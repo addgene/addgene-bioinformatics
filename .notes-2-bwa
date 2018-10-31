@@ -1,0 +1,17 @@
+jhttp://bio-bwa.sourceforge.net/
+
+https://sourceforge.net/projects/bio-bwa/
+
+>> https://sourceforge.net/projects/bio-bwa/files/latest/download
+>> wget https://sourceforge.net/projects/bio-bwa/files/latest/download -O bwa-latest.tar.bz2
+
+http://bio-bwa.sourceforge.net/bwa.shtml
+
+## Getting started
+
+	git clone https://github.com/lh3/bwa.git
+>>	cd bwa; make
+>>	cd bwa-0.7.17; make
+	./bwa index ref.fa
+	./bwa mem ref.fa read-se.fq.gz | gzip -3 > aln-se.sam.gz
+	./bwa mem ref.fa read1.fq read2.fq | gzip -3 > aln-pe.sam.gz
