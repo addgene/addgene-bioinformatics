@@ -70,7 +70,7 @@ SPAdes will be built in the directory ./bin. If you wish to install SPAdes into 
 
 
 >>    PREFIX=<destination_dir> ./spades_compile.sh
->>    PREFIX=~/Projects/Addgene/addgene-bioinformatics ./spades_compile.sh
+>>    PREFIX=~/Projects/Addgene/addgene-bioinformatics/local ./spades_compile.sh
 
 for example:
 
