@@ -1,6 +1,3 @@
 [submodule "src/bwa"]
 	path = src/bwa
 	url = https://github.com/lh3/bwa.git
-[submodule "src/Prodigal"]
-	path = src/Prodigal
-	url = git@github.com:hyattpd/Prodigal.git
