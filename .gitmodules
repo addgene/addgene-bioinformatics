@@ -4,6 +4,3 @@
 [submodule "src/Prodigal"]
 	path = src/Prodigal
 	url = git@github.com:hyattpd/Prodigal.git
-[submodule "src/samtools"]
-	path = src/samtools
-	url = git@github.com:samtools/samtools.git
