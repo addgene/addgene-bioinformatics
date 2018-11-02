@@ -3,20 +3,20 @@
 export PATH="../../local/bin:$PATH"
 
 fastq_home="../../dat"
-fastq_dirs=("challenge-data"
-            "miscellaneous/A12417_sW0200_FASTQ"
+fastq_dirs=("A12417_sW0200_FASTQ"
             "representative-assortment"
             "simple-data"
+            "challenge-data"
            )
 
-date > time.out
-
 for fastq_dir in ${fastq_dirs}; do
+
+    date > time_${fastq_dir}.out
 
     dir_size=$(du -m ${fastq_home}/${fastq_dir} | cut -f 1)
     echo
     echo "FASTQ directory : ${fastq_dir} : size (MB) : ${dir_size}" \
-        | tee -a time.out
+        | tee -a time_${fastq_dir}.out
 
     fastq_fnms=$(ls -1 ${fastq_home}/${fastq_dir}/*_R1_001.fastq.gz)
     for fastq_pth in ${fastq_fnms}; do
@@ -35,7 +35,7 @@ for fastq_dir in ${fastq_dirs}; do
         spades_real=$(expr $spades_end - $spades_start)
         echo
         echo "FASTQ filename : ${fastq_fnm} : SPAdes required (s) : ${spades_real}" \
-            | tee -a time.out
+            | tee -a time_${fastq_dir}.out
         
         { time ../apc/apc.pl \
                -b ${fastq_fnm} ${fastq_fnm}/scaffolds.fasta \
@@ -43,8 +43,10 @@ for fastq_dir in ${fastq_dirs}; do
         apc_real=$(grep "real" apc_${fastq_fnm}_time.out | cut -f 2)
         echo
         echo "FASTQ filename : ${fastq_fnm} : apc required : ${apc_real}" \
-            | tee -a time.out
-        
+            | tee -a time_${fastq_dir}.out
+
+        break
+
     done
 
 done
