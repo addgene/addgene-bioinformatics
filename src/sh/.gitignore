@@ -1,0 +1,5 @@
+A[0-9]*
+apc_*
+spades_*
+test.out
+time.out
