@@ -1,0 +1,44 @@
+http://last.cbrc.jp/
+
+Clone it using Mercurial: >> hg clone http://last.cbrc.jp/last/
+
+http://last.cbrc.jp/doc/last.html
+
+LAST: Genome-Scale Sequence Comparison
+
+Requirements
+
+To handle mammalian genomes, it's best if you have at least 10-20 gigabytes of real memory, but you can get by with 2 gigabytes.
+
+To install the software, you need a C++ compiler. On Linux, you might need to install a package called "g++". On Mac, you might need to install command-line developer tools. On Windows, you might need to install Cygwin.
+
+Setup
+
+Using the command line, go into the top-level LAST directory. To compile the programs, type:
+
+>> make
+
+You might get some harmless warning messages. If your compiler is really old, you might get an error message like this:
+
+unrecognized command line option "-std=c++11"
+
+In that case, you can compile like this (which will disable multi-threading):
+
+make CXXFLAGS=-O3
+
+Or you can specify another compiler like this:
+
+make CXX=MyOtherCompiler
+
+Install (optional)
+
+You can copy the programs and scripts to a standard "bin" directory (using "sudo" to request administrator permissions):
+
+sudo make install
+
+Or copy them to your personal bin directory:
+
+make install prefix=~
+>> make install prefix=~/Projects/Addgene/addgene-bioinformatics/local
+
+You might have to log out and back in before your computer recognizes the new programs.
