@@ -85,6 +85,7 @@ the package's source and type the following commands:
 
 >>    ./configure
 >>    make
+>>    make test
     make install
 
 The './configure' command checks your build environment and allows various
@@ -102,6 +103,6 @@ that cause build failures.
 The 'make install' command installs the libraries, library header files,
 utilities, several manual pages, and a pkgconfig file to /usr/local.
 The installation location can be changed by configuring with --prefix=DIR
-or via '>> make prefix=DIR install' (see Installation Locations below).
+or via 'make prefix=DIR install' (see Installation Locations below).
 
 >> make install prefix=~/Projects/Addgene/addgene-bioinformatics/local
