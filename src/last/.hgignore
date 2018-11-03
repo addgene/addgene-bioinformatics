@@ -1,0 +1,8 @@
+syntax: glob
+
+*.o
+*.o8
+*.zip
+ChangeLog.txt
+doc/*.html
+src/version.hh
