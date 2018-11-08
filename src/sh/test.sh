@@ -4,8 +4,11 @@ export PATH="../../local/bin:$PATH"
 
 fastq_home="../../dat"
 fastq_dir="representative-assortment"
-
 fastq_fnm="A12180A_B11"
+
+fastq_home="../../dat/miscellaneous"
+fastq_dir="A11967A_sW0154_FASTQ"
+fastq_fnm="A11967A_sW0154_A01"
 
 spades_start=$(date +%s)
 spades.py \
