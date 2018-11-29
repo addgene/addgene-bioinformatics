@@ -1,0 +1,2 @@
+awscli==1.16.50
+toil[aws,encryption,cwl,wdl]==3.18.0
