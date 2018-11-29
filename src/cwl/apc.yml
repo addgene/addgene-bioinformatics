@@ -1,0 +1,7 @@
+basename: apc
+
+scaffolds:
+  class: File
+  label: Assembled scaffolds
+  format: edam:format_1929
+  path: ./scaffolds.fasta

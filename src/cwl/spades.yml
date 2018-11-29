@@ -1,0 +1,15 @@
+read_one_file:
+  class: File
+  label: FASTQ Illumina short left paired reads
+  format: edam:format_1931
+  path: ../../dat/miscellaneous/A11967A_sW0154_FASTQ/A11967A_sW0154_A01_R1_001.fastq.gz
+
+read_two_file:
+  class: File
+  label: FASTQ Illumina short right paired reads
+  format: edam:format_1931
+  path: ../../dat/miscellaneous/A11967A_sW0154_FASTQ/A11967A_sW0154_A01_R2_001.fastq.gz
+
+output_directory: A11967A_sW0154_A01_CWL
+
+coverage_cutoff: 100
