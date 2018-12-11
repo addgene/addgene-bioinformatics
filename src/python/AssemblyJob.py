@@ -48,8 +48,8 @@ class AssemblyJob(Job):
             parent_rv=spades_job.rv()
             )
         final_job = self.addChild(
-            spades_job) # .addChild(
-        # apc_job)
+            spades_job).addChild(
+                apc_job)
 
         # Return file ids for export
         return final_job.rv()

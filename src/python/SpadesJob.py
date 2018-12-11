@@ -46,12 +46,10 @@ class SpadesJob(Job):
         """
         # Read the read files from the file store into the local
         # temporary directory
-        read_one_file_name = "R1.fastq.gz"
         read_one_file_path = utilities.readGlobalFile(
-            fileStore, self.read_one_file_id, read_one_file_name)
-        read_two_file_name = "R2.fastq.gz"
+            fileStore, self.read_one_file_id, "R1.fastq.gz")
         read_two_file_path = utilities.readGlobalFile(
-            fileStore, self.read_two_file_id, read_two_file_name)
+            fileStore, self.read_two_file_id, "R2.fastq.gz")
 
         # Call spades.py
         subprocess.check_call([
@@ -60,20 +58,20 @@ class SpadesJob(Job):
             read_one_file_path,
             "-2",
             read_two_file_path,
-            "--cov-cutoff",
-            self.coverage_cutoff,
             "-o",
             os.path.join(fileStore.localTempDir, self.output_directory),
+            "--cov-cutoff",
+            self.coverage_cutoff,
             ])
 
         # Write the warnings and spades log files, and contigs FASTA
         # file from the local temporary directory into the file store
         warnings_file_id = utilities.writeGlobalFile(
-            fileStore, "warnings.log")
+            fileStore, self.output_directory, "warnings.log")
         spades_file_id = utilities.writeGlobalFile(
-            fileStore, "spades.log")
+            fileStore, self.output_directory, "spades.log")
         contigs_file_id = utilities.writeGlobalFile(
-            fileStore, "contigs.fasta")
+            fileStore, self.output_directory, "contigs.fasta")
 
         # Return file ids for export
         spades_rv = {

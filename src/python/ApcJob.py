@@ -35,7 +35,7 @@ class ApcJob(Job):
             file ids of output and alignment files, and circular
             sequence FASTA file
         """
-        # Read the contig FASTA file from the file store into the
+        # Read the contigs FASTA file from the file store into the
         # local temporary directory
         contigs_file_name = "contigs.fasta"
         utilities.readGlobalFile(

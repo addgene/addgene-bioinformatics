@@ -41,8 +41,6 @@ if __name__ == "__main__":
             # Restart the job
             assembly_rv = toil.restart(assembly_job)
 
-        print assembly_rv
-        
         # Export the SPAdes warnings and log files, and contigs FASTA
         # file from the file store
         spades_rv = assembly_rv['spades_rv']
@@ -57,8 +55,6 @@ if __name__ == "__main__":
         # file store
         apc_rv = assembly_rv['apc_rv']
         toil.exportFile(apc_rv['output_file_id'],
-                        "file://" + os.path.abspath("./warnings.log"))
-        toil.exportFile(apc_rv['_file_id'],
-                        "file://" + os.path.abspath("./spades.log"))
-        toil.exportFile(apc_rv['contigs_file_id'],
-                        "file://" + os.path.abspath("./contigs.fasta"))
+                        "file://" + os.path.abspath("./apc.out"))
+        toil.exportFile(apc_rv['sequence_file_id'],
+                        "file://" + os.path.abspath("./apc.1.fa"))
