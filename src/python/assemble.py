@@ -45,19 +45,6 @@ if __name__ == "__main__":
         # file from the file store
         utilities.exportFiles(toil, assembly_rv['spades_rv'])
 
-        # toil.exportFile(spades_rv['warnings_file_id'],
-        #                 "file://" + os.path.abspath("./warnings.log"))
-        # toil.exportFile(spades_rv['spades_file_id'],
-        #                 "file://" + os.path.abspath("./spades.log"))
-        # toil.exportFile(spades_rv['contigs_file_id'],
-        #                 "file://" + os.path.abspath("./contigs.fasta"))
-
         # Export the apc output file, and sequence FASTA file from the
         # file store
         utilities.exportFiles(toil, assembly_rv['apc_rv'])
-
-        # apc_rv = assembly_rv['apc_rv']
-        # toil.exportFile(apc_rv['output_file_id'],
-        #                 "file://" + os.path.abspath("./apc.out"))
-        # toil.exportFile(apc_rv['sequence_file_id'],
-        #                 "file://" + os.path.abspath("./apc.1.fa"))
