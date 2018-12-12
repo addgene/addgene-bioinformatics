@@ -34,7 +34,7 @@ def readGlobalFile(fileStore, file_id, *cmps):
         instance of a Toil file store
     file_id : str
         id of the file in the file store
-    *cmps : list
+    cmps : list
         path components of the file read into the local temporary
         directory
 
@@ -58,7 +58,7 @@ def writeGlobalFile(fileStore, *cmps):
     ----------
     fileStore : toil.fileStore.FileStore
         instance of a Toil file store
-    *cmps : list
+    cmps : list
         path components of the file in the local temporary directory
 
     Returns
