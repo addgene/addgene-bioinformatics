@@ -63,9 +63,15 @@ class ApcJob(Job):
         # Return file ids for export
         apc_rv = {
             'apc_rv': {
-                'output_file_id': output_file_id,
-                'sequence_file_id': sequence_file_id,
-                }
+                'output_file': {
+                    'id': output_file_id,
+                    'name': output_file_name,
+                },
+                'sequence_file': {
+                    'id': sequence_file_id,
+                    'name': sequence_file_name,
+                },
             }
+        }
         apc_rv.update(self.parent_rv)
         return apc_rv
