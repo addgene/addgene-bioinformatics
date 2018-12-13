@@ -44,7 +44,7 @@ class AssemblyJob(Job):
             self.output_directory,
             )
         apc_job = ApcJob(
-            spades_job.rv('spades_rv', 'contigs_file_id'),
+            spades_job.rv('spades_rv', 'contigs_file', 'id'),
             parent_rv=spades_job.rv()
             )
         final_job = self.addChild(

@@ -66,20 +66,32 @@ class SpadesJob(Job):
 
         # Write the warnings and spades log files, and contigs FASTA
         # file from the local temporary directory into the file store
+        warnings_file_name = "warnings.log"
         warnings_file_id = utilities.writeGlobalFile(
-            fileStore, self.output_directory, "warnings.log")
+            fileStore, self.output_directory, warnings_file_name)
+        spades_file_name = "spades.log"
         spades_file_id = utilities.writeGlobalFile(
-            fileStore, self.output_directory, "spades.log")
+            fileStore, self.output_directory, spades_file_name)
+        contigs_file_name = "contigs.fasta"
         contigs_file_id = utilities.writeGlobalFile(
-            fileStore, self.output_directory, "contigs.fasta")
+            fileStore, self.output_directory, contigs_file_name)
 
         # Return file ids for export
         spades_rv = {
             'spades_rv': {
-                'warnings_file_id': warnings_file_id,
-                'spades_file_id': spades_file_id,
-                'contigs_file_id': contigs_file_id,
-                }
+                'warnings_file': {
+                    'id': warnings_file_id,
+                    'name': warnings_file_name,
+                },
+                'spades_file': {
+                    'id': spades_file_id,
+                    'name': spades_file_name,
+                },
+                'contigs_file': {
+                    'id': contigs_file_id,
+                    'name': contigs_file_name,
+                },
             }
+        }
         spades_rv.update(self.parent_rv)
         return spades_rv
