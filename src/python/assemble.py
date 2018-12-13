@@ -1,5 +1,3 @@
-import os
-
 from toil.job import Job
 from toil.common import Toil
 
@@ -38,7 +36,7 @@ if __name__ == "__main__":
 
         else:
 
-            # Restart the job
+            # Restart the assembly job
             assembly_rv = toil.restart(assembly_job)
 
         # Export the SPAdes warnings and log files, and contigs FASTA
