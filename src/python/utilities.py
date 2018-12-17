@@ -76,7 +76,7 @@ def writeGlobalFile(fileStore, *cmps):
     return file_id
 
 
-def exportFiles(toil, job_rv):
+def exportFiles(toil, job_rv, output_directory="."):
     """
     Export files corresponding to the specified id from the file store
     using the specified name
@@ -90,4 +90,5 @@ def exportFiles(toil, job_rv):
     """
     for name, spec in job_rv.iteritems():
         if spec['id'] is not None:
-            toil.exportFile(spec['id'], "file://" + os.path.abspath(spec['name']))
+            toil.exportFile(spec['id'], "file://" + os.path.abspath(
+                os.path.join(output_directory, spec['name'])))

@@ -66,20 +66,26 @@ if __name__ == "__main__":
     Assemble reads corresponding to a single well.
     """
 
-    # Parese data directory, plate and well specification, and
+    # Parese FASTQ data directory, plate and well specification, and
     # coverage cutoff
     parser = ArgumentParser()
     Job.Runner.addToilOptions(parser)
     parser.add_argument('-d', '--data-directory',
                         default="../../dat/miscellaneous",
-                        help="the plate specification")
+                        help="the directory containing FASTQ read data files")
     parser.add_argument('-p', '--plate-spec', default="A11967A_sW0154",
                         help="the plate specification")
     parser.add_argument('-w', '--well-spec', default="A01",
                         help="the well specification")
     parser.add_argument('-c', '--coverage-cutoff', default="100",
                         help="the coverage cutoff")
+    parser.add_argument('-o', '--output-directory', default=None,
+                        help="the directory containing all output files")
     options = parser.parse_args()
+    if options.output_directory is None:
+        options.output_directory = options.plate_spec + "_" + options.well_spec
+    if not os.path.exists(options.output_directory):
+        os.mkdir(options.output_directory)
 
     # Work within the Toil context manager
     with Toil(options) as toil:
@@ -111,8 +117,10 @@ if __name__ == "__main__":
 
         # Export the SPAdes warnings and log files, and contigs FASTA
         # file from the file store
-        utilities.exportFiles(toil, assembly_rv['spades_rv'])
+        utilities.exportFiles(
+            toil, assembly_rv['spades_rv'], options.output_directory)
 
         # Export the apc output file, and sequence FASTA file from the
         # file store
-        utilities.exportFiles(toil, assembly_rv['apc_rv'])
+        utilities.exportFiles(
+            toil, assembly_rv['apc_rv'], options.output_directory)
