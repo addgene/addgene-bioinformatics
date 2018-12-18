@@ -19,10 +19,10 @@ class WellAssemblyJob(Job):
         """
         Parameters
         ----------
-        read_one_file_id : str
+        read_one_file_id : toil.fileStore.FileID
             id of file in job store containing FASTQ Illumina short
             left paired reads
-        read_two_file_id : str
+        read_two_file_id : toil.fileStore.FileID
             id of file in job store containing FASTQ Illumina short
             right paired reads
         coverage_cutoff : str
@@ -63,11 +63,12 @@ class WellAssemblyJob(Job):
 
 if __name__ == "__main__":
     """
-    Assemble reads corresponding to a single well.
-    """
+    Assemble reads corresponding to a single well
 
-    # Parese FASTQ data directory, plate and well specification, and
-    # coverage cutoff
+    """
+    # Parese FASTQ data directory, plate and well specification,
+    # coverage cutoff, and output directory, making the output
+    # directory if needed
     parser = ArgumentParser()
     Job.Runner.addToilOptions(parser)
     parser.add_argument('-d', '--data-directory',
@@ -93,11 +94,11 @@ if __name__ == "__main__":
 
             # Import the local read files into the file store
             read_one_file_id = utilities.importFile(
-                toil, os.path.join("../../dat/miscellaneous",
+                toil, os.path.join(options.data_directory,
                                    "{0}_FASTQ/{0}_{1}_R1_001.fastq.gz".format(
                                        options.plate_spec, options.well_spec)))
             read_two_file_id = utilities.importFile(
-                toil, os.path.join("../../dat/miscellaneous",
+                toil, os.path.join(options.data_directory,
                                    "{0}_FASTQ/{0}_{1}_R2_001.fastq.gz".format(
                                        options.plate_spec, options.well_spec)))
 
@@ -106,7 +107,7 @@ if __name__ == "__main__":
                 read_one_file_id,
                 read_two_file_id,
                 options.coverage_cutoff,
-                options.plate_spec,
+                options.output_directory,
                 )
             assembly_rv = toil.start(assembly_job)
 
