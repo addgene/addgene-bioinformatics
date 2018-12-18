@@ -18,10 +18,10 @@ class SpadesJob(Job):
         """
         Parameters
         ----------
-        read_one_file_id : str
+        read_one_file_id : toil.fileStore.FileID
             id of the file in the job store containing FASTQ Illumina
             short left paired reads
-        read_two_file_id : str
+        read_two_file_id : toil.fileStore.FileID
             id of the file in the job store containing FASTQ Illumina
             short right paired reads
         coverage_cutoff : str
@@ -40,9 +40,9 @@ class SpadesJob(Job):
         """
         Returns
         -------
-        dict
-            file ids of warnings and spades log files, and contigs
-            FASTA file
+        dict of toil.fileStore.FileID and str
+            file ids and names of warnings and spades log files, and
+            contigs FASTA file
         """
         # Read the read files from the file store into the local
         # temporary directory
@@ -76,7 +76,7 @@ class SpadesJob(Job):
         contigs_file_id = utilities.writeGlobalFile(
             fileStore, self.output_directory, contigs_file_name)
 
-        # Return file ids for export
+        # Return file ids and names for export
         spades_rv = {
             'spades_rv': {
                 'warnings_file': {
