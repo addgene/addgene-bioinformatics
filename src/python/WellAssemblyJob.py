@@ -66,7 +66,7 @@ if __name__ == "__main__":
     Assemble reads corresponding to a single well
 
     """
-    # Parese FASTQ data directory, plate and well specification,
+    # Parse FASTQ data directory, plate and well specification,
     # coverage cutoff, and output directory, making the output
     # directory if needed
     parser = ArgumentParser()
