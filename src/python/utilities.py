@@ -132,7 +132,7 @@ def writeGlobalFile(fileStore, *cmps):
     return file_id
 
 
-def exportFiles(toil, job_rv, output_directory="."):
+def exportFiles(toil, output_directory, job_rv):
     """
     Export files corresponding to the specified id from the file store
     using the specified name
@@ -141,6 +141,8 @@ def exportFiles(toil, job_rv, output_directory="."):
     ----------
     toil : toil.common.Toil
         instance of a Toil context manager
+    output_directory : string
+        name of output directory
     job_rv : dict
         name, id, and file name of files to export
     """
