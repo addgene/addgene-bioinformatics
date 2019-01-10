@@ -28,6 +28,8 @@ class SpadesJob(Job):
             read coverage cutoff value
         output_directory : str
             name of directory for output
+        parent_rv : dict
+            dictionary of return values from the parent job
         """
         super(SpadesJob, self).__init__(*args, **kwargs)
         self.read_one_file_id = read_one_file_id
