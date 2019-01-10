@@ -109,8 +109,8 @@ if __name__ == "__main__":
                 read_two_file = read_one_file.replace("R1", "R2")
                 if os.path.exists(read_two_file):
                     well_specs.append(p.search(read_one_file).group(1))
-                    read_one_file_ids.append(utilities.importFile(toil, read_one_file))
-                    read_two_file_ids.append(utilities.importFile(toil, read_two_file))
+            read_one_file_ids, read_two_file_ids = utilities.importReadFiles(
+                toil, options.data_directory, options.plate_spec, well_specs)
 
             # Construct and start the plate assembly job
             assembly_job = PlateAssemblyJob(
