@@ -48,11 +48,11 @@ class WellAssemblyJob(Job):
             self.read_two_file_id,
             self.coverage_cutoff,
             self.output_directory,
-            )
+        )
         apc_job = ApcJob(
             spades_job.rv('spades_rv', 'contigs_file', 'id'),
             parent_rv=spades_job.rv()
-            )
+        )
         final_job = self.addChild(
             spades_job).addChild(
                 apc_job)
@@ -72,7 +72,7 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     Job.Runner.addToilOptions(parser)
     parser.add_argument('-d', '--data-directory',
-                        default="../../dat/miscellaneous",
+                        default=os.path.join("..", "..", "dat/miscellaneous"),
                         help="the directory containing FASTQ read data files")
     parser.add_argument('-p', '--plate-spec', default="A11967A_sW0154",
                         help="the plate specification")
@@ -93,14 +93,9 @@ if __name__ == "__main__":
         if not toil.options.restart:
 
             # Import the local read files into the file store
-            read_one_file_id = utilities.importFile(
-                toil, os.path.join(options.data_directory,
-                                   "{0}_FASTQ/{0}_{1}_R1_001.fastq.gz".format(
-                                       options.plate_spec, options.well_spec)))
-            read_two_file_id = utilities.importFile(
-                toil, os.path.join(options.data_directory,
-                                   "{0}_FASTQ/{0}_{1}_R2_001.fastq.gz".format(
-                                       options.plate_spec, options.well_spec)))
+            read_one_file_ids, read_two_file_ids = utilities.importReadFiles(
+                toil, options.data_directory, options.plate_spec, [options.well_spec])
+
 
             # Construct and start the well assembly job
             assembly_job = WellAssemblyJob(
