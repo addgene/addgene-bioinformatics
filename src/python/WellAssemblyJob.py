@@ -98,25 +98,25 @@ if __name__ == "__main__":
 
 
             # Construct and start the well assembly job
-            assembly_job = WellAssemblyJob(
-                read_one_file_id,
-                read_two_file_id,
+            well_assembly_job = WellAssemblyJob(
+                read_one_file_ids[0],
+                read_two_file_ids[0],
                 options.coverage_cutoff,
                 options.output_directory,
                 )
-            assembly_rv = toil.start(assembly_job)
+            well_assembly_rv = toil.start(well_assembly_job)
 
         else:
 
             # Restart the well assembly job
-            assembly_rv = toil.restart(assembly_job)
+            well_assembly_rv = toil.restart(well_assembly_job)
 
         # Export the SPAdes warnings and log files, and contigs FASTA
         # file from the file store
         utilities.exportFiles(
-            toil, assembly_rv['spades_rv'], options.output_directory)
+            toil, options.output_directory, well_assembly_rv['spades_rv'])
 
         # Export the apc output file, and sequence FASTA file from the
         # file store
         utilities.exportFiles(
-            toil, assembly_rv['apc_rv'], options.output_directory)
+            toil, options.output_directory, well_assembly_rv['apc_rv'])
