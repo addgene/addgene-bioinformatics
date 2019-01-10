@@ -22,6 +22,62 @@ def importFile(toil, file_name):
     return file_id
 
 
+def importReadFiles(toil, data_directory, plate_spec, well_specs):
+    """
+    Import the read one and two files in the data directory for the
+    specified plate and well.
+
+    Parameters
+    ----------
+    toil : toil.common.Toil
+        instance of a Toil context manager
+    data_directory : string
+        name of directory containing plate FASTQ directory
+    plate_spec : str
+        specification of the plate
+    well_spec : list
+        specification of the wells
+    Returns
+    -------
+    tuple of lists
+        ids of the imported read one and two files in the file store
+    """
+    read_one_file_ids = []
+    read_two_file_ids = []
+
+    for well_spec in well_specs:
+
+        read_one_file_ids.append(importFile(
+            toil, os.path.join(
+                data_directory, "{0}_FASTQ".format(plate_spec),
+                "{0}_{1}_R1_001.fastq.gz".format(plate_spec, well_spec))))
+
+        read_two_file_ids.append(importFile(
+            toil, os.path.join(
+                data_directory, "{0}_FASTQ".format(plate_spec),
+                "{0}_{1}_R2_001.fastq.gz".format(plate_spec, well_spec))))
+
+    return read_one_file_ids, read_two_file_ids
+
+
+def importContigsFile(toil, data_directory):
+    """
+    Import the contigs FASTA file from the specified data directory.
+
+    Parameters
+    ----------
+    data_directory : string
+        name of directory containing contigs FASTA file
+    Returns
+    -------
+    str
+        id of the imported contigs file in the file store
+    """
+    contigs_file_id = importFile(
+        toil, os.path.join(data_directory, "contigs.fasta"))
+    return contigs_file_id
+
+
 def readGlobalFile(fileStore, file_id, *cmps):
     """
     Read the file corresponding to the specified id from the file
