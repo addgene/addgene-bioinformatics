@@ -49,10 +49,10 @@ class PlateAssemblyJob(Job):
         dict
             the return values of the WellAssemblyJobs
         """
-        well_assembly_job_rvs = []
+        well_assembly_rvs = []
         nW = len(self.well_specs)
         for iW in range(nW):
-            well_assembly_job_rvs.append(
+            well_assembly_rvs.append(
                 self.addChild(
                     WellAssemblyJob(
                         self.read_one_file_ids[iW],
@@ -63,7 +63,7 @@ class PlateAssemblyJob(Job):
                         disk="2G",
                         memory="3G",
                         )).rv())
-        return well_assembly_job_rvs
+        return well_assembly_rvs
 
 
 if __name__ == "__main__":
@@ -113,7 +113,7 @@ if __name__ == "__main__":
                 toil, options.data_directory, options.plate_spec, well_specs)
 
             # Construct and start the plate assembly job
-            assembly_job = PlateAssemblyJob(
+            plate_assembly_job = PlateAssemblyJob(
                 well_specs,
                 read_one_file_ids,
                 read_two_file_ids,
@@ -123,12 +123,12 @@ if __name__ == "__main__":
                 disk="3G",
                 memory="4G",
                 )
-            well_assembly_rvs = toil.start(assembly_job)
+            well_assembly_rvs = toil.start(plate_assembly_job)
 
         else:
 
             # Restart the well assembly job
-            well_assembly_rvs = toil.restart(assembly_job)
+            well_assembly_rvs = toil.restart(plate_assembly_job)
 
         # Export needed files created by each well assembly job
         nW = len(well_specs)
@@ -143,11 +143,9 @@ if __name__ == "__main__":
             # Export the SPAdes warnings and log files, and contigs
             # FASTA file from the file store
             utilities.exportFiles(
-                toil, well_assembly_rvs[iW]['spades_rv'],
-                well_output_directory)
+                toil, well_output_directory, well_assembly_rvs[iW]['spades_rv'])
 
             # Export the apc output file, and sequence FASTA file from
             # the file store
             utilities.exportFiles(
-                toil, well_assembly_rvs[iW]['apc_rv'],
-                well_output_directory)
+                toil, well_output_directory, well_assembly_rvs[iW]['apc_rv'])
