@@ -131,21 +131,5 @@ if __name__ == "__main__":
             well_assembly_rvs = toil.restart(plate_assembly_job)
 
         # Export needed files created by each well assembly job
-        nW = len(well_specs)
-        for iW in range(nW):
-
-            # Define and make the well output directory, if needed
-            well_output_directory = os.path.join(
-                options.output_directory, well_specs[iW])
-            if not os.path.exists(well_output_directory):
-                os.mkdir(well_output_directory)
-
-            # Export the SPAdes warnings and log files, and contigs
-            # FASTA file from the file store
-            utilities.exportFiles(
-                toil, well_output_directory, well_assembly_rvs[iW]['spades_rv'])
-
-            # Export the apc output file, and sequence FASTA file from
-            # the file store
-            utilities.exportFiles(
-                toil, well_output_directory, well_assembly_rvs[iW]['apc_rv'])
+        utilities.exportWellAssemblyFiles(
+            toil, options.plate_spec, well_specs, well_assembly_rvs)
