@@ -96,7 +96,6 @@ if __name__ == "__main__":
             read_one_file_ids, read_two_file_ids = utilities.importReadFiles(
                 toil, options.data_directory, options.plate_spec, [options.well_spec])
 
-
             # Construct and start the well assembly job
             well_assembly_job = WellAssemblyJob(
                 read_one_file_ids[0],
