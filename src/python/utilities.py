@@ -150,3 +150,31 @@ def exportFiles(toil, output_directory, job_rv):
         if spec['id'] is not None:
             toil.exportFile(spec['id'], "file://" + os.path.abspath(
                 os.path.join(output_directory, spec['name'])))
+
+
+def exportWellAssemblyFiles(toil, output_directory, well_specs, well_assembly_rvs):
+    """
+    Export the SPAdes warnings and log files, and contigs FASTA file
+    and the apc output file, and sequence FASTA file from the file
+    store.
+
+    Parameters
+    ----------
+    toil : toil.common.Toil
+        instance of a Toil context manager
+    output_directory : string
+        name of directory for export destination
+    well_specs : list
+        string specifications of the wells
+    well_assembly_rvs : list
+        dictionaries of assembly job return values
+    """
+    nW = len(well_specs)
+    for iW in range(nW):
+        well_output_directory = os.path.join(output_directory, well_specs[iW])
+        if not os.path.exists(well_output_directory):
+            os.mkdir(well_output_directory)
+        exportFiles(
+            toil, well_output_directory, well_assembly_rvs[iW]['spades_rv'])
+        exportFiles(
+            toil, well_output_directory, well_assembly_rvs[iW]['apc_rv'])
