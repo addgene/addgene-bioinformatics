@@ -56,16 +56,16 @@ class ToilTestCase(unittest.TestCase):
                 self.plate_spec, self.well_spec), self.spades_fasta))
         return contigs_file_id
 
-    def _assert_true_cmp_spades_fasta(self, actual_directory):
+    def _assert_true_cmp_spades_fasta(self, test_directory, actual_directory):
         self.assertTrue(
             filecmp.cmp(
-                os.path.join(self.test_directory_a, self.spades_fasta),
+                os.path.join(test_directory, self.spades_fasta),
                 os.path.join(actual_directory, self.spades_fasta)))
 
-    def _assert_true_cmp_apc_fasta(self, actual_directory):
+    def _assert_true_cmp_apc_fasta(self, test_directory, actual_directory):
         self.assertTrue(
             filecmp.cmp(
-                os.path.join(self.test_directory_a, self.apc_fasta),
+                os.path.join(test_directory, self.apc_fasta),
                 os.path.join(actual_directory, self.apc_fasta)))
 
 
@@ -91,10 +91,8 @@ class JobsTestCase(ToilTestCase):
             utilities.exportFiles(
                 toil, self.test_directory_a, spades_rv['spades_rv'])
 
-        self.assertTrue(
-            filecmp.cmp(
-                os.path.join(self.test_directory_a, self.spades_fasta),
-                os.path.join(self.actual_directory_a, self.spades_fasta)))
+        self._assert_true_cmp_spades_fasta(
+            self.test_directory_a, self.actual_directory_a)
 
     def test_apc_job(self):
 
@@ -110,10 +108,8 @@ class JobsTestCase(ToilTestCase):
             utilities.exportFiles(
                 toil, self.test_directory_a, apc_rv['apc_rv'])
 
-        self.assertTrue(
-            filecmp.cmp(
-                os.path.join(self.test_directory_a, self.apc_fasta),
-                os.path.join(self.actual_directory_a, self.apc_fasta)))
+        self._assert_true_cmp_apc_fasta(
+            self.test_directory_a, self.actual_directory_a)
 
 
 class WellAssemblyJobTestCase(ToilTestCase):
@@ -140,14 +136,10 @@ class WellAssemblyJobTestCase(ToilTestCase):
             utilities.exportFiles(
                 toil, self.test_directory_a, well_assembly_rv['apc_rv'])
 
-        self.assertTrue(
-            filecmp.cmp(
-                os.path.join(self.test_directory_a, self.spades_fasta),
-                os.path.join(self.actual_directory_a, self.spades_fasta)))
-        self.assertTrue(
-            filecmp.cmp(
-                os.path.join(self.test_directory_a, self.apc_fasta),
-                os.path.join(self.actual_directory_a, self.apc_fasta)))
+        self._assert_true_cmp_spades_fasta(
+            self.test_directory_a, self.actual_directory_a)
+        self._assert_true_cmp_apc_fasta(
+            self.test_directory_a, self.actual_directory_a)
 
 
 class PlateJobTestCase(ToilTestCase):
@@ -177,14 +169,12 @@ class PlateJobTestCase(ToilTestCase):
                 toil, self.test_directory_b, self.well_specs, well_assembly_rvs)
 
         for well_spec in self.well_specs:
-            self.assertTrue(
-                filecmp.cmp(
-                    os.path.join(self.test_directory_b, well_spec, self.spades_fasta),
-                    os.path.join(self.actual_directory_b, well_spec, self.spades_fasta)))
-            self.assertTrue(
-                filecmp.cmp(
-                    os.path.join(self.test_directory_b, well_spec, self.apc_fasta),
-                    os.path.join(self.actual_directory_b, well_spec, self.apc_fasta)))
+            self._assert_true_cmp_spades_fasta(
+                os.path.join(self.test_directory_b, well_spec),
+                os.path.join(self.actual_directory_b, well_spec))
+            self._assert_true_cmp_apc_fasta(
+                os.path.join(self.test_directory_b, well_spec),
+                os.path.join(self.actual_directory_b, well_spec))
 
 
 if __name__ == '__main__':
