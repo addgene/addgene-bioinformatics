@@ -31,9 +31,9 @@ class ApcJob(Job):
         """
         Returns
         -------
-        dict
-            file ids of output and alignment files, and circular
-            sequence FASTA file
+        dict of toil.fileStore.FileID and str
+            file ids and names of output and alignment files, and
+            circular sequence FASTA file
         """
         # Read the contigs FASTA file from the file store into the
         # local temporary directory
@@ -60,7 +60,7 @@ class ApcJob(Job):
         sequence_file_id = utilities.writeGlobalFile(
             fileStore, sequence_file_name)
 
-        # Return file ids for export
+        # Return file ids and names for export
         apc_rv = {
             'apc_rv': {
                 'output_file': {

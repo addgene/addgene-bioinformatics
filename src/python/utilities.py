@@ -22,6 +22,62 @@ def importFile(toil, file_name):
     return file_id
 
 
+def importReadFiles(toil, data_directory, plate_spec, well_specs):
+    """
+    Import the read one and two files in the data directory for the
+    specified plate and well.
+
+    Parameters
+    ----------
+    toil : toil.common.Toil
+        instance of a Toil context manager
+    data_directory : string
+        name of directory containing plate FASTQ directory
+    plate_spec : str
+        specification of the plate
+    well_spec : list
+        specification of the wells
+    Returns
+    -------
+    tuple of lists
+        ids of the imported read one and two files in the file store
+    """
+    read_one_file_ids = []
+    read_two_file_ids = []
+
+    for well_spec in well_specs:
+
+        read_one_file_ids.append(importFile(
+            toil, os.path.join(
+                data_directory, "{0}_FASTQ".format(plate_spec),
+                "{0}_{1}_R1_001.fastq.gz".format(plate_spec, well_spec))))
+
+        read_two_file_ids.append(importFile(
+            toil, os.path.join(
+                data_directory, "{0}_FASTQ".format(plate_spec),
+                "{0}_{1}_R2_001.fastq.gz".format(plate_spec, well_spec))))
+
+    return read_one_file_ids, read_two_file_ids
+
+
+def importContigsFile(toil, data_directory):
+    """
+    Import the contigs FASTA file from the specified data directory.
+
+    Parameters
+    ----------
+    data_directory : string
+        name of directory containing contigs FASTA file
+    Returns
+    -------
+    str
+        id of the imported contigs file in the file store
+    """
+    contigs_file_id = importFile(
+        toil, os.path.join(data_directory, "contigs.fasta"))
+    return contigs_file_id
+
+
 def readGlobalFile(fileStore, file_id, *cmps):
     """
     Read the file corresponding to the specified id from the file
@@ -76,7 +132,7 @@ def writeGlobalFile(fileStore, *cmps):
     return file_id
 
 
-def exportFiles(toil, job_rv):
+def exportFiles(toil, output_directory, job_rv):
     """
     Export files corresponding to the specified id from the file store
     using the specified name
@@ -85,9 +141,40 @@ def exportFiles(toil, job_rv):
     ----------
     toil : toil.common.Toil
         instance of a Toil context manager
+    output_directory : string
+        name of output directory
     job_rv : dict
         name, id, and file name of files to export
     """
     for name, spec in job_rv.iteritems():
         if spec['id'] is not None:
-            toil.exportFile(spec['id'], "file://" + os.path.abspath(spec['name']))
+            toil.exportFile(spec['id'], "file://" + os.path.abspath(
+                os.path.join(output_directory, spec['name'])))
+
+
+def exportWellAssemblyFiles(toil, output_directory, well_specs, well_assembly_rvs):
+    """
+    Export the SPAdes warnings and log files, and contigs FASTA file
+    and the apc output file, and sequence FASTA file from the file
+    store.
+
+    Parameters
+    ----------
+    toil : toil.common.Toil
+        instance of a Toil context manager
+    output_directory : string
+        name of directory for export destination
+    well_specs : list
+        string specifications of the wells
+    well_assembly_rvs : list
+        dictionaries of assembly job return values
+    """
+    nW = len(well_specs)
+    for iW in range(nW):
+        well_output_directory = os.path.join(output_directory, well_specs[iW])
+        if not os.path.exists(well_output_directory):
+            os.mkdir(well_output_directory)
+        exportFiles(
+            toil, well_output_directory, well_assembly_rvs[iW]['spades_rv'])
+        exportFiles(
+            toil, well_output_directory, well_assembly_rvs[iW]['apc_rv'])
