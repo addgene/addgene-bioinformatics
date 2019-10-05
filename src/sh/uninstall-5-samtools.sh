@@ -1,4 +1,6 @@
-pushd /Users/raymondleclair/Projects/Addgene/addgene-bioinformatics/local-tmp/bin
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd | sed s%/src/sh%% )"
+
+pushd $DIR/local-tmp/bin
 rm ace2sam
 rm blast2sam.pl
 rm bowtie2sam.pl
@@ -22,7 +24,7 @@ rm wgsim_eval.pl
 rm zoom2sam.pl
 popd
 
-pushd /Users/raymondleclair/Projects/Addgene/addgene-bioinformatics/local-tmp/share/man/man1
+pushd $DIR/local-tmp/share/man/man1
 rm samtools-addreplacerg.1
 rm samtools-bedcov.1
 rm samtools-calmd.1

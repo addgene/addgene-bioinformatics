@@ -1,3 +1,5 @@
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd | sed s%/src/sh%% )"
+
 sudo port install zlib
 sudo port install bzip2
 sudo port install lzma
@@ -9,5 +11,5 @@ pushd htslib
 autoreconf
 ./configure
 make
-make install prefix=~/Projects/Addgene/addgene-bioinformatics/local-tmp
+make install prefix=$DIR/local-tmp
 popd

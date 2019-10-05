@@ -1,4 +1,6 @@
-pushd /Users/raymondleclair/Projects/Addgene/addgene-bioinformatics/local-tmp/bin
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd | sed s%/src/sh%% )"
+
+pushd $DIR/local-tmp/bin
 rm metaspades.py
 rm plasmidspades.py
 rm rnaspades.py
@@ -16,6 +18,6 @@ rm spades_init.py
 rm truspades.py
 popd
 
-pushd /Users/raymondleclair/Projects/Addgene/addgene-bioinformatics/local-tmp/share
+pushd $DIR/local-tmp/share
 rm -rf spades
 popd
