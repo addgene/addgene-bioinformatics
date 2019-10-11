@@ -146,7 +146,7 @@ def exportFiles(toil, output_directory, job_rv):
     job_rv : dict
         name, id, and file name of files to export
     """
-    for name, spec in job_rv.iteritems():
+    for name, spec in job_rv.items():
         if spec['id'] is not None:
             toil.exportFile(spec['id'], "file://" + os.path.abspath(
                 os.path.join(output_directory, spec['name'])))
