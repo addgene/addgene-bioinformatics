@@ -9,7 +9,7 @@ import utilities
 class SpadesJob(Job):
     """
     Accepts paired-end Illumina reads for assembly with a coverage
-    cutoff specification
+    cutoff specification.
     """
 
     def __init__(self, read_one_file_id, read_two_file_id,

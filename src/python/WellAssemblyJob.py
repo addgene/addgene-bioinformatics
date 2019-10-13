@@ -12,7 +12,7 @@ import utilities
 
 class WellAssemblyJob(Job):
     """
-    Runs a SpadesJob followed by an ApcJob
+    Runs a SpadesJob followed by an ApcJob.
     """
     def __init__(self, read_one_file_id, read_two_file_id,
                  coverage_cutoff, output_directory, *args, **kwargs):
@@ -63,7 +63,8 @@ class WellAssemblyJob(Job):
 
 if __name__ == "__main__":
     """
-    Assemble reads corresponding to a single well
+    Assemble reads and circularize contigs corresponding to a single
+    well.
 
     """
     # Parse FASTQ data directory, plate and well specification,

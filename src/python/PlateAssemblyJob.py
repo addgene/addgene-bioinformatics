@@ -14,7 +14,7 @@ import utilities
 class PlateAssemblyJob(Job):
     """
     Runs a WellAssemblyJob for each well of a plate for which both
-    FASTQ read files were found
+    FASTQ read files were found.
     """
     def __init__(self, well_specs, read_one_file_ids, read_two_file_ids,
                  plate_spec, coverage_cutoff, *args, **kwargs):
@@ -69,7 +69,7 @@ class PlateAssemblyJob(Job):
 if __name__ == "__main__":
     """
     Assemble reads for each well of a specified plate for which both
-    FASTQ read files are found
+    FASTQ read files are found.
     """
 
     # Parse FASTQ data directory, plate specification, coverage
