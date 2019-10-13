@@ -1,7 +1,9 @@
+from argparse import ArgumentParser
 import os
 import subprocess
 
 from toil.job import Job
+from toil.common import Toil
 
 import utilities
 
@@ -97,3 +99,61 @@ class SpadesJob(Job):
         }
         spades_rv.update(self.parent_rv)
         return spades_rv
+
+
+if __name__ == "__main__":
+    """
+    Assemble reads corresponding to a single well.
+
+    """
+    # Parse FASTQ data directory, plate and well specification,
+    # coverage cutoff, and output directory, making the output
+    # directory if needed
+    parser = ArgumentParser()
+    Job.Runner.addToilOptions(parser)
+    parser.add_argument('-d', '--data-directory',
+                        default=os.path.join("..", "..", "dat", "miscellaneous"),
+                        help="the directory containing FASTQ read data files")
+
+    parser.add_argument('-p', '--plate-spec', default="A11967A_sW0154",
+                        help="the plate specification")
+    parser.add_argument('-w', '--well-spec', default="A01",
+                        help="the well specification")
+
+    parser.add_argument('-c', '--coverage-cutoff', default="100",
+                        help="the coverage cutoff")
+    parser.add_argument('-o', '--output-directory', default=None,
+                        help="the directory containing all output files")
+    options = parser.parse_args()
+    if options.output_directory is None:
+        options.output_directory = options.plate_spec + "_" + options.well_spec
+    if not os.path.exists(options.output_directory):
+        os.mkdir(options.output_directory)
+
+    # Work within the Toil context manager
+    with Toil(options) as toil:
+        if not toil.options.restart:
+
+            # Import the local read files into the file store
+            read_one_file_ids, read_two_file_ids = utilities.importReadFiles(
+                toil, options.data_directory,
+                options.plate_spec, [options.well_spec])
+
+            # Construct and start the SPAdes job
+            spades_job = SpadesJob(
+                read_one_file_ids[0],
+                read_two_file_ids[0],
+                options.coverage_cutoff,
+                options.output_directory,
+                )
+            spades_rv = toil.start(spades_job)
+
+        else:
+
+            # Restart the SPAdes job
+            spades_rv = toil.restart(spades_job)
+
+        # Export the SPAdes warnings and log files, and contigs FASTA
+        # file from the file store
+        utilities.exportFiles(
+            toil, options.output_directory, spades_rv['spades_rv'])
