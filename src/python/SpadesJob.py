@@ -114,12 +114,10 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--data-directory',
                         default=os.path.join("..", "..", "dat", "miscellaneous"),
                         help="the directory containing FASTQ read data files")
-
     parser.add_argument('-p', '--plate-spec', default="A11967A_sW0154",
                         help="the plate specification")
     parser.add_argument('-w', '--well-spec', default="A01",
                         help="the well specification")
-
     parser.add_argument('-c', '--coverage-cutoff', default="100",
                         help="the coverage cutoff")
     parser.add_argument('-o', '--output-directory', default=None,
