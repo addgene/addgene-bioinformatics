@@ -4,6 +4,7 @@ import subprocess
 
 from toil.job import Job
 from toil.common import Toil
+from toil.lib.docker import apiDockerCall
 
 import utilities
 
@@ -55,18 +56,26 @@ class SpadesJob(Job):
         read_two_file_path = utilities.readGlobalFile(
             fileStore, self.read_two_file_id, "R2.fastq.gz")
 
-        # Call spades.py
-        subprocess.check_call([
-            "spades.py",
-            "-1",
-            read_one_file_path,
-            "-2",
-            read_two_file_path,
-            "-o",
-            os.path.join(fileStore.localTempDir, self.output_directory),
-            "--cov-cutoff",
-            self.coverage_cutoff,
-            ])
+        # Mount the Toil local temporary directory to the same path in
+        # the container, and use the path as the working directory in
+        # the container, then call spades.py
+        # TODO: Specify the container on construction
+        working_dir = fileStore.localTempDir
+        apiDockerCall(
+            self,
+            image='biocontainers/spades:v3.13.1_cv1',
+            volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
+            working_dir=working_dir,
+            parameters=["spades.py",
+                        "-1",
+                        read_one_file_path,
+                        "-2",
+                        read_two_file_path,
+                        "-o",
+                        os.path.join(working_dir, self.output_directory),
+                        "--cov-cutoff",
+                        self.coverage_cutoff,
+                        ])
 
         # Write the warnings and spades log files, and contigs FASTA
         # file from the local temporary directory into the file store
