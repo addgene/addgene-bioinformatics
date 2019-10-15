@@ -20,7 +20,7 @@ class ToilTestCase(unittest.TestCase):
         self.data_directory = os.path.join("..", "..", "dat", "miscellaneous")
 
         self.plate_spec = "A11967A_sW0154"
-        self.well_spec = "A01"
+        self.well_spec = "B01"
         self.coverage_cutoff = "100"
 
         self.output_directory = "{0}_{1}".format(self.plate_spec, self.well_spec)
