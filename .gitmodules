@@ -1,6 +1,3 @@
-[submodule "src/apc"]
-	path = src/apc
-	url = git@github.com:jfass/apc.git
 [submodule "src/bwa"]
 	path = src/bwa
 	url = git@github.com:lh3/bwa.git
