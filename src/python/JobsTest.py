@@ -52,8 +52,7 @@ class ToilTestCase(unittest.TestCase):
 
     def _import_contigs_file(self, toil):
         contigs_file_id = utilities.importContigsFile(
-            toil, os.path.join(self.data_directory, "{0}_FASTA".format(
-                self.plate_spec)))
+            toil, self.output_directory)
         return contigs_file_id
 
     def _assert_true_cmp_spades_fasta(self, test_directory, actual_directory):
