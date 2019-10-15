@@ -141,7 +141,7 @@ class WellAssemblyJobTestCase(ToilTestCase):
             self.test_directory_a, self.actual_directory_a)
 
 
-class PlateJobTestCase(ToilTestCase):
+class PlateAssemblyJobTestCase(ToilTestCase):
 
     def test_plate_assembly_job(self):
 
