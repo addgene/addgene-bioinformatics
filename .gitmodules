@@ -1,3 +1,0 @@
-[submodule "src/samtools"]
-	path = src/samtools
-	url = git@github.com:samtools/samtools.git
