@@ -4,6 +4,7 @@ import subprocess
 
 from toil.job import Job
 from toil.common import Toil
+from toil.lib.docker import apiDockerCall
 
 import utilities
 
@@ -46,29 +47,45 @@ class ApcJob(Job):
 
         # Call apc.pl
         base_file_name = "apc"
-        output_file_name = base_file_name + ".out"
+        log_file_name = base_file_name + ".log"
         sequence_file_name = base_file_name + ".1.fa"
-        with open(output_file_name, 'w') as output_file:
-            subprocess.check_call([
-                "apc.pl",
-                "-b",
-                base_file_name,
-                contigs_file_name,
-                ], stdout=output_file)
+        # with open(log_file_name, 'w') as log_file:
+        #     subprocess.check_call([
+        #         "apc.pl",
+        #         "-b",
+        #         base_file_name,
+        #         contigs_file_name,
+        #         ], stdout=log_file)
+
+        # Mount the Toil local temporary directory to the same path in
+        # the container, and use the path as the working directory in
+        # the container, then call apc.pl
+        # TODO: Specify the container on construction
+        working_dir = fileStore.localTempDir
+        apiDockerCall(
+            self,
+            image='ralatsdio/apc',
+            volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
+            working_dir=working_dir,
+            parameters=["apc.pl",
+                        "-b",
+                        base_file_name,
+                        contigs_file_name,
+                        ])
 
         # Write the output file from the local temporary directory
         # into the file store
-        output_file_id = utilities.writeGlobalFile(
-            fileStore, output_file_name)
+        log_file_id = utilities.writeGlobalFile(
+            fileStore, log_file_name)
         sequence_file_id = utilities.writeGlobalFile(
             fileStore, sequence_file_name)
 
         # Return file ids and names for export
         apc_rv = {
             'apc_rv': {
-                'output_file': {
-                    'id': output_file_id,
-                    'name': output_file_name,
+                'log_file': {
+                    'id': log_file_id,
+                    'name': log_file_name,
                 },
                 'sequence_file': {
                     'id': sequence_file_id,
