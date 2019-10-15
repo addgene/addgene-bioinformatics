@@ -1,8 +1,1 @@
-*.fa
-*.fasta
-*.log
-*.out
 *.pyc
-*.txt
-tmp/
-zzz/
