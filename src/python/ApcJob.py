@@ -110,7 +110,7 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--data-directory',
                         default=os.path.join("..", "..", "dat", "miscellaneous", "A11967A_sW0154_FASTA"),
                         help="the directory containing FASTA contigs files")
-    parser.add_argument('-f', '--file-name', default="A01-A11967A-contigs.fasta",
+    parser.add_argument('-f', '--file-name', default="contigs.fasta",
                         help="the FASTA contigs file")
     parser.add_argument('-o', '--output-directory', default=None,
                         help="the directory containing all output files")
@@ -125,8 +125,8 @@ if __name__ == "__main__":
         if not toil.options.restart:
 
             # Import the local contigs file into the file store
-            contigs_file_id = utilities.importContigsFile(
-                toil, options.data_directory, options.file_name)
+            contigs_file_id = utilities.importFile(
+                toil, os.path.join(options.data_directory, options.file_name))
 
             # Construct and start the APC job
             apc_job = ApcJob(

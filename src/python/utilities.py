@@ -61,7 +61,7 @@ def importReadFiles(toil, data_directory, plate_spec, well_specs):
     return read_one_file_ids, read_two_file_ids
 
 
-def importContigsFile(toil, data_directory, file_name="contis.fasta"):
+def importContigsFile(toil, data_directory):
     """
     Import the contigs FASTA file from the specified data directory.
 
@@ -69,8 +69,6 @@ def importContigsFile(toil, data_directory, file_name="contis.fasta"):
     ----------
     data_directory : string
         name of directory containing contigs FASTA file
-    file_name : str
-        name of contigs FASTA file
 
     Returns
     -------
@@ -78,7 +76,7 @@ def importContigsFile(toil, data_directory, file_name="contis.fasta"):
         id of the imported contigs file in the file store
     """
     contigs_file_id = importFile(
-        toil, os.path.join(data_directory, file_name))
+        toil, os.path.join(data_directory, "contigs.fasta"))
     return contigs_file_id
 
 

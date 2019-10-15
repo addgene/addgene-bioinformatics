@@ -51,9 +51,9 @@ class ToilTestCase(unittest.TestCase):
         return read_one_file_ids, read_two_file_ids
 
     def _import_contigs_file(self, toil):
-        contigs_file_id = utilities.importFile(
-            toil, os.path.join("{0}_{1}".format(
-                self.plate_spec, self.well_spec), self.spades_fasta))
+        contigs_file_id = utilities.importContigsFile(
+            toil, os.path.join(self.data_directory, "{0}_FASTA".format(
+                self.plate_spec)))
         return contigs_file_id
 
     def _assert_true_cmp_spades_fasta(self, test_directory, actual_directory):
