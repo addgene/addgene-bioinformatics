@@ -104,7 +104,8 @@ if __name__ == "__main__":
             read_two_file_ids = []
             read_one_files = glob(os.path.join(
                 options.data_directory,
-                "{0}_FASTQ", "{0}_*_R1_001.fastq.gz".format(options.plate_spec)))
+                "{0}_FASTQ".format(options.plate_spec),
+                "{0}_*_R1_001.fastq.gz".format(options.plate_spec)))
             for read_one_file in read_one_files:
                 read_two_file = read_one_file.replace("R1", "R2")
                 if os.path.exists(read_two_file):
