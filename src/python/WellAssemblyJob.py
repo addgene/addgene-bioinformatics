@@ -77,7 +77,7 @@ if __name__ == "__main__":
                         help="the directory containing FASTQ read data files")
     parser.add_argument('-p', '--plate-spec', default="A11967A_sW0154",
                         help="the plate specification")
-    parser.add_argument('-w', '--well-spec', default="A01",
+    parser.add_argument('-w', '--well-spec', default="B01",
                         help="the well specification")
     parser.add_argument('-c', '--coverage-cutoff', default="100",
                         help="the coverage cutoff")
