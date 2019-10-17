@@ -1,6 +1,5 @@
 from argparse import ArgumentParser
 import os
-import subprocess
 
 from toil.job import Job
 from toil.common import Toil
@@ -17,6 +16,7 @@ class SpadesJob(Job):
 
     def __init__(self, read_one_file_id, read_two_file_id,
                  coverage_cutoff, output_directory, parent_rv={},
+                 read_one_file_name="R1.fastq.gz", read_two_file_name="R2.fastq.gz",
                  *args, **kwargs):
         """
         Parameters
@@ -36,7 +36,9 @@ class SpadesJob(Job):
         """
         super(SpadesJob, self).__init__(*args, **kwargs)
         self.read_one_file_id = read_one_file_id
+        self.read_one_file_name = read_one_file_name
         self.read_two_file_id = read_two_file_id
+        self.read_two_file_name = read_two_file_name
         self.coverage_cutoff = coverage_cutoff
         self.output_directory = output_directory
         self.parent_rv = parent_rv
@@ -52,9 +54,9 @@ class SpadesJob(Job):
         # Read the read files from the file store into the local
         # temporary directory
         read_one_file_path = utilities.readGlobalFile(
-            fileStore, self.read_one_file_id, "R1.fastq.gz")
+            fileStore, self.read_one_file_id, self.read_one_file_name)
         read_two_file_path = utilities.readGlobalFile(
-            fileStore, self.read_two_file_id, "R2.fastq.gz")
+            fileStore, self.read_two_file_id, self.read_two_file_name)
 
         # Mount the Toil local temporary directory to the same path in
         # the container, and use the path as the working directory in

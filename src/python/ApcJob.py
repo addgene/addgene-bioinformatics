@@ -1,6 +1,5 @@
 from argparse import ArgumentParser
 import os
-import subprocess
 
 from toil.job import Job
 from toil.common import Toil
@@ -18,7 +17,9 @@ class ApcJob(Job):
     header, to allow confirmation.
     """
 
-    def __init__(self, contigs_file_id, parent_rv={}, *args, **kwargs):
+    def __init__(self, contigs_file_id, parent_rv={},
+                 contigs_file_name="contigs.fasta", base_file_name="apc",
+                 *args, **kwargs):
         """
         Parameters
         ----------
@@ -29,6 +30,8 @@ class ApcJob(Job):
         """
         super(ApcJob, self).__init__(*args, **kwargs)
         self.contigs_file_id = contigs_file_id
+        self.contigs_file_name = "contigs.fasta"
+        self.base_file_name = "apc"
         self.parent_rv = parent_rv
 
     def run(self, fileStore):
@@ -41,21 +44,8 @@ class ApcJob(Job):
         """
         # Read the contigs FASTA file from the file store into the
         # local temporary directory
-        contigs_file_name = "contigs.fasta"
         utilities.readGlobalFile(
-            fileStore, self.contigs_file_id, contigs_file_name)
-
-        # Call apc.pl
-        base_file_name = "apc"
-        log_file_name = base_file_name + ".log"
-        sequence_file_name = base_file_name + ".1.fa"
-        # with open(log_file_name, 'w') as log_file:
-        #     subprocess.check_call([
-        #         "apc.pl",
-        #         "-b",
-        #         base_file_name,
-        #         contigs_file_name,
-        #         ], stdout=log_file)
+            fileStore, self.contigs_file_id, self.contigs_file_name)
 
         # Mount the Toil local temporary directory to the same path in
         # the container, and use the path as the working directory in
@@ -69,14 +59,16 @@ class ApcJob(Job):
             working_dir=working_dir,
             parameters=["apc.pl",
                         "-b",
-                        base_file_name,
-                        contigs_file_name,
+                        self.base_file_name,
+                        self.contigs_file_name,
                         ])
 
         # Write the output file from the local temporary directory
         # into the file store
+        log_file_name = self.base_file_name + ".log"
         log_file_id = utilities.writeGlobalFile(
             fileStore, log_file_name)
+        sequence_file_name = self.base_file_name + ".1.fa"
         sequence_file_id = utilities.writeGlobalFile(
             fileStore, sequence_file_name)
 
