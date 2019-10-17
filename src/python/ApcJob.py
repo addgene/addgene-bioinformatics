@@ -99,7 +99,9 @@ if __name__ == "__main__":
     # making the output directory if needed
     parser = ArgumentParser()
     Job.Runner.addToilOptions(parser)
-    parser.add_argument('-d', '--data-directory', default="A11967A_sW0154_B01",
+    cmps = str(os.path.abspath(__file__)).split(os.sep)
+    parser.add_argument('-d', '--data-directory',
+                        default=os.sep + os.path.join(*cmps[0:-3], "A11967A_sW0154_B01"),
                         help="the directory containing FASTA contigs files")
     parser.add_argument('-f', '--file-name', default="contigs.fasta",
                         help="the FASTA contigs file")
@@ -107,7 +109,7 @@ if __name__ == "__main__":
                         help="the directory containing all output files")
     options = parser.parse_args()
     if options.output_directory is None:
-        options.output_directory = options.data_directory
+        options.output_directory = os.path.relpath(options.data_directory)
     if not os.path.exists(options.output_directory):
         os.mkdir(options.output_directory)
 

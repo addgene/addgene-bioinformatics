@@ -17,7 +17,8 @@ import utilities
 class ToilTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.data_directory = os.path.join("..", "..", "dat", "miscellaneous")
+        cmps = str(os.path.abspath(__file__)).split(os.sep)
+        self.data_directory = os.path.join(*cmps[0:-3], "dat", "miscellaneous"),
 
         self.plate_spec = "A11967A_sW0154"
         self.well_spec = "B01"
