@@ -101,7 +101,7 @@ if __name__ == "__main__":
     Job.Runner.addToilOptions(parser)
     cmps = str(os.path.abspath(__file__)).split(os.sep)
     parser.add_argument('-d', '--data-directory',
-                        default=os.sep + os.path.join(*cmps[0:-3], "A11967A_sW0154_B01"),
+                        default=os.sep + os.path.join(*cmps[0:-1], "A11967A_sW0154_B01"),
                         help="the directory containing FASTA contigs files")
     parser.add_argument('-f', '--file-name', default="contigs.fasta",
                         help="the FASTA contigs file")
