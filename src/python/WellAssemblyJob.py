@@ -12,7 +12,7 @@ import utilities
 
 class WellAssemblyJob(Job):
     """
-    Runs a SpadesJob followed by an ApcJob
+    Runs a SpadesJob followed by an ApcJob.
     """
     def __init__(self, read_one_file_id, read_two_file_id,
                  coverage_cutoff, output_directory, *args, **kwargs):
@@ -63,7 +63,8 @@ class WellAssemblyJob(Job):
 
 if __name__ == "__main__":
     """
-    Assemble reads corresponding to a single well
+    Assemble reads and circularize contigs corresponding to a single
+    well.
 
     """
     # Parse FASTQ data directory, plate and well specification,
@@ -71,12 +72,13 @@ if __name__ == "__main__":
     # directory if needed
     parser = ArgumentParser()
     Job.Runner.addToilOptions(parser)
+    cmps = str(os.path.abspath(__file__)).split(os.sep)
     parser.add_argument('-d', '--data-directory',
-                        default=os.path.join("..", "..", "dat/miscellaneous"),
+                        default=os.sep + os.path.join(*cmps[0:-3], "dat", "miscellaneous"),
                         help="the directory containing FASTQ read data files")
     parser.add_argument('-p', '--plate-spec', default="A11967A_sW0154",
                         help="the plate specification")
-    parser.add_argument('-w', '--well-spec', default="A01",
+    parser.add_argument('-w', '--well-spec', default="B01",
                         help="the well specification")
     parser.add_argument('-c', '--coverage-cutoff', default="100",
                         help="the coverage cutoff")

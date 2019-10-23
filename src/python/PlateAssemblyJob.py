@@ -14,7 +14,7 @@ import utilities
 class PlateAssemblyJob(Job):
     """
     Runs a WellAssemblyJob for each well of a plate for which both
-    FASTQ read files were found
+    FASTQ read files were found.
     """
     def __init__(self, well_specs, read_one_file_ids, read_two_file_ids,
                  plate_spec, coverage_cutoff, *args, **kwargs):
@@ -69,15 +69,16 @@ class PlateAssemblyJob(Job):
 if __name__ == "__main__":
     """
     Assemble reads for each well of a specified plate for which both
-    FASTQ read files are found
+    FASTQ read files are found.
     """
 
     # Parse FASTQ data directory, plate specification, coverage
     # cutoff, and output directory
     parser = ArgumentParser()
     Job.Runner.addToilOptions(parser)
+    cmps = str(os.path.abspath(__file__)).split(os.sep)
     parser.add_argument('-d', '--data-directory',
-                        default=os.path.join("..", "..", "dat/miscellaneous"),
+                        default=os.sep + os.path.join(*cmps[0:-3], "dat", "miscellaneous"),
                         help="the directory containing FASTQ read data files")
     parser.add_argument('-p', '--plate-spec', default="A11967B_sW0154",
                         help="the plate specification")
@@ -104,7 +105,8 @@ if __name__ == "__main__":
             read_two_file_ids = []
             read_one_files = glob(os.path.join(
                 options.data_directory,
-                "{0}_FASTQ/{0}_*_R1_001.fastq.gz".format(options.plate_spec)))
+                "{0}_FASTQ".format(options.plate_spec),
+                "{0}_*_R1_001.fastq.gz".format(options.plate_spec)))
             for read_one_file in read_one_files:
                 read_two_file = read_one_file.replace("R1", "R2")
                 if os.path.exists(read_two_file):

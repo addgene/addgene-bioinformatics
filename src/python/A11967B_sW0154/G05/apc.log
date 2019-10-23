@@ -1,0 +1,6 @@
+formatting LAST db ... running LAST self-alignment ... done
+Overlap detected between  NODE_1_length_11580_cov_210.146075:1-29  and  NODE_1_length_11580_cov_210.146075:11552-11580
+formatting LAST db ... running LAST self-alignment ... done
+Overlap detected between  NODE_2_length_2641_cov_274.065632:1-29  and  NODE_2_length_2641_cov_274.065632:2613-2641
+formatting LAST db ... running LAST self-alignment ... done
+irregular LAST results ... check local file apc_aln_3.txt

@@ -17,10 +17,11 @@ import utilities
 class ToilTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.data_directory = os.path.join("..", "..", "dat", "miscellaneous")
+        cmps = str(os.path.abspath(__file__)).split(os.sep)
+        self.data_directory = os.path.join(*cmps[0:-3], "dat", "miscellaneous"),
 
         self.plate_spec = "A11967A_sW0154"
-        self.well_spec = "A01"
+        self.well_spec = "B01"
         self.coverage_cutoff = "100"
 
         self.output_directory = "{0}_{1}".format(self.plate_spec, self.well_spec)
@@ -51,9 +52,8 @@ class ToilTestCase(unittest.TestCase):
         return read_one_file_ids, read_two_file_ids
 
     def _import_contigs_file(self, toil):
-        contigs_file_id = utilities.importFile(
-            toil, os.path.join("{0}_{1}".format(
-                self.plate_spec, self.well_spec), self.spades_fasta))
+        contigs_file_id = utilities.importContigsFile(
+            toil, self.output_directory)
         return contigs_file_id
 
     def _assert_true_cmp_spades_fasta(self, test_directory, actual_directory):
@@ -142,7 +142,7 @@ class WellAssemblyJobTestCase(ToilTestCase):
             self.test_directory_a, self.actual_directory_a)
 
 
-class PlateJobTestCase(ToilTestCase):
+class PlateAssemblyJobTestCase(ToilTestCase):
 
     def test_plate_assembly_job(self):
 
