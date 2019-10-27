@@ -1,6 +1,0 @@
-
-=== Error correction and assembling warnings:
- * 0:00:03.731    16M / 544M  WARN    General                 (kmer_coverage_model.cpp   : 218)   Too many erroneous kmers, the estimates might be unreliable
- * 0:00:05.393    16M / 544M  WARN    General                 (kmer_coverage_model.cpp   : 327)   Valley value was estimated improperly, reset to 6
- * 0:00:06.171    16M / 572M  WARN    General                 (kmer_coverage_model.cpp   : 327)   Valley value was estimated improperly, reset to 4
-======= Warnings saved to /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/toil-0f305016-465c-4374-9ff2-1c577f210bef-154505276368670/tmp7qb0hawo/84f32b2e-5263-4b0a-97b3-640cf896fd7c/A11967B_sW0154_G05/warnings.log
