@@ -1,12 +1,18 @@
 # Introduction
 
-The addgene-bioinformatics repository demonstrates a two step workflow for assembling plasmid next generation sequencing data using Toil.
+The addgene-bioinformatics repository demonstrates a two step workflow
+for assembling plasmid next generation sequencing data using Toil.
 
 # Set-up
 
 ## Install Docker Desktop, and start the Docker daemon
 
-Docker will need to mount the directory Toil creates for a job. When using Docker Desktop on macOS, this mount is accomplished in Preferences > File Sharing by adding /var/folders to the list.
+Downlaod the Docker Desktop package, then install as usual. The Docker
+daemon shoud be started by default.
+
+Docker will need to mount the directory Toil creates for a job. When
+using Docker Desktop on macOS, this mount is accomplished in
+"Preferences > File Sharing" by adding "/var/folders" to the list.
 
 ## Clone the repository:
 
@@ -14,12 +20,15 @@ Docker will need to mount the directory Toil creates for a job. When using Docke
 $ git clone git@github.com:addgene/addgene-bioinformatics.git
 ```
 
-## Create a virtual environment (using a Python 3 version), and install the requirements:
+## Create a virtual environment (using a Python 2 version), and install the requirements:
 
 ```
 $ mkvirtualenv addgene-bioinformatics
 $ pip install -r requirements.txt
 ```
+
+Note that Toil runs fine using a python 3 version, however, the Toil
+appliance (a docker image) still uses a python 2 version.
 
 ## Pull required images from Docker Hub:
 
@@ -84,5 +93,5 @@ $ toil ssh-cluster --zone us-east-1a assembly-cluster
 
 ```
 # python PlateAssemblyJob.py --data-directory miscellaneous --plate-spec A11967B_sW0154 --provisioner aws --nodeTypes c3.large --maxNodes 2 --batchSystem mesos aws:us-east-1:pajs
-# python PlateAssemblyJob.py --data-directory miscellaneous --plate-spec A11967A_sW0154 --provisioner aws --nodeTypes c3.large --maxNodes 2 --batchSystem mesos aws:us-east-1:paj
+# python PlateAssemblyJob.py --data-directory miscellaneous --plate-spec A11967A_sW0154 --provisioner aws --nodeTypes c3.large --maxNodes 2 --batchSystem mesos aws:us-east-1:pajs
 ```
