@@ -30,11 +30,59 @@ $ docker pull ralatsdio/apc:latest
 
 # Demonstration
 
-## Run one of the Toil jobs:
+## Run one of the Toil jobs locally:
 
 ```
 $ python src/python/SpadesJob.py spadesJobStore
 $ python src/python/ApcJob.py apcJobStore
 $ python src/python/WellAssemblyJob.py wellAssemblyJobStore
 $ python src/python/PlateAssemblyJob.py plateAssemblyJobStore
+```
+
+## Run one of the Toil jobs on EC2
+
+The following assumes the instructions for 
+https://toil.readthedocs.io/en/latest/running/cloud/amazon.html#preparing-your-aws-environment
+have been completed.
+
+### Launch the cluster leader:
+
+```
+$ toil launch-cluster --zone us-east-1a --keyPairName id_rsa --leaderNodeType t2.medium assembly-cluster
+```
+
+### Synchronize code and data:
+
+```
+$ toil rsync-cluster --zone us-east-1a assembly-cluster python.tar.gz :/root
+$ toil rsync-cluster --zone us-east-1a assembly-cluster miscellaneous.tar.gz :/root
+```
+
+### Login to the cluster leader, and extract the archives:
+
+```
+$ toil ssh-cluster --zone us-east-1a assembly-cluster
+# cd
+# tar -zxvf python.tar.gz
+# tar -zxvf miscellaneous.tar.gz
+```
+
+### Run the Toil sort example:
+
+```
+# python sort.py --provisioner aws --nodeTypes c3.large --maxNodes 2 --batchSystem mesos aws:us-east-1:sort
+```
+
+### Run the default plate assembly job on the cluster leader only with a local or S3 file store:
+
+```
+# python PlateAssemblyJob.py --data-directory miscellaneous --plate-spec A11967B_sW0154 pajs
+# python PlateAssemblyJob.py --data-directory miscellaneous --plate-spec A11967B_sW0154 aws:us-east-1:pajs
+```
+
+### Run the default or a larger plate assembly job using auto-scaling with an S3 file store:
+
+```
+# python PlateAssemblyJob.py --data-directory miscellaneous --plate-spec A11967B_sW0154 --provisioner aws --nodeTypes c3.large --maxNodes 2 --batchSystem mesos aws:us-east-1:pajs
+# python PlateAssemblyJob.py --data-directory miscellaneous --plate-spec A11967A_sW0154 --provisioner aws --nodeTypes c3.large --maxNodes 2 --batchSystem mesos aws:us-east-1:paj
 ```
