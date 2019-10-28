@@ -72,9 +72,10 @@ if __name__ == "__main__":
     # directory if needed
     parser = ArgumentParser()
     Job.Runner.addToilOptions(parser)
-    cmps = str(os.path.abspath(__file__)).split(os.sep)
+    cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-3]
+    cmps.extend(["dat", "miscellaneous"])
     parser.add_argument('-d', '--data-directory',
-                        default=os.sep + os.path.join(*cmps[0:-3], "dat", "miscellaneous"),
+                        default=os.sep + os.path.join(*cmps),
                         help="the directory containing FASTQ read data files")
     parser.add_argument('-p', '--plate-spec', default="A11967A_sW0154",
                         help="the plate specification")
