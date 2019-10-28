@@ -50,8 +50,7 @@ $ python src/python/PlateAssemblyJob.py plateAssemblyJobStore
 
 ## Run one of the Toil jobs on EC2
 
-The following assumes the instructions for 
-https://toil.readthedocs.io/en/latest/running/cloud/amazon.html#preparing-your-aws-environment
+The following assumes the instructions for [preparing your AWS environment](https://toil.readthedocs.io/en/latest/running/cloud/amazon.html#preparing-your-aws-environment)
 have been completed.
 
 ### Launch the cluster leader:
@@ -95,3 +94,10 @@ $ toil ssh-cluster --zone us-east-1a assembly-cluster
 # python PlateAssemblyJob.py --data-directory miscellaneous --plate-spec A11967B_sW0154 --provisioner aws --nodeTypes c3.large --maxNodes 2 --batchSystem mesos aws:us-east-1:pajs
 # python PlateAssemblyJob.py --data-directory miscellaneous --plate-spec A11967A_sW0154 --provisioner aws --nodeTypes c3.large --maxNodes 2 --batchSystem mesos aws:us-east-1:pajs
 ```
+
+### Destroy the cluster leader:
+
+```
+$ toil destroy-cluster --zone us-east-1a assembly-cluster
+```
+
