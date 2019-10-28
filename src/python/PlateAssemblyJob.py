@@ -59,9 +59,6 @@ class PlateAssemblyJob(Job):
                         self.read_two_file_ids[iW],
                         self.coverage_cutoff,
                         self.plate_spec + "_" + self.well_specs[iW],
-                        cores=1,
-                        disk="2G",
-                        memory="3G",
                         )).rv())
         return well_assembly_rvs
 
@@ -122,9 +119,6 @@ if __name__ == "__main__":
                 read_two_file_ids,
                 options.plate_spec,
                 options.coverage_cutoff,
-                cores=2,
-                disk="3G",
-                memory="4G",
                 )
             well_assembly_rvs = toil.start(plate_assembly_job)
 
