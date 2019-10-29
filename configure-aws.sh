@@ -18,7 +18,7 @@ sudo apt-get clean all && \
     sudo apt-get purge && \
     sudo rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# install Docker
+# install Docker (from https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-16-04)
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 sudo apt-get update
@@ -27,8 +27,7 @@ sudo apt-get install -y docker-ceq
 
 # install Conda's Python 3
 wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
-chmod +x Miniconda3-latest-Linux-x86_64.sh
-sudo ./Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda
+sudo bash /Miniconda3-latest-Linux-x86_64.sh -b 
 conda update -y -n base conda && conda config --add channels conda-forge && conda config --add channels defaults &&  conda config --add channels bioconda
 
 # # install Toil itself
