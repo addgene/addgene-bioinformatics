@@ -27,8 +27,9 @@ sudo apt-get install -y docker-ceq
 
 # install Conda's Python 3
 wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
-sudo bash /Miniconda3-latest-Linux-x86_64.sh -b 
-conda update -y -n base conda && conda config --add channels conda-forge && conda config --add channels defaults &&  conda config --add channels bioconda
+sudo bash Miniconda3-latest-Linux-x86_64.sh -b -p /usr/local/bin
+miniconda3/bin/conda init bash
+source ~/.bashrc
 
-# # install Toil itself
-# pip install toil --user
+# install Toil itself
+pip install toil --user
