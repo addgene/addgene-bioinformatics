@@ -17,9 +17,9 @@ import utilities
 class ToilTestCase(unittest.TestCase):
 
     def setUp(self):
-        cmps = str(os.path.abspath(__file__)).split(os.sep)
-        self.data_directory = os.path.join(*cmps[0:-3], "dat", "miscellaneous"),
-
+        cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-3]
+        cmps.extend(["dat", "miscellaneous"])
+        self.data_directory = os.sep + os.path.join(*cmps)
         self.plate_spec = "A11967A_sW0154"
         self.well_spec = "B01"
         self.coverage_cutoff = "100"
@@ -183,16 +183,16 @@ if __name__ == '__main__':
     jobsTestSuite.addTest(JobsTestCase('test_spades_job'))
     jobsTestSuite.addTest(JobsTestCase('test_apc_job'))
 
-    wellJobTestSuite = unittest.TestLoader().loadTestsFromTestCase(
+    wellAssemblyJobTestSuite = unittest.TestLoader().loadTestsFromTestCase(
         WellAssemblyJobTestCase)
 
-    plateJobTestSuite = unittest.TestLoader().loadTestsFromTestCase(
-        PlateJobTestCase)
+    plateAssemblyJobTestSuite = unittest.TestLoader().loadTestsFromTestCase(
+        PlateAssemblyJobTestCase)
 
     testSuites = unittest.TestSuite([
         jobsTestSuite,
-        wellJobTestSuite,
-        plateJobTestSuite,
+        wellAssemblyJobTestSuite,
+        plateAssemblyJobTestSuite,
     ])
 
     unittest.TextTestRunner(verbosity=2).run(testSuites)
