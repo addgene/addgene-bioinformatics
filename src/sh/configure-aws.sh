@@ -9,6 +9,7 @@ sudo apt-get clean all && \
         dpkg            \
         fuse            \
         git             \
+        emacs           \
         wget            \
         zip             \
         build-essential \
