@@ -1,7 +1,0 @@
-
-=== Error correction and assembling warnings:
- * 0:00:10.164    16M / 532M  WARN    General                 (kmer_coverage_model.cpp   : 327)   Valley value was estimated improperly, reset to 1
- * 0:00:10.165    16M / 532M  WARN    General                 (kmer_coverage_model.cpp   : 366)   Failed to determine erroneous kmer threshold. Threshold set to: 1
- * 0:00:03.842    16M / 560M  WARN    General                 (kmer_coverage_model.cpp   : 218)   Too many erroneous kmers, the estimates might be unreliable
- * 0:00:05.296    16M / 560M  WARN    General                 (kmer_coverage_model.cpp   : 366)   Failed to determine erroneous kmer threshold. Threshold set to: 17
-======= Warnings saved to /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/toil-0f305016-465c-4374-9ff2-1c577f210bef-154505276368670/tmp05bvjbys/4015e736-2d39-48d9-8c82-8bbee8b5ee9b/A11967B_sW0154_G06/warnings.log
