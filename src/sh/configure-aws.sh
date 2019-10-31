@@ -1,3 +1,4 @@
+# Install essentials
 sudo apt-get clean all && \
     sudo apt-get update && \
     sudo apt-get upgrade -y && \
