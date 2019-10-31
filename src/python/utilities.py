@@ -1,42 +1,47 @@
 import os
 
 
-def importFile(toil, file_name):
+def importFile(toil, source_path, scheme="file"):
     """
-    Import the named file into the file store.
+    Import the source path using the specified shecme into the file store.
 
     Parameters
     ----------
     toil : toil.common.Toil
         instance of a Toil context manager
-    file_name : str
-        name of the file to import
+    source_path : str
+        path of the source to import
+    scheme : str
+        scheme used for the source URL
 
     Returns
     -------
     str
-        id of the imported file in the file store
+        id of the imported source in the file store
     """
-    file_id = toil.importFile("file://" + os.path.abspath(file_name))
+    file_id = toil.importFile(scheme + "://" + source_path)
 
     return file_id
 
 
-def importReadFiles(toil, data_directory, plate_spec, well_specs):
+def importReadFiles(toil, data_path, plate_spec, well_specs, scheme="file"):
     """
-    Import the read one and two files in the data directory for the
-    specified plate and well (follows directory naming convention).
+    Import the read one and two sources from the data path containing
+    the specified plate and well FASTQ source (follows Addgene's
+    folder naming convention, mostly).
 
     Parameters
     ----------
     toil : toil.common.Toil
         instance of a Toil context manager
-    data_directory : string
-        name of directory containing plate FASTQ directory
+    data_path : str
+        path containing plate and well FASTQ source
     plate_spec : str
         specification of the plate
     well_spec : list
         specification of the wells
+    scheme : str
+        scheme used for the source URL
 
     Returns
     -------
@@ -50,25 +55,30 @@ def importReadFiles(toil, data_directory, plate_spec, well_specs):
 
         read_one_file_ids.append(importFile(
             toil, os.path.join(
-                os.path.abspath(data_directory), "{0}_FASTQ".format(plate_spec),
-                "{0}_{1}_R1_001.fastq.gz".format(plate_spec, well_spec))))
+                data_path, "{0}_FASTQ".format(plate_spec),
+                "{0}_{1}_R1_001.fastq.gz".format(plate_spec, well_spec)),
+            scheme))
 
         read_two_file_ids.append(importFile(
             toil, os.path.join(
-                os.path.abspath(data_directory), "{0}_FASTQ".format(plate_spec),
-                "{0}_{1}_R2_001.fastq.gz".format(plate_spec, well_spec))))
+                data_path, "{0}_FASTQ".format(plate_spec),
+                "{0}_{1}_R2_001.fastq.gz".format(plate_spec, well_spec)),
+            scheme))
 
     return read_one_file_ids, read_two_file_ids
 
 
-def importContigsFile(toil, data_directory):
+def importContigsFile(toil, data_path, scheme="file"):
     """
-    Import the contigs FASTA file from the specified data directory.
+    Import the contigs source from the data path containing the FASTA
+    source.
 
     Parameters
     ----------
-    data_directory : string
-        name of directory containing contigs FASTA file
+    data_path : str
+        path containing the FASTA source
+    scheme : str
+        scheme used for the source URL
 
     Returns
     -------
@@ -76,7 +86,7 @@ def importContigsFile(toil, data_directory):
         id of the imported contigs file in the file store
     """
     contigs_file_id = importFile(
-        toil, os.path.join(os.path.abspath(data_directory), "contigs.fasta"))
+        toil, os.path.join(data_path, "contigs.fasta"), scheme)
     return contigs_file_id
 
 
