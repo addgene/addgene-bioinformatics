@@ -105,23 +105,41 @@ if __name__ == "__main__":
             well_specs = []
             read_one_file_ids = []
             read_two_file_ids = []
+            if options.source_scheme == "file":
 
-            s3 = boto.connect_s3()
-            b = s3.get_bucket()
-            b.list(os.path.join(
-                options.data_path,
-                "{0}_FASTQ".format(options.plate_spec),
-                "{0}_*_R1_001.fastq.gz".format(options.plate_spec)))
+                # Find read one and two files
+                read_one_files = glob(os.path.join(
+                    options.data_path,
+                    "{0}_FASTQ".format(options.plate_spec),
+                    "{0}_*_R1_001.fastq.gz".format(options.plate_spec)))
+                read_two_files = glob(os.path.join(
+                    options.data_path,
+                    "{0}_FASTQ".format(options.plate_spec),
+                    "{0}_*_R2_001.fastq.gz".format(options.plate_spec)))
 
-            read_one_files = glob(os.path.join(
-                options.data_path,
-                "{0}_FASTQ".format(options.plate_spec),
-                "{0}_*_R1_001.fastq.gz".format(options.plate_spec)))
+            elif options.source_scheme == "s3":
+
+                # Find the bucket name and path to the data source
+                cmps = options.data_path.split(os.sep)
+                bucket_name = cmps[0]
+                bucket_cmps = cmps[1:]
+                bucket_cmps.append("{0}_FASTQ".format(options.plate_spec))
+                bucket_path = os.path.join(*bucket_cmps)
+
+                # Find read one and two files
+                s3 = boto.connect_s3()
+                bucket = s3.get_bucket(bucket_name)
+                read_one_files = [f.name for f in bucket.list(bucket_path)
+                                  if re.search('R1', f.name)]
+                read_two_files = [f.name for f in bucket.list(bucket_path)
+                                  if re.search('R2', f.name)]
+
+            # Ensure a read two file exists for each read one file
             for read_one_file in read_one_files:
                 read_two_file = read_one_file.replace("R1", "R2")
-                if os.path.exists(read_two_file):
+                if read_two_file in read_two_files:
                     well_specs.append(p.search(read_one_file).group(1))
-                    
+
             read_one_file_ids, read_two_file_ids = utilities.importReadFiles(
                 toil, options.data_path, options.plate_spec, well_specs,
                 options.source_scheme)
