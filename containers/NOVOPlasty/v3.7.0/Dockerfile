@@ -26,15 +26,15 @@ USER root
 ENV INSTALL_PFX=/home/biodocker
 
 # Install NOVOPlasty
-ENV NOVOPlasty_URL=https://github.com/ndierckx/NOVOPlasty
-ENV NOVOPlasty_SRC=apc
-ENV NOVOPlasty_TAG=NOVOPlasty3.7
-RUN git clone $NOVOPlasty_URL && \
-    cd $NOVOPlasty_SRC && \
-    git checkout $NOVOPlasty_TAG && \
-    cp NOVOPlasty.pl $INSTALL_PFX/bin && \
+ENV NOVOPLASTY_URL=https://github.com/ndierckx/NOVOPlasty
+ENV NOVOPLASTY_SRC=NOVOPlasty
+ENV NOVOPLASTY_TAG=NOVOPlasty3.7
+RUN git clone $NOVOPLASTY_URL && \
+    cd $NOVOPLASTY_SRC && \
+    git checkout $NOVOPLASTY_TAG && \
+    cp NOVOPlasty3.7.pl $INSTALL_PFX/bin/NOVOPlasty.pl && \
     cd .. && \
-    rm -rf $NOVOPlasty_SRC
+    rm -rf $NOVOPLASTY_SRC
 
 # Change user to back to biodocker
 USER biodocker
