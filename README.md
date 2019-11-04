@@ -7,8 +7,8 @@ for assembling plasmid next generation sequencing data using Toil.
 
 ## Install Docker Desktop, and start the Docker daemon
 
-Downlaod the Docker Desktop package, then install as usual. The Docker
-daemon shoud be started by default.
+Download the Docker Desktop package, then install as usual. The Docker
+daemon should be started by default.
 
 Docker will need to mount the directory Toil creates for a job. When
 using Docker Desktop on macOS, this mount is accomplished in
@@ -39,18 +39,32 @@ $ docker pull ralatsdio/apc:latest
 
 # Demonstration
 
-## Run one of the Toil jobs locally:
+## Run the tests:
 
 ```
-$ python src/python/SpadesJob.py spadesJobStore
-$ python src/python/ApcJob.py apcJobStore
-$ python src/python/WellAssemblyJob.py wellAssemblyJobStore
-$ python src/python/PlateAssemblyJob.py plateAssemblyJobStore
+$ python src/python/JobsTest.py
 ```
 
-## Run one of the Toil jobs on EC2
+## Run one of the jobs with default inputs locally:
 
-The following assumes the instructions for [preparing your AWS environment](https://toil.readthedocs.io/en/latest/running/cloud/amazon.html#preparing-your-aws-environment)
+```
+$ python src/python/SpadesJob.py sjs
+$ python src/python/ApcJob.py ajs
+$ python src/python/WellAssemblyJob.py wajs
+$ python src/python/PlateAssemblyJob.py pajs
+```
+
+## Run a well, or sample plate assembly job locally with data imported from S3:
+
+```
+$ python src/python/WellAssemblyJob.py  -s s3 -d addgene-sequencing-data/2018/FASTQ -p A11935X_sW0148 -w A01 wajs
+$ python src/python/PlateAssemblyJob.py -s s3 -d addgene-sequencing-data/2018/FASTQ -p A11935X_sW0148 pajs
+```
+
+## Run one of the jobs on EC2
+
+The following assumes the instructions for [preparing your AWS
+environment](https://toil.readthedocs.io/en/latest/running/cloud/amazon.html#preparing-your-aws-environment)
 have been completed.
 
 ### Launch the cluster leader:
@@ -62,6 +76,7 @@ $ toil launch-cluster --zone us-east-1a --keyPairName id_rsa --leaderNodeType t2
 ### Synchronize code and data:
 
 ```
+$ src/sh/make-archives-for-leader.sh
 $ toil rsync-cluster --zone us-east-1a assembly-cluster python.tar.gz :/root
 $ toil rsync-cluster --zone us-east-1a assembly-cluster miscellaneous.tar.gz :/root
 ```
@@ -88,6 +103,13 @@ $ toil ssh-cluster --zone us-east-1a assembly-cluster
 # python PlateAssemblyJob.py --data-directory miscellaneous --plate-spec A11967B_sW0154 aws:us-east-1:pajs
 ```
 
+## Run a well, or sample plate assembly job on the cluster leader only with data imported from S3:
+
+```
+# python WellAssemblyJob.py  -s s3 -d addgene-sequencing-data/2018/FASTQ -p A11935X_sW0148 -w A01 wajs
+# python PlateAssemblyJob.py -s s3 -d addgene-sequencing-data/2018/FASTQ -p A11935X_sW0148 pajs
+```
+
 ### Run the default or a larger plate assembly job using auto-scaling with an S3 file store:
 
 ```
@@ -100,4 +122,3 @@ $ toil ssh-cluster --zone us-east-1a assembly-cluster
 ```
 $ toil destroy-cluster --zone us-east-1a assembly-cluster
 ```
-

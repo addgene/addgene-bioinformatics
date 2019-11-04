@@ -95,22 +95,25 @@ if __name__ == "__main__":
     Circularize contigs corresponding to a single well.
 
     """
-    # Parse FASTA data directory and file name, and output directory,
+    # Parse FASTA data path and file name, and output directory,
     # making the output directory if needed
     parser = ArgumentParser()
     Job.Runner.addToilOptions(parser)
     cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-1]
     cmps.extend(["A11967A_sW0154_B01"])
-    parser.add_argument('-d', '--data-directory',
+    parser.add_argument('-d', '--data-path',
                         default=os.sep + os.path.join(*cmps),
-                        help="the directory containing FASTA contigs files")
+                        help="path containing the FASTA source")
+    parser.add_argument('-s', '--source-scheme',
+                        default="file",
+                        help="scheme used for the source URL")
     parser.add_argument('-f', '--file-name', default="contigs.fasta",
                         help="the FASTA contigs file")
     parser.add_argument('-o', '--output-directory', default=None,
                         help="the directory containing all output files")
     options = parser.parse_args()
     if options.output_directory is None:
-        options.output_directory = os.path.relpath(options.data_directory)
+        options.output_directory = os.path.relpath(options.data_path)
     if not os.path.exists(options.output_directory):
         os.mkdir(options.output_directory)
 
@@ -120,7 +123,8 @@ if __name__ == "__main__":
 
             # Import the local contigs file into the file store
             contigs_file_id = utilities.importFile(
-                toil, os.path.join(options.data_directory, options.file_name))
+                toil, os.path.join(options.data_path, options.file_name),
+                options.source_scheme)
 
             # Construct and start the APC job
             apc_job = ApcJob(
