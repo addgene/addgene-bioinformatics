@@ -80,10 +80,10 @@ RUN git clone $APC_URL && \
 # Change user to back to biodocker
 USER biodocker
 
-# CHANGE WORKDIR TO /DATA
+# Change WORKDIR to /data
 WORKDIR /data
 
-# DEFINE DEFAULT COMMAND
+# Define default command
 # CMD ['apc.pl']
 
 ##################### INSTALLATION END #####################
