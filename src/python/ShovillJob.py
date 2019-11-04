@@ -8,18 +8,15 @@ from toil.lib.docker import apiDockerCall
 import utilities
 
 
-class ShovillJob(Job):
+class SpadesJob(Job):
     """
-    Accepts paired-end Illumina reads for assembly with SPAdes, SKESA,
-    Megahit, or Velvet performing desirable pre- and post-processing.
+    Accepts paired-end Illumina reads for assembly with a coverage
+    cutoff specification.
     """
 
     def __init__(self, read_one_file_id, read_two_file_id,
-                 output_directory, parent_rv={},
+                 coverage_cutoff, output_directory, parent_rv={},
                  read_one_file_name="R1.fastq.gz", read_two_file_name="R2.fastq.gz",
-                 assembler="spades",  # Use spades, skesa, megahit, or velvet
-                 cpus=16,             # Use this number of CPUs (0=ALL)
-                 ram=4.00,            # Try to keep RAM usage below this many GB
                  *args, **kwargs):
         """
         Parameters
@@ -30,35 +27,29 @@ class ShovillJob(Job):
         read_two_file_id : toil.fileStore.FileID
             id of the file in the job store containing FASTQ Illumina
             short right paired reads
+        coverage_cutoff : str
+            read coverage cutoff value
         output_directory : str
             name of directory for output
         parent_rv : dict
             dictionary of return values from the parent job
-        assembler : str
-            One of skesa, velvet, megahit, or spades
-        cpus : int
-            Number of CPUs to use (0=ALL)
-        ram : flt
-            RAM usage limit [GB]
         """
-        super(ShovillJob, self).__init__(*args, **kwargs)
+        super(SpadesJob, self).__init__(*args, **kwargs)
         self.read_one_file_id = read_one_file_id
         self.read_one_file_name = read_one_file_name
         self.read_two_file_id = read_two_file_id
         self.read_two_file_name = read_two_file_name
+        self.coverage_cutoff = coverage_cutoff
         self.output_directory = output_directory
         self.parent_rv = parent_rv
-        self.assembler = assembler
-        self.cpus = cpus
-        self.ram = ram
 
     def run(self, fileStore):
         """
         Returns
         -------
-        TODO: Complete when it is clear what output files are created
         dict of toil.fileStore.FileID and str
-            file ids and names of assorted output files.
+            file ids and names of warnings and spades log files, and
+            contigs FASTA file
         """
         # Read the read files from the file store into the local
         # temporary directory
@@ -69,30 +60,25 @@ class ShovillJob(Job):
 
         # Mount the Toil local temporary directory to the same path in
         # the container, and use the path as the working directory in
-        # the container, then call shovill
+        # the container, then call spades.py
         # TODO: Specify the container on construction
         working_dir = fileStore.localTempDir
         apiDockerCall(
             self,
-            image='bioboxes/shovill',
+            image='biocontainers/spades:v3.13.1_cv1',
             volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
             working_dir=working_dir,
-            parameters=["shovill",
+            parameters=["spades.py",
                         "-1",
                         read_one_file_path,
                         "-2",
                         read_two_file_path,
-                        "--outdir",
+                        "-o",
                         os.path.join(working_dir, self.output_directory),
-                        "--cpus",
-                        self.cpus,
-                        "--ram",
-                        self.ram,
-                        "--assembler",
-                        self.assembler,
+                        "--cov-cutoff",
+                        self.coverage_cutoff,
                         ])
 
-        # TODO: >>> Start here
         # Write the warnings and spades log files, and contigs FASTA
         # file from the local temporary directory into the file store
         warnings_file_name = "warnings.log"
@@ -131,15 +117,19 @@ if __name__ == "__main__":
     Assemble reads corresponding to a single well.
 
     """
-    # Parse FASTQ data directory, plate and well specification,
-    # coverage cutoff, and output directory, making the output
-    # directory if needed
+    # Parse FASTQ data path, plate and well specification, coverage
+    # cutoff, and output directory, making the output directory if
+    # needed
     parser = ArgumentParser()
     Job.Runner.addToilOptions(parser)
-    cmps = str(os.path.abspath(__file__)).split(os.sep)
-    parser.add_argument('-d', '--data-directory',
-                        default=os.sep + os.path.join(*cmps[0:-3], "dat", "miscellaneous"),
-                        help="the directory containing FASTQ read data files")
+    cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-3]
+    cmps.extend(["dat", "miscellaneous"])
+    parser.add_argument('-d', '--data-path',
+                        default=os.sep + os.path.join(*cmps),
+                        help="path containing plate and well FASTQ source")
+    parser.add_argument('-s', '--source-scheme',
+                        default="file",
+                        help="scheme used for the source URL")
     parser.add_argument('-p', '--plate-spec', default="A11967A_sW0154",
                         help="the plate specification")
     parser.add_argument('-w', '--well-spec', default="B01",
@@ -160,7 +150,8 @@ if __name__ == "__main__":
 
             # Import the local read files into the file store
             read_one_file_ids, read_two_file_ids = utilities.importReadFiles(
-                toil, options.data_directory, options.plate_spec, [options.well_spec])
+                toil, options.data_path, options.plate_spec, [options.well_spec],
+                options.source_scheme)
 
             # Construct and start the SPAdes job
             spades_job = SpadesJob(
