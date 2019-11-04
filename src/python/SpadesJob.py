@@ -117,16 +117,19 @@ if __name__ == "__main__":
     Assemble reads corresponding to a single well.
 
     """
-    # Parse FASTQ data directory, plate and well specification,
-    # coverage cutoff, and output directory, making the output
-    # directory if needed
+    # Parse FASTQ data path, plate and well specification, coverage
+    # cutoff, and output directory, making the output directory if
+    # needed
     parser = ArgumentParser()
     Job.Runner.addToilOptions(parser)
     cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-3]
     cmps.extend(["dat", "miscellaneous"])
-    parser.add_argument('-d', '--data-directory',
+    parser.add_argument('-d', '--data-path',
                         default=os.sep + os.path.join(*cmps),
-                        help="the directory containing FASTQ read data files")
+                        help="path containing plate and well FASTQ source")
+    parser.add_argument('-s', '--source-scheme',
+                        default="file",
+                        help="scheme used for the source URL")
     parser.add_argument('-p', '--plate-spec', default="A11967A_sW0154",
                         help="the plate specification")
     parser.add_argument('-w', '--well-spec', default="B01",
@@ -147,7 +150,8 @@ if __name__ == "__main__":
 
             # Import the local read files into the file store
             read_one_file_ids, read_two_file_ids = utilities.importReadFiles(
-                toil, options.data_directory, options.plate_spec, [options.well_spec])
+                toil, options.data_path, options.plate_spec, [options.well_spec],
+                options.source_scheme)
 
             # Construct and start the SPAdes job
             spades_job = SpadesJob(
