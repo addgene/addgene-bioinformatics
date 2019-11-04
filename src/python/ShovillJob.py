@@ -10,15 +10,14 @@ import utilities
 
 class ShovillJob(Job):
     """
-    Accepts paired-end Illumina reads for assembly with
-    SPAdes/SKESA/Megahit, performing desirable pre- and
-    post-processing.
+    Accepts paired-end Illumina reads for assembly with SPAdes, SKESA,
+    Megahit, or Velvet performing desirable pre- and post-processing.
     """
 
     def __init__(self, read_one_file_id, read_two_file_id,
                  output_directory, parent_rv={},
                  read_one_file_name="R1.fastq.gz", read_two_file_name="R2.fastq.gz",
-                 assembler="spades",  # Use skesa, velvet, megahit, or spades
+                 assembler="spades",  # Use spades, skesa, megahit, or velvet
                  cpus=16,             # Use this number of CPUs (0=ALL)
                  ram=4.00,            # Try to keep RAM usage below this many GB
                  *args, **kwargs):
@@ -38,7 +37,7 @@ class ShovillJob(Job):
         assembler : str
             One of skesa, velvet, megahit, or spades
         cpus : int
-            Number of CPUs ot use (0=ALL)
+            Number of CPUs to use (0=ALL)
         ram : flt
             RAM usage limit [GB]
         """
@@ -93,6 +92,7 @@ class ShovillJob(Job):
                         self.assembler,
                         ])
 
+        # TODO: >>> Start here
         # Write the warnings and spades log files, and contigs FASTA
         # file from the local temporary directory into the file store
         warnings_file_name = "warnings.log"
