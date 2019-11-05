@@ -26,15 +26,7 @@ USER root
 ENV INSTALL_PFX=/home/biodocker
 
 # Install shovill
-ENV SHOVILL_URL=https://github.com/tseemann/shovill
-ENV SHOVILL_SRC=shovill
-ENV SHOVILL_TAG=v1.0.9
-RUN git clone $SHOVILL_URL && \
-    cd $SHOVILL_SRC && \
-    git checkout $SHOVILL_TAG && \
-    cp bin/shovill $INSTALL_PFX/bin && \
-    cd .. && \
-    rm -rf $SHOVILL_SRC
+RUN conda install -c conda-forge -c bioconda -c defaults shovill
 
 # Change user to back to biodocker
 USER biodocker
