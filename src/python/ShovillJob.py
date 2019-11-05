@@ -157,7 +157,6 @@ if __name__ == "__main__":
                 read_one_file_ids[0],
                 read_two_file_ids[0],
                 options.output_directory,
-                memory="4G",
                 )
             shovill_rv = toil.start(shovill_job)
 
