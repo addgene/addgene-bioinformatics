@@ -64,7 +64,7 @@ class ShovillJob(Job):
         working_dir = fileStore.localTempDir
         apiDockerCall(
             self,
-            image='ralatsdio/shovill:v1.0.4',
+            image='ralatsdio/shovill:v1.0.9',
             volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
             working_dir=working_dir,
             parameters=["shovill",
