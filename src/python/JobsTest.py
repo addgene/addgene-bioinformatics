@@ -73,7 +73,7 @@ class JobsTestCase(ToilTestCase):
 
     def test_spades_job(self):
 
-        options = Job.Runner.getDefaultOptions("spadesJobStore")
+        options = Job.Runner.getDefaultOptions("spadesFileStore")
 
         with Toil(options) as toil:
 
@@ -96,7 +96,7 @@ class JobsTestCase(ToilTestCase):
 
     def test_apc_job(self):
 
-        options = Job.Runner.getDefaultOptions("apcJobStore")
+        options = Job.Runner.getDefaultOptions("apcFileStore")
 
         with Toil(options) as toil:
 
@@ -108,15 +108,15 @@ class JobsTestCase(ToilTestCase):
             utilities.exportFiles(
                 toil, self.test_directory_a, apc_rv['apc_rv'])
 
-        self._assert_true_cmp_apc_fasta(
-            self.test_directory_a, self.actual_directory_a)
+        self._assert_true_cmp_fasta(
+            self.test_directory_a, self.actual_directory_a, self.apc_fasta)
 
 
 class WellAssemblyJobTestCase(ToilTestCase):
 
     def test_well_assembly_job(self):
 
-        options = Job.Runner.getDefaultOptions("wellAssemblyJobStore")
+        options = Job.Runner.getDefaultOptions("wellAssemblyFileStore")
 
         with Toil(options) as toil:
 
@@ -136,17 +136,17 @@ class WellAssemblyJobTestCase(ToilTestCase):
             utilities.exportFiles(
                 toil, self.test_directory_a, well_assembly_rv['apc_rv'])
 
-        self._assert_true_cmp_spades_fasta(
-            self.test_directory_a, self.actual_directory_a)
-        self._assert_true_cmp_apc_fasta(
-            self.test_directory_a, self.actual_directory_a)
+        self._assert_true_cmp_fasta(
+            self.test_directory_a, self.actual_directory_a, self.spades_fasta)
+        self._assert_true_cmp_fasta(
+            self.test_directory_a, self.actual_directory_a, self.apc_fasta)
 
 
 class PlateAssemblyJobTestCase(ToilTestCase):
 
     def test_plate_assembly_job(self):
 
-        options = Job.Runner.getDefaultOptions("plateAssemblyJobStore")
+        options = Job.Runner.getDefaultOptions("plateAssemblyFileStore")
 
         with Toil(options) as toil:
 

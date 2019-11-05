@@ -16,16 +16,17 @@ class ShovillJob(Job):
 
     def __init__(self, read_one_file_id, read_two_file_id,
                  output_directory, parent_rv={},
-                 read_one_file_name="R1.fastq.gz", read_two_file_name="R2.fastq.gz", ram="3",
+                 read_one_file_name="R1.fastq.gz", read_two_file_name="R2.fastq.gz",
+                 membory="4", ram="3",
                  *args, **kwargs):
         """
         Parameters
         ----------
         read_one_file_id : toil.fileStore.FileID
-            id of the file in the job store containing FASTQ Illumina
+            id of the file in the file store containing FASTQ Illumina
             short left paired reads
         read_two_file_id : toil.fileStore.FileID
-            id of the file in the job store containing FASTQ Illumina
+            id of the file in the file store containing FASTQ Illumina
             short right paired reads
         output_directory : str
             name of directory for output

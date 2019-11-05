@@ -22,10 +22,10 @@ class SpadesJob(Job):
         Parameters
         ----------
         read_one_file_id : toil.fileStore.FileID
-            id of the file in the job store containing FASTQ Illumina
+            id of the file in the file store containing FASTQ Illumina
             short left paired reads
         read_two_file_id : toil.fileStore.FileID
-            id of the file in the job store containing FASTQ Illumina
+            id of the file in the file store containing FASTQ Illumina
             short right paired reads
         coverage_cutoff : str
             read coverage cutoff value
