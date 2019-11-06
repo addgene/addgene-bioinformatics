@@ -128,6 +128,8 @@ Use Quality Scores    = no
                         ],
         )
 
+        # Write the contigs FASTA file from the local temporary
+        # directory into the file store
         contigs_file_name = "contigs.fa"
         contigs_file_id = utilities.writeGlobalFile(
             fileStore, self.output_directory, contigs_file_name
