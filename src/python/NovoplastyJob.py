@@ -70,7 +70,7 @@ class NovoplastyJob(Job):
         working_dir = fileStore.localTempDir
         print(working_dir)
 
-        with open(working_dir + "config.txt", "w+") as f:
+        with open(os.path.join(working_dir, "config.txt"), "w+") as f:
             config = """Project:
 -----------------------
 Project name          = batch:~/PATH/batch_file.txt
@@ -121,7 +121,7 @@ Use Quality Scores    = no
             parameters=[
                 "perl /home/biodocker/bin/NOVOPlasty.pl",
                 "-c",
-                working_dir + "config.txt",
+                os.path.join(working_dir, "config.txt"),
             ],
         )
 
