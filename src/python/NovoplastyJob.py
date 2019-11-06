@@ -112,16 +112,20 @@ Use Quality Scores    = no
             )
             f.write(config)
 
+        # Mount the Toil local temporary directory to the same path in
+        # the container, and use the path as the working directory in
+        # the container, then call NOVOPlasty
+        # TODO: Specify the container on construction
         apiDockerCall(
             self,
             image="ralatsdio/novoplasty:v3.7.0",
             volumes={working_dir: {"bind": working_dir, "mode": "rw"}},
             working_dir=working_dir,
-            parameters=[
-                "perl /home/biodocker/bin/NOVOPlasty.pl",
-                "-c",
-                os.path.join(working_dir, "config.txt"),
-            ],
+            parameters=["perl",
+                        "/home/biodocker/bin/NOVOPlasty.pl",
+                        "-c",
+                        "config.txt",
+                        ],
         )
 
         contigs_file_name = "contigs.fa"
