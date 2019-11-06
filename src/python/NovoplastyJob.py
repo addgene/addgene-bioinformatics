@@ -63,12 +63,8 @@ class NovoplastyJob(Job):
             fileStore, self.read_two_file_id, self.read_two_file_name
         )
 
-        # Mount the Toil local temporary directory to the same path in
-        # the container, and use the path as the working directory in
-        # the container, then call NOVOPlasty
-        # TODO: Specify the container on construction
-        working_dir = fileStore.localTempDir
-        print(working_dir)
+        # TODO: Select a read sequence as the seed here, and write it
+        # into the local temporary directory
 
         with open(os.path.join(working_dir, "config.txt"), "w+") as f:
             config = """Project:
