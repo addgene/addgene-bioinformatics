@@ -17,9 +17,10 @@ class ApcJob(Job):
     header, to allow confirmation.
     """
 
-    def __init__(self, contigs_file_id, parent_rv={},
+    def __init__(self, contigs_file_id,
                  contigs_file_name="contigs.fasta", base_file_name="apc",
-                 *args, **kwargs):
+                 environment={'DOCKER_CLIENT_TIMEOUT': 60},
+                 parent_rv={}, *args, **kwargs):
         """
         Parameters
         ----------
@@ -32,6 +33,7 @@ class ApcJob(Job):
         self.contigs_file_id = contigs_file_id
         self.contigs_file_name = "contigs.fasta"
         self.base_file_name = "apc"
+        self.environment = environment
         self.parent_rv = parent_rv
 
     def run(self, fileStore):
@@ -61,7 +63,9 @@ class ApcJob(Job):
                         "-b",
                         self.base_file_name,
                         self.contigs_file_name,
-                        ])
+                        ],
+            environment=self.environment,
+        )
 
         # Write the output file from the local temporary directory
         # into the file store

@@ -172,10 +172,10 @@ class PlateAssemblyJobTestCase(ToilTestCase):
                 toil, self.well_specs)
 
             plate_assembly_job = PlateAssemblyJob(
+                self.plate_spec,
                 self.well_specs,
                 read_one_file_ids,
                 read_two_file_ids,
-                self.plate_spec,
                 self.coverage_cutoff,
                 cores=2,
                 disk="3G",
@@ -202,6 +202,7 @@ if __name__ == '__main__':
     jobsTestSuite = unittest.TestSuite()
     jobsTestSuite.addTest(JobsTestCase('test_spades_job'))
     jobsTestSuite.addTest(JobsTestCase('test_apc_job'))
+    jobsTestSuite.addTest(JobsTestCase('test_shovill_job'))
 
     wellAssemblyJobTestSuite = unittest.TestLoader().loadTestsFromTestCase(
         WellAssemblyJobTestCase)

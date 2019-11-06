@@ -15,7 +15,9 @@ class WellAssemblyJob(Job):
     Runs a SpadesJob followed by an ApcJob.
     """
     def __init__(self, read_one_file_id, read_two_file_id,
-                 coverage_cutoff, output_directory, *args, **kwargs):
+                 coverage_cutoff, output_directory,
+                 environment={'DOCKER_CLIENT_TIMEOUT': 60},
+                 *args, **kwargs):
         """
         Parameters
         ----------
@@ -35,6 +37,7 @@ class WellAssemblyJob(Job):
         self.read_two_file_id = read_two_file_id
         self.coverage_cutoff = coverage_cutoff
         self.output_directory = output_directory
+        self.environment = environment
 
     def run(self, fileStore):
         """
@@ -48,10 +51,12 @@ class WellAssemblyJob(Job):
             self.read_two_file_id,
             self.coverage_cutoff,
             self.output_directory,
+            environment=self.environment,
         )
         apc_job = ApcJob(
             spades_job.rv('spades_rv', 'contigs_file', 'id'),
-            parent_rv=spades_job.rv()
+            environment=self.environment,
+            parent_rv=spades_job.rv(),
         )
         final_job = self.addChild(
             spades_job).addChild(
@@ -109,7 +114,7 @@ if __name__ == "__main__":
                 read_two_file_ids[0],
                 options.coverage_cutoff,
                 options.output_directory,
-                )
+            )
             well_assembly_rv = toil.start(well_assembly_job)
 
         else:

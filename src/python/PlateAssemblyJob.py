@@ -17,11 +17,15 @@ class PlateAssemblyJob(Job):
     Runs a WellAssemblyJob for each well of a plate for which both
     FASTQ read files were found.
     """
-    def __init__(self, well_specs, read_one_file_ids, read_two_file_ids,
-                 plate_spec, coverage_cutoff, *args, **kwargs):
+    def __init__(self, plate_spec, well_specs,
+                 read_one_file_ids, read_two_file_ids, coverage_cutoff,
+                 environment={'DOCKER_CLIENT_TIMEOUT': 120},
+                 *args, **kwargs):
         """
         Parameters
         ----------
+        plate_spec : str
+            Specification for plate containing the specified wells
         well_specs : list of str
             Specification for each well for which both FASTQ read
             files were found
@@ -31,17 +35,16 @@ class PlateAssemblyJob(Job):
         read_two_file_ids : list of toil.fileStore.FileID
             ids of files in file store containing FASTQ Illumina short
             right paired reads
-        plate_spec : str
-            Specification for plate containing the specified wells
         coverage_cutoff : str
             read coverage cutoff value
         """
         super(PlateAssemblyJob, self).__init__(*args, **kwargs)
+        self.plate_spec = plate_spec
         self.well_specs = well_specs
         self.read_one_file_ids = read_one_file_ids
         self.read_two_file_ids = read_two_file_ids
-        self.plate_spec = plate_spec
         self.coverage_cutoff = coverage_cutoff
+        self.environment = environment
 
     def run(self, fileStore):
         """
@@ -60,7 +63,10 @@ class PlateAssemblyJob(Job):
                         self.read_two_file_ids[iW],
                         self.coverage_cutoff,
                         self.plate_spec + "_" + self.well_specs[iW],
-                        )).rv())
+                        environment=self.environment,
+                    )
+                ).rv()
+            )
         return well_assembly_rvs
 
 
@@ -86,6 +92,8 @@ if __name__ == "__main__":
                         help="the plate specification")
     parser.add_argument('-c', '--coverage-cutoff', default="100",
                         help="the coverage cutoff")
+    parser.add_argument('-t', '--client-timeout', default="120",
+                        help="the docker client timeout [s])")
     parser.add_argument('-o', '--output-directory', default=None,
                         help="the directory containing all output files")
     options = parser.parse_args()
@@ -146,12 +154,13 @@ if __name__ == "__main__":
 
             # Construct and start the plate assembly job
             plate_assembly_job = PlateAssemblyJob(
+                options.plate_spec,
                 well_specs,
                 read_one_file_ids,
                 read_two_file_ids,
-                options.plate_spec,
                 options.coverage_cutoff,
-                )
+                environment={'DOCKER_CLIENT_TIMEOUT': options.client_timeout},
+            )
             well_assembly_rvs = toil.start(plate_assembly_job)
 
         else:

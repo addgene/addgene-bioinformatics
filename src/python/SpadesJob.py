@@ -15,9 +15,10 @@ class SpadesJob(Job):
     """
 
     def __init__(self, read_one_file_id, read_two_file_id,
-                 coverage_cutoff, output_directory, parent_rv={},
+                 coverage_cutoff, output_directory,
                  read_one_file_name="R1.fastq.gz", read_two_file_name="R2.fastq.gz",
-                 *args, **kwargs):
+                 environment={'DOCKER_CLIENT_TIMEOUT': 60},
+                 parent_rv={}, *args, **kwargs):
         """
         Parameters
         ----------
@@ -36,11 +37,12 @@ class SpadesJob(Job):
         """
         super(SpadesJob, self).__init__(*args, **kwargs)
         self.read_one_file_id = read_one_file_id
-        self.read_one_file_name = read_one_file_name
         self.read_two_file_id = read_two_file_id
-        self.read_two_file_name = read_two_file_name
         self.coverage_cutoff = coverage_cutoff
         self.output_directory = output_directory
+        self.read_one_file_name = read_one_file_name
+        self.read_two_file_name = read_two_file_name
+        self.environment = environment
         self.parent_rv = parent_rv
 
     def run(self, fileStore):
@@ -77,7 +79,9 @@ class SpadesJob(Job):
                         os.path.join(working_dir, self.output_directory),
                         "--cov-cutoff",
                         self.coverage_cutoff,
-                        ])
+                        ],
+            environment=self.environment,
+        )
 
         # Write the warnings and spades log files, and contigs FASTA
         # file from the local temporary directory into the file store

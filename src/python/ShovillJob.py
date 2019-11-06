@@ -14,11 +14,10 @@ class ShovillJob(Job):
     SKESA, MEGAHIT, or Velvet.
     """
 
-    def __init__(self, read_one_file_id, read_two_file_id,
-                 output_directory, parent_rv={},
+    def __init__(self, read_one_file_id, read_two_file_id, output_directory,
                  read_one_file_name="R1.fastq.gz", read_two_file_name="R2.fastq.gz",
-                 membory="4", ram="3",
-                 *args, **kwargs):
+                 memory="4G", ram="3.00", environment={'DOCKER_CLIENT_TIMEOUT': 60},
+                 parent_rv={}, *args, **kwargs):
         """
         Parameters
         ----------
@@ -33,13 +32,14 @@ class ShovillJob(Job):
         parent_rv : dict
             dictionary of return values from the parent job
         """
-        super(ShovillJob, self).__init__(*args, **kwargs)
+        super(ShovillJob, self).__init__(*args, memory=memory, **kwargs)
         self.read_one_file_id = read_one_file_id
-        self.read_one_file_name = read_one_file_name
         self.read_two_file_id = read_two_file_id
-        self.read_two_file_name = read_two_file_name
         self.output_directory = output_directory
-        self.ram = ram
+        self.read_one_file_name = read_one_file_name
+        self.read_two_file_name = read_two_file_name
+        self.ram = ram  # GB
+        self.environment = environment
         self.parent_rv = parent_rv
 
     def run(self, fileStore):
@@ -76,7 +76,9 @@ class ShovillJob(Job):
                         os.path.join(working_dir, self.output_directory),
                         "--ram",
                         self.ram,
-                        ])
+                        ],
+            environment=self.environment,
+        )
 
         # Write the shovill log and corrections files, and contigs
         # FASTA file from the local temporary directory into the file
