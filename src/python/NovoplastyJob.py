@@ -66,19 +66,22 @@ class NovoplastyJob(Job):
         # TODO: Select a read sequence as the seed here, and write it
         # into the local temporary directory
 
+        # Write the NOVOPlasty config file into the local temporary
+        # directory
+        working_dir = fileStore.localTempDir
         with open(os.path.join(working_dir, "config.txt"), "w+") as f:
             config = """Project:
 -----------------------
-Project name          = batch:~/PATH/batch_file.txt
+Project name          = Assembly
 Type                  = mito
 Genome Range          = 1800-35000
 K-mer                 = 121
 Max memory            = 3
 Extended log          =
 Save assembled reads  =
-Seed Input            = batch
+Seed Input            = Seed.fasta
 Reference sequence    =
-Variance detection    = 
+Variance detection    =
 Chloroplast sequence  =
 
 Dataset 1:
@@ -93,9 +96,9 @@ Reverse reads         = {read_two_file_path}
 
 Heteroplasmy:
 -----------------------
-MAF                   = 
-HP exclude list       = 
-PCR-free              = 
+MAF                   =
+HP exclude list       =
+PCR-free              =
 
 Optional:
 -----------------------
