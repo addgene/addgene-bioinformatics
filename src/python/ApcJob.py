@@ -24,7 +24,7 @@ class ApcJob(Job):
         Parameters
         ----------
         contigs_file_id : str
-            id of the file in job store containing FASTA contigs
+            id of the file in file store containing FASTA contigs
         parent_rv : dict
             dictionary of return values from the parent job
         """

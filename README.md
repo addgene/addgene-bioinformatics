@@ -48,17 +48,17 @@ $ python src/python/JobsTest.py
 ## Run one of the jobs with default inputs locally:
 
 ```
-$ python src/python/SpadesJob.py sjs
-$ python src/python/ApcJob.py ajs
-$ python src/python/WellAssemblyJob.py wajs
-$ python src/python/PlateAssemblyJob.py pajs
+$ python src/python/SpadesJob.py sjfs
+$ python src/python/ApcJob.py ajfs
+$ python src/python/WellAssemblyJob.py wajfs
+$ python src/python/PlateAssemblyJob.py pajfs
 ```
 
 ## Run a well, or sample plate assembly job locally with data imported from S3:
 
 ```
-$ python src/python/WellAssemblyJob.py  -s s3 -d addgene-sequencing-data/2018/FASTQ -p A11935X_sW0148 -w A01 wajs
-$ python src/python/PlateAssemblyJob.py -s s3 -d addgene-sequencing-data/2018/FASTQ -p A11935X_sW0148 pajs
+$ python src/python/WellAssemblyJob.py  -s s3 -d addgene-sequencing-data/2018/FASTQ -p A11935X_sW0148 -w A01 wajfs
+$ python src/python/PlateAssemblyJob.py -s s3 -d addgene-sequencing-data/2018/FASTQ -p A11935X_sW0148 pajfs
 ```
 
 ## Run one of the jobs on EC2
@@ -99,22 +99,22 @@ $ toil ssh-cluster --zone us-east-1a assembly-cluster
 ### Run the default plate assembly job on the cluster leader only with a local or S3 file store:
 
 ```
-# python PlateAssemblyJob.py --data-directory miscellaneous --plate-spec A11967B_sW0154 pajs
-# python PlateAssemblyJob.py --data-directory miscellaneous --plate-spec A11967B_sW0154 aws:us-east-1:pajs
+# python PlateAssemblyJob.py --data-directory miscellaneous --plate-spec A11967B_sW0154 pajfs
+# python PlateAssemblyJob.py --data-directory miscellaneous --plate-spec A11967B_sW0154 aws:us-east-1:pajfs
 ```
 
 ## Run a well, or sample plate assembly job on the cluster leader only with data imported from S3:
 
 ```
-# python WellAssemblyJob.py  -s s3 -d addgene-sequencing-data/2018/FASTQ -p A11935X_sW0148 -w A01 wajs
-# python PlateAssemblyJob.py -s s3 -d addgene-sequencing-data/2018/FASTQ -p A11935X_sW0148 pajs
+# python WellAssemblyJob.py  -s s3 -d addgene-sequencing-data/2018/FASTQ -p A11935X_sW0148 -w A01 wajfs
+# python PlateAssemblyJob.py -s s3 -d addgene-sequencing-data/2018/FASTQ -p A11935X_sW0148 pajfs
 ```
 
 ### Run the default or a larger plate assembly job using auto-scaling with an S3 file store:
 
 ```
-# python PlateAssemblyJob.py --data-directory miscellaneous --plate-spec A11967B_sW0154 --provisioner aws --nodeTypes c3.large --maxNodes 2 --batchSystem mesos aws:us-east-1:pajs
-# python PlateAssemblyJob.py --data-directory miscellaneous --plate-spec A11967A_sW0154 --provisioner aws --nodeTypes c3.large --maxNodes 2 --batchSystem mesos aws:us-east-1:pajs
+# python PlateAssemblyJob.py --data-directory miscellaneous --plate-spec A11967B_sW0154 --provisioner aws --nodeTypes c3.large --maxNodes 2 --batchSystem mesos aws:us-east-1:pajfs
+# python PlateAssemblyJob.py --data-directory miscellaneous --plate-spec A11967A_sW0154 --provisioner aws --nodeTypes c3.large --maxNodes 2 --batchSystem mesos aws:us-east-1:pajfs
 ```
 
 ### Destroy the cluster leader:

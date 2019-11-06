@@ -7,6 +7,7 @@ from toil.job import Job
 from toil.common import Toil
 
 from ApcJob import ApcJob
+from ShovillJob import ShovillJob
 from SpadesJob import SpadesJob
 from WellAssemblyJob import WellAssemblyJob
 from PlateAssemblyJob import PlateAssemblyJob
@@ -37,6 +38,7 @@ class ToilTestCase(unittest.TestCase):
         if not os.path.exists(self.test_directory_b):
             os.mkdir(self.test_directory_b)
 
+        self.shovill_fasta = "contigs.fa"
         self.spades_fasta = "contigs.fasta"
         self.apc_fasta = "apc.1.fa"
 
@@ -56,24 +58,40 @@ class ToilTestCase(unittest.TestCase):
             toil, os.path.abspath(self.output_directory))
         return contigs_file_id
 
-    def _assert_true_cmp_spades_fasta(self, test_directory, actual_directory):
+    def _assert_true_cmp_fasta(self, test_directory, actual_directory, fasta):
         self.assertTrue(
             filecmp.cmp(
-                os.path.join(test_directory, self.spades_fasta),
-                os.path.join(actual_directory, self.spades_fasta)))
-
-    def _assert_true_cmp_apc_fasta(self, test_directory, actual_directory):
-        self.assertTrue(
-            filecmp.cmp(
-                os.path.join(test_directory, self.apc_fasta),
-                os.path.join(actual_directory, self.apc_fasta)))
+                os.path.join(test_directory, fasta),
+                os.path.join(actual_directory, fasta)))
 
 
 class JobsTestCase(ToilTestCase):
 
+    def test_shovill_job(self):
+
+        options = Job.Runner.getDefaultOptions("shovillFileStore")
+
+        with Toil(options) as toil:
+
+            read_one_file_ids, read_two_file_ids = self._import_read_files(
+                toil, [self.well_spec])
+
+            shovill_job = ShovillJob(
+                read_one_file_ids[0],
+                read_two_file_ids[0],
+                self.output_directory,
+            )
+            shovill_rv = toil.start(shovill_job)
+
+            utilities.exportFiles(
+                toil, self.test_directory_a, shovill_rv['shovill_rv'])
+
+        self._assert_true_cmp_fasta(
+            self.test_directory_a, self.actual_directory_a, self.shovill_fasta)
+
     def test_spades_job(self):
 
-        options = Job.Runner.getDefaultOptions("spadesJobStore")
+        options = Job.Runner.getDefaultOptions("spadesFileStore")
 
         with Toil(options) as toil:
 
@@ -91,12 +109,12 @@ class JobsTestCase(ToilTestCase):
             utilities.exportFiles(
                 toil, self.test_directory_a, spades_rv['spades_rv'])
 
-        self._assert_true_cmp_spades_fasta(
-            self.test_directory_a, self.actual_directory_a)
+        self._assert_true_cmp_fasta(
+            self.test_directory_a, self.actual_directory_a, self.spades_fasta)
 
     def test_apc_job(self):
 
-        options = Job.Runner.getDefaultOptions("apcJobStore")
+        options = Job.Runner.getDefaultOptions("apcFileStore")
 
         with Toil(options) as toil:
 
@@ -108,15 +126,15 @@ class JobsTestCase(ToilTestCase):
             utilities.exportFiles(
                 toil, self.test_directory_a, apc_rv['apc_rv'])
 
-        self._assert_true_cmp_apc_fasta(
-            self.test_directory_a, self.actual_directory_a)
+        self._assert_true_cmp_fasta(
+            self.test_directory_a, self.actual_directory_a, self.apc_fasta)
 
 
 class WellAssemblyJobTestCase(ToilTestCase):
 
     def test_well_assembly_job(self):
 
-        options = Job.Runner.getDefaultOptions("wellAssemblyJobStore")
+        options = Job.Runner.getDefaultOptions("wellAssemblyFileStore")
 
         with Toil(options) as toil:
 
@@ -136,17 +154,17 @@ class WellAssemblyJobTestCase(ToilTestCase):
             utilities.exportFiles(
                 toil, self.test_directory_a, well_assembly_rv['apc_rv'])
 
-        self._assert_true_cmp_spades_fasta(
-            self.test_directory_a, self.actual_directory_a)
-        self._assert_true_cmp_apc_fasta(
-            self.test_directory_a, self.actual_directory_a)
+        self._assert_true_cmp_fasta(
+            self.test_directory_a, self.actual_directory_a, self.spades_fasta)
+        self._assert_true_cmp_fasta(
+            self.test_directory_a, self.actual_directory_a, self.apc_fasta)
 
 
 class PlateAssemblyJobTestCase(ToilTestCase):
 
     def test_plate_assembly_job(self):
 
-        options = Job.Runner.getDefaultOptions("plateAssemblyJobStore")
+        options = Job.Runner.getDefaultOptions("plateAssemblyFileStore")
 
         with Toil(options) as toil:
 
@@ -169,12 +187,14 @@ class PlateAssemblyJobTestCase(ToilTestCase):
                 toil, self.test_directory_b, self.well_specs, well_assembly_rvs)
 
         for well_spec in self.well_specs:
-            self._assert_true_cmp_spades_fasta(
+            self._assert_true_cmp_fasta(
                 os.path.join(self.test_directory_b, well_spec),
-                os.path.join(self.actual_directory_b, well_spec))
-            self._assert_true_cmp_apc_fasta(
+                os.path.join(self.actual_directory_b, well_spec),
+                self.spades_fasta)
+            self._assert_true_cmp_fasta(
                 os.path.join(self.test_directory_b, well_spec),
-                os.path.join(self.actual_directory_b, well_spec))
+                os.path.join(self.actual_directory_b, well_spec),
+                self.apc_fasta)
 
 
 if __name__ == '__main__':

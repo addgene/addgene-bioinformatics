@@ -20,10 +20,10 @@ class WellAssemblyJob(Job):
         Parameters
         ----------
         read_one_file_id : toil.fileStore.FileID
-            id of file in job store containing FASTQ Illumina short
+            id of file in file store containing FASTQ Illumina short
             left paired reads
         read_two_file_id : toil.fileStore.FileID
-            id of file in job store containing FASTQ Illumina short
+            id of file in file store containing FASTQ Illumina short
             right paired reads
         coverage_cutoff : str
             read coverage cutoff value

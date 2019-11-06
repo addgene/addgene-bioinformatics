@@ -26,10 +26,10 @@ class PlateAssemblyJob(Job):
             Specification for each well for which both FASTQ read
             files were found
         read_one_file_ids : list of toil.fileStore.FileID
-            ids of files in job store containing FASTQ Illumina short
+            ids of files in file store containing FASTQ Illumina short
             left paired reads
         read_two_file_ids : list of toil.fileStore.FileID
-            ids of files in job store containing FASTQ Illumina short
+            ids of files in file store containing FASTQ Illumina short
             right paired reads
         plate_spec : str
             Specification for plate containing the specified wells

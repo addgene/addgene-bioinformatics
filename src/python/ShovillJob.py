@@ -8,15 +8,16 @@ from toil.lib.docker import apiDockerCall
 import utilities
 
 
-class SpadesJob(Job):
+class ShovillJob(Job):
     """
-    Accepts paired-end Illumina reads for assembly with a coverage
-    cutoff specification.
+    Accepts paired-end Illumina reads for assembly using SPAdes,
+    SKESA, MEGAHIT, or Velvet.
     """
 
     def __init__(self, read_one_file_id, read_two_file_id,
-                 coverage_cutoff, output_directory, parent_rv={},
+                 output_directory, parent_rv={},
                  read_one_file_name="R1.fastq.gz", read_two_file_name="R2.fastq.gz",
+                 membory="4", ram="3",
                  *args, **kwargs):
         """
         Parameters
@@ -27,20 +28,18 @@ class SpadesJob(Job):
         read_two_file_id : toil.fileStore.FileID
             id of the file in the file store containing FASTQ Illumina
             short right paired reads
-        coverage_cutoff : str
-            read coverage cutoff value
         output_directory : str
             name of directory for output
         parent_rv : dict
             dictionary of return values from the parent job
         """
-        super(SpadesJob, self).__init__(*args, **kwargs)
+        super(ShovillJob, self).__init__(*args, **kwargs)
         self.read_one_file_id = read_one_file_id
         self.read_one_file_name = read_one_file_name
         self.read_two_file_id = read_two_file_id
         self.read_two_file_name = read_two_file_name
-        self.coverage_cutoff = coverage_cutoff
         self.output_directory = output_directory
+        self.ram = ram
         self.parent_rv = parent_rv
 
     def run(self, fileStore):
@@ -48,7 +47,7 @@ class SpadesJob(Job):
         Returns
         -------
         dict of toil.fileStore.FileID and str
-            file ids and names of warnings and spades log files, and
+            file ids and names of log and corrections files, and
             contigs FASTA file
         """
         # Read the read files from the file store into the local
@@ -60,47 +59,50 @@ class SpadesJob(Job):
 
         # Mount the Toil local temporary directory to the same path in
         # the container, and use the path as the working directory in
-        # the container, then call spades.py
+        # the container, then call shovill
         # TODO: Specify the container on construction
         working_dir = fileStore.localTempDir
         apiDockerCall(
             self,
-            image='biocontainers/spades:v3.13.1_cv1',
+            image='ralatsdio/shovill:v1.0.9',
             volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
             working_dir=working_dir,
-            parameters=["spades.py",
-                        "-1",
+            parameters=["shovill",
+                        "--R1",
                         read_one_file_path,
-                        "-2",
+                        "--R2",
                         read_two_file_path,
-                        "-o",
+                        "--outdir",
                         os.path.join(working_dir, self.output_directory),
-                        "--cov-cutoff",
-                        self.coverage_cutoff,
+                        "--ram",
+                        self.ram,
                         ])
 
-        # Write the warnings and spades log files, and contigs FASTA
-        # file from the local temporary directory into the file store
-        warnings_file_name = "warnings.log"
-        warnings_file_id = utilities.writeGlobalFile(
-            fileStore, self.output_directory, warnings_file_name)
-        spades_file_name = "spades.log"
-        spades_file_id = utilities.writeGlobalFile(
-            fileStore, self.output_directory, spades_file_name)
-        contigs_file_name = "contigs.fasta"
+        # Write the shovill log and corrections files, and contigs
+        # FASTA file from the local temporary directory into the file
+        # store
+        log_file_name = "shovill.log"
+        log_file_id = utilities.writeGlobalFile(
+            fileStore, self.output_directory, log_file_name)
+
+        corrections_file_name = "shovill.corrections"
+        corrections_file_id = utilities.writeGlobalFile(
+            fileStore, self.output_directory, corrections_file_name)
+
+        contigs_file_name = "contigs.fa"
         contigs_file_id = utilities.writeGlobalFile(
             fileStore, self.output_directory, contigs_file_name)
 
         # Return file ids and names for export
-        spades_rv = {
-            'spades_rv': {
-                'warnings_file': {
-                    'id': warnings_file_id,
-                    'name': warnings_file_name,
+        shovill_rv = {
+            'shovill_rv': {
+                'log_file': {
+                    'id': log_file_id,
+                    'name': log_file_name,
                 },
-                'spades_file': {
-                    'id': spades_file_id,
-                    'name': spades_file_name,
+                'corrections_file': {
+                    'id': corrections_file_id,
+                    'name': corrections_file_name,
                 },
                 'contigs_file': {
                     'id': contigs_file_id,
@@ -108,8 +110,8 @@ class SpadesJob(Job):
                 },
             }
         }
-        spades_rv.update(self.parent_rv)
-        return spades_rv
+        shovill_rv.update(self.parent_rv)
+        return shovill_rv
 
 
 if __name__ == "__main__":
@@ -117,9 +119,8 @@ if __name__ == "__main__":
     Assemble reads corresponding to a single well.
 
     """
-    # Parse FASTQ data path, plate and well specification, coverage
-    # cutoff, and output directory, making the output directory if
-    # needed
+    # Parse FASTQ data path, plate and well specification, and output
+    # directory, making the output directory if needed
     parser = ArgumentParser()
     Job.Runner.addToilOptions(parser)
     cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-3]
@@ -134,8 +135,6 @@ if __name__ == "__main__":
                         help="the plate specification")
     parser.add_argument('-w', '--well-spec', default="B01",
                         help="the well specification")
-    parser.add_argument('-c', '--coverage-cutoff', default="100",
-                        help="the coverage cutoff")
     parser.add_argument('-o', '--output-directory', default=None,
                         help="the directory containing all output files")
     options = parser.parse_args()
@@ -153,21 +152,20 @@ if __name__ == "__main__":
                 toil, options.data_path, options.plate_spec, [options.well_spec],
                 options.source_scheme)
 
-            # Construct and start the SPAdes job
-            spades_job = SpadesJob(
+            # Construct and start the shovill job
+            shovill_job = ShovillJob(
                 read_one_file_ids[0],
                 read_two_file_ids[0],
-                options.coverage_cutoff,
                 options.output_directory,
                 )
-            spades_rv = toil.start(spades_job)
+            shovill_rv = toil.start(shovill_job)
 
         else:
 
-            # Restart the SPAdes job
-            spades_rv = toil.restart(spades_job)
+            # Restart the shovill job
+            shovill_rv = toil.restart(shovill_job)
 
-        # Export the SPAdes warnings and log files, and contigs FASTA
-        # file from the file store
+        # Export the shovill log and corrections files, and contigs
+        # FASTA file from the file store
         utilities.exportFiles(
-            toil, options.output_directory, spades_rv['spades_rv'])
+            toil, options.output_directory, shovill_rv['shovill_rv'])
