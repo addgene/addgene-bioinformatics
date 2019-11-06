@@ -23,7 +23,7 @@ class NovoplastyJob(Job):
         read_two_file_name="R2.fastq.gz",
         *args,
         **kwargs
-    ):
+        ):
         """
         Parameters
         ----------
