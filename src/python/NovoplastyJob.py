@@ -196,7 +196,7 @@ if __name__ == "__main__":
                 options.source_scheme,
             )
 
-            # Construct and start the novoplasty job
+            # Construct and start the NOVOPlasty job
             novoplasty_job = NovoplastyJob(
                 read_one_file_ids[0], read_two_file_ids[0], options.output_directory
             )
@@ -204,12 +204,11 @@ if __name__ == "__main__":
 
         else:
 
-            # Restart the novoplasty job
+            # Restart the NOVOPlasty job
             novoplasty_rv = toil.restart(novoplasty_job)
 
-        # Export the novoplasty log and corrections files, and contigs
+        # Export the NOVOPlasty log and corrections files, and contigs
         # FASTA file from the file store
         utilities.exportFiles(
             toil, options.output_directory, novoplasty_rv["novoplasty_rv"]
         )
-
