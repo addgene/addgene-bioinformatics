@@ -10,6 +10,7 @@ from ApcJob import ApcJob
 from SpadesJob import SpadesJob
 from WellAssemblyJob import WellAssemblyJob
 from PlateAssemblyJob import PlateAssemblyJob
+from NovoplastyJob import NovoplastyJob
 
 import utilities
 
@@ -69,6 +70,7 @@ class ToilTestCase(unittest.TestCase):
                 os.path.join(actual_directory, self.apc_fasta)))
 
 
+
 class JobsTestCase(ToilTestCase):
 
     def test_spades_job(self):
@@ -110,6 +112,27 @@ class JobsTestCase(ToilTestCase):
 
         self._assert_true_cmp_apc_fasta(
             self.test_directory_a, self.actual_directory_a)
+
+    def test_novoplasty_job(self):
+        options = Job.Runner.getDefaultOptions("novoplastyFileStore")
+
+        with Toil(options) as toil:
+
+            read_one_file_ids, read_two_file_ids = self._import_read_files(
+                toil, [self.well_spec])
+
+            novoplasty_job = NovoplastyJob(
+                read_one_file_ids[0],
+                read_two_file_ids[0],
+                self.output_directory,
+            )
+            novoplasty_rv = toil.start(novoplasty_job)
+
+            utilities.exportFiles(
+                toil, self.test_directory_a, novoplasty_rv['novoplasty_rv'])
+
+        self._assert_true_cmp_fasta(
+            self.test_directory_a, self.actual_directory_a, self.novoplasty_fasta)
 
 
 class WellAssemblyJobTestCase(ToilTestCase):
