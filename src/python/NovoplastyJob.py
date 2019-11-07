@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 import os
+import gzip
 
 from toil.job import Job
 from toil.common import Toil
@@ -23,7 +24,7 @@ class NovoplastyJob(Job):
         read_two_file_name="R2.fastq.gz",
         *args,
         **kwargs
-        ):
+    ):
         """
         Parameters
         ----------
@@ -62,9 +63,6 @@ class NovoplastyJob(Job):
         read_two_file_path = utilities.readGlobalFile(
             fileStore, self.read_two_file_id, self.read_two_file_name
         )
-
-        # TODO: Select a read sequence as the seed here, and write it
-        # into the local temporary directory
 
         # Write the NOVOPlasty config file into the local temporary
         # directory
@@ -112,6 +110,18 @@ Use Quality Scores    = no
             )
             f.write(config)
 
+        # Select a read sequence as the seed here, and write it
+        # into the local temporary directory
+        with open(os.path.join(working_dir, "Seed.fasta"), "w+") as f:
+            with gzip.open(os.path.join(working_dir, read_one_file_path), "rt") as g:
+                for line in g:
+                    # ignore the comment line
+                    if line[0] == "@":
+                        continue
+                    # just write the first read as the seed
+                    f.write(">seed\n" + line)
+                    break
+
         # Mount the Toil local temporary directory to the same path in
         # the container, and use the path as the working directory in
         # the container, then call NOVOPlasty
@@ -121,11 +131,12 @@ Use Quality Scores    = no
             image="ralatsdio/novoplasty:v3.7.0",
             volumes={working_dir: {"bind": working_dir, "mode": "rw"}},
             working_dir=working_dir,
-            parameters=["perl",
-                        "/home/biodocker/bin/NOVOPlasty.pl",
-                        "-c",
-                        "config.txt",
-                        ],
+            parameters=[
+                "perl",
+                "/home/biodocker/bin/NOVOPlasty.pl",
+                "-c",
+                "config.txt",
+            ],
         )
 
         # Write the contigs FASTA file from the local temporary
