@@ -2,3 +2,5 @@
 A11967A_sW0154_B01/
 A11967B_sW0154/
 dat/miscellaneous/A11967A_sW0154_FASTA/apc*
+.mypy_cache/
+.vscode/
