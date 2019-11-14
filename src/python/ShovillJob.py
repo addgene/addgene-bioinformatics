@@ -50,6 +50,11 @@ class ShovillJob(Job):
             file ids and names of log and corrections files, and
             contigs FASTA file
         """
+        # Expected output file names
+        log_file_name = "shovill.log"
+        corrections_file_name = "shovill.corrections"
+        contigs_file_name = "contigs.fa"
+
         # Read the read files from the file store into the local
         # temporary directory
         read_one_file_path = utilities.readGlobalFile(
@@ -81,17 +86,18 @@ class ShovillJob(Job):
         # Write the shovill log and corrections files, and contigs
         # FASTA file from the local temporary directory into the file
         # store
-        log_file_name = "shovill.log"
         log_file_id = utilities.writeGlobalFile(
             fileStore, self.output_directory, log_file_name)
-
-        corrections_file_name = "shovill.corrections"
         corrections_file_id = utilities.writeGlobalFile(
             fileStore, self.output_directory, corrections_file_name)
-
-        contigs_file_name = "contigs.fa"
         contigs_file_id = utilities.writeGlobalFile(
             fileStore, self.output_directory, contigs_file_name)
+
+        except Exception as exc:
+            # Ensure expectred return values on exceptions
+            log_file_id = None
+            corrections_file_id = None
+            contigs_file_id = None
 
         # Return file ids and names for export
         shovill_rv = {

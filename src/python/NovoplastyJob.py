@@ -55,20 +55,24 @@ class NovoplastyJob(Job):
             file ids and names of log and corrections files, and
             contigs FASTA file
         """
-        # Read the read files from the file store into the local
-        # temporary directory
-        read_one_file_path = utilities.readGlobalFile(
-            fileStore, self.read_one_file_id, self.read_one_file_name
-        )
-        read_two_file_path = utilities.readGlobalFile(
-            fileStore, self.read_two_file_id, self.read_two_file_name
-        )
+        # Expected output file names
+        contigs_file_name = "contigs.fa"
 
-        # Write the NOVOPlasty config file into the local temporary
-        # directory
-        working_dir = fileStore.localTempDir
-        with open(os.path.join(working_dir, "config.txt"), "w+") as f:
-            config = """Project:
+        try:
+            # Read the read files from the file store into the local
+            # temporary directory
+            read_one_file_path = utilities.readGlobalFile(
+                fileStore, self.read_one_file_id, self.read_one_file_name
+            )
+            read_two_file_path = utilities.readGlobalFile(
+                fileStore, self.read_two_file_id, self.read_two_file_name
+            )
+
+            # Write the NOVOPlasty config file into the local temporary
+            # directory
+            working_dir = fileStore.localTempDir
+            with open(os.path.join(working_dir, "config.txt"), "w+") as f:
+                config = """Project:
 -----------------------
 Project name          = Assembly
 Type                  = mito
@@ -104,47 +108,50 @@ Insert size auto      = yes
 Insert Range          = 1.9
 Insert Range strict   = 1.3,
 Use Quality Scores    = no
-            """.format(
-                read_one_file_path=read_one_file_path,
-                read_two_file_path=read_two_file_path,
-            )
-            f.write(config)
+                 """.format(
+                     read_one_file_path=read_one_file_path,
+                     read_two_file_path=read_two_file_path,
+                 )
+                 f.write(config)
 
-        # Select a read sequence as the seed here, and write it
-        # into the local temporary directory
-        with open(os.path.join(working_dir, "Seed.fasta"), "w+") as f:
-            with gzip.open(os.path.join(working_dir, read_one_file_path), "rt") as g:
-                for line in g:
-                    # ignore the comment line
-                    if line[0] == "@":
-                        continue
-                    # just write the first read as the seed
-                    f.write(">seed\n" + line)
-                    break
+             # Select a read sequence as the seed here, and write it
+             # into the local temporary directory
+             with open(os.path.join(working_dir, "Seed.fasta"), "w+") as f:
+                 with gzip.open(os.path.join(working_dir, read_one_file_path), "rt") as g:
+                     for line in g:
+                         # ignore the comment line
+                         if line[0] == "@":
+                             continue
+                         # just write the first read as the seed
+                         f.write(">seed\n" + line)
+                         break
 
-        # Mount the Toil local temporary directory to the same path in
-        # the container, and use the path as the working directory in
-        # the container, then call NOVOPlasty
-        # TODO: Specify the container on construction
-        apiDockerCall(
-            self,
-            image="ralatsdio/novoplasty:v3.7.0",
-            volumes={working_dir: {"bind": working_dir, "mode": "rw"}},
-            working_dir=working_dir,
-            parameters=[
-                "perl",
-                "/home/biodocker/bin/NOVOPlasty.pl",
-                "-c",
-                "config.txt",
-            ],
-        )
+             # Mount the Toil local temporary directory to the same path in
+             # the container, and use the path as the working directory in
+             # the container, then call NOVOPlasty
+             # TODO: Specify the container on construction
+             apiDockerCall(
+                 self,
+                 image="ralatsdio/novoplasty:v3.7.0",
+                 volumes={working_dir: {"bind": working_dir, "mode": "rw"}},
+                 working_dir=working_dir,
+                 parameters=[
+                     "perl",
+                     "/home/biodocker/bin/NOVOPlasty.pl",
+                     "-c",
+                     "config.txt",
+                 ],
+             )
 
-        # Write the contigs FASTA file from the local temporary
-        # directory into the file store
-        contigs_file_name = "contigs.fa"
-        contigs_file_id = utilities.writeGlobalFile(
-            fileStore, self.output_directory, contigs_file_name
-        )
+             # Write the contigs FASTA file from the local temporary
+             # directory into the file store
+             contigs_file_id = utilities.writeGlobalFile(
+                 fileStore, self.output_directory, contigs_file_name
+             )    
+
+        except Exception as exc:
+            # Ensure expectred return values on exceptions
+             contigs_file_id = None
 
         # Return file ids and names for export
         novoplasty_rv = {

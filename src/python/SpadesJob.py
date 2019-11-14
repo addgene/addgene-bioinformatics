@@ -51,45 +51,54 @@ class SpadesJob(Job):
             file ids and names of warnings and spades log files, and
             contigs FASTA file
         """
-        # Read the read files from the file store into the local
-        # temporary directory
-        read_one_file_path = utilities.readGlobalFile(
-            fileStore, self.read_one_file_id, self.read_one_file_name)
-        read_two_file_path = utilities.readGlobalFile(
-            fileStore, self.read_two_file_id, self.read_two_file_name)
-
-        # Mount the Toil local temporary directory to the same path in
-        # the container, and use the path as the working directory in
-        # the container, then call spades.py
-        # TODO: Specify the container on construction
-        working_dir = fileStore.localTempDir
-        apiDockerCall(
-            self,
-            image='biocontainers/spades:v3.13.1_cv1',
-            volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
-            working_dir=working_dir,
-            parameters=["spades.py",
-                        "-1",
-                        read_one_file_path,
-                        "-2",
-                        read_two_file_path,
-                        "-o",
-                        os.path.join(working_dir, self.output_directory),
-                        "--cov-cutoff",
-                        self.coverage_cutoff,
-                        ])
-
-        # Write the warnings and spades log files, and contigs FASTA
-        # file from the local temporary directory into the file store
+        # Expected output file names
         warnings_file_name = "warnings.log"
-        warnings_file_id = utilities.writeGlobalFile(
-            fileStore, self.output_directory, warnings_file_name)
         spades_file_name = "spades.log"
-        spades_file_id = utilities.writeGlobalFile(
-            fileStore, self.output_directory, spades_file_name)
         contigs_file_name = "contigs.fasta"
-        contigs_file_id = utilities.writeGlobalFile(
-            fileStore, self.output_directory, contigs_file_name)
+
+        try:
+            # Read the read files from the file store into the local
+            # temporary directory
+            read_one_file_path = utilities.readGlobalFile(
+                fileStore, self.read_one_file_id, self.read_one_file_name)
+            read_two_file_path = utilities.readGlobalFile(
+                fileStore, self.read_two_file_id, self.read_two_file_name)
+
+            # Mount the Toil local temporary directory to the same path in
+            # the container, and use the path as the working directory in
+            # the container, then call spades.py
+            # TODO: Specify the container on construction
+            working_dir = fileStore.localTempDir
+            apiDockerCall(
+                self,
+                image='biocontainers/spades:v3.13.1_cv1',
+                volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
+                working_dir=working_dir,
+                parameters=["spades.py",
+                            "-1",
+                            read_one_file_path,
+                            "-2",
+                            read_two_file_path,
+                            "-o",
+                            os.path.join(working_dir, self.output_directory),
+                            "--cov-cutoff",
+                            self.coverage_cutoff,
+                            ])
+
+            # Write the warnings and spades log files, and contigs FASTA
+            # file from the local temporary directory into the file store
+            warnings_file_id = utilities.writeGlobalFile(
+                fileStore, self.output_directory, warnings_file_name)
+            spades_file_id = utilities.writeGlobalFile(
+                fileStore, self.output_directory, spades_file_name)
+            contigs_file_id = utilities.writeGlobalFile(
+                fileStore, self.output_directory, contigs_file_name)
+
+        except Exception as exc:
+            # Ensure expectred return values on exceptions
+            warnings_file_id = None
+            spades_file_id = None
+            contigs_file_id = None
 
         # Return file ids and names for export
         spades_rv = {

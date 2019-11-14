@@ -42,36 +42,44 @@ class ApcJob(Job):
             file ids and names of output and alignment files, and
             circular sequence FASTA file
         """
-        # Read the contigs FASTA file from the file store into the
-        # local temporary directory
-        utilities.readGlobalFile(
-            fileStore, self.contigs_file_id, self.contigs_file_name)
-
-        # Mount the Toil local temporary directory to the same path in
-        # the container, and use the path as the working directory in
-        # the container, then call apc.pl
-        # TODO: Specify the container on construction
-        working_dir = fileStore.localTempDir
-        apiDockerCall(
-            self,
-            image='ralatsdio/apc',
-            volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
-            working_dir=working_dir,
-            parameters=["apc.pl",
-                        "-b",
-                        self.base_file_name,
-                        self.contigs_file_name,
-                        ])
-
-        # Write the output file from the local temporary directory
-        # into the file store
+        # Expected output file names
         log_file_name = self.base_file_name + ".log"
-        log_file_id = utilities.writeGlobalFile(
-            fileStore, log_file_name)
         sequence_file_name = self.base_file_name + ".1.fa"
-        sequence_file_id = utilities.writeGlobalFile(
-            fileStore, sequence_file_name)
+        
+        try:
+            # Read the contigs FASTA file from the file store into the
+            # local temporary directory
+            utilities.readGlobalFile(
+                fileStore, self.contigs_file_id, self.contigs_file_name)
 
+            # Mount the Toil local temporary directory to the same path in
+            # the container, and use the path as the working directory in
+            # the container, then call apc.pl
+            # TODO: Specify the container on construction
+            working_dir = fileStore.localTempDir
+            apiDockerCall(
+                self,
+                image='ralatsdio/apc',
+                volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
+                working_dir=working_dir,
+                parameters=["apc.pl",
+                            "-b",
+                            self.base_file_name,
+                            self.contigs_file_name,
+                            ])
+
+            # Write the output file from the local temporary directory
+            # into the file store
+            log_file_id = utilities.writeGlobalFile(
+                fileStore, log_file_name)
+            sequence_file_id = utilities.writeGlobalFile(
+                fileStore, sequence_file_name)
+
+        except Exception as exc:
+            # Ensure expectred return values on exceptions
+            log_file_id = None
+            sequence_file_id = None
+            
         # Return file ids and names for export
         apc_rv = {
             'apc_rv': {
