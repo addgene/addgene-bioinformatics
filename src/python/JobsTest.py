@@ -66,7 +66,6 @@ class ToilTestCase(unittest.TestCase):
                 os.path.join(actual_directory, fasta)))
 
 
-
 class JobsTestCase(ToilTestCase):
 
     def test_shovill_job(self):

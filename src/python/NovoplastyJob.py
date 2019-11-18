@@ -111,47 +111,47 @@ Use Quality Scores    = no
                  """.format(
                      read_one_file_path=read_one_file_path,
                      read_two_file_path=read_two_file_path,
-                 )
-                 f.write(config)
+                )
+                f.write(config)
 
-             # Select a read sequence as the seed here, and write it
-             # into the local temporary directory
-             with open(os.path.join(working_dir, "Seed.fasta"), "w+") as f:
-                 with gzip.open(os.path.join(working_dir, read_one_file_path), "rt") as g:
-                     for line in g:
-                         # ignore the comment line
-                         if line[0] == "@":
-                             continue
-                         # just write the first read as the seed
-                         f.write(">seed\n" + line)
-                         break
+            # Select a read sequence as the seed here, and write it
+            # into the local temporary directory
+            with open(os.path.join(working_dir, "Seed.fasta"), "w+") as f:
+                with gzip.open(os.path.join(working_dir, read_one_file_path), "rt") as g:
+                    for line in g:
+                        # ignore the comment line
+                        if line[0] == "@":
+                            continue
+                        # just write the first read as the seed
+                        f.write(">seed\n" + line)
+                        break
 
-             # Mount the Toil local temporary directory to the same path in
-             # the container, and use the path as the working directory in
-             # the container, then call NOVOPlasty
-             # TODO: Specify the container on construction
-             apiDockerCall(
-                 self,
-                 image="ralatsdio/novoplasty:v3.7.0",
-                 volumes={working_dir: {"bind": working_dir, "mode": "rw"}},
-                 working_dir=working_dir,
-                 parameters=[
-                     "perl",
-                     "/home/biodocker/bin/NOVOPlasty.pl",
-                     "-c",
-                     "config.txt",
-                 ],
-             )
+            # Mount the Toil local temporary directory to the same path in
+            # the container, and use the path as the working directory in
+            # the container, then call NOVOPlasty
+            # TODO: Specify the container on construction
+            apiDockerCall(
+                self,
+                image="ralatsdio/novoplasty:v3.7.0",
+                volumes={working_dir: {"bind": working_dir, "mode": "rw"}},
+                working_dir=working_dir,
+                parameters=[
+                    "perl",
+                    "/home/biodocker/bin/NOVOPlasty.pl",
+                    "-c",
+                    "config.txt",
+                ],
+            )
 
-             # Write the contigs FASTA file from the local temporary
-             # directory into the file store
-             contigs_file_id = utilities.writeGlobalFile(
-                 fileStore, self.output_directory, contigs_file_name
-             )    
+            # Write the contigs FASTA file from the local temporary
+            # directory into the file store
+            contigs_file_id = utilities.writeGlobalFile(
+                fileStore, self.output_directory, contigs_file_name
+            )
 
         except Exception as exc:
             # Ensure expectred return values on exceptions
-             contigs_file_id = None
+            contigs_file_id = None
 
         # Return file ids and names for export
         novoplasty_rv = {
