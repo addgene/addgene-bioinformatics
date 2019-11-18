@@ -159,8 +159,8 @@ if __name__ == "__main__":
                 well_specs,
                 read_one_file_ids,
                 read_two_file_ids,
-                options.assembler,
                 options.plate_spec,
+                options.assembler,
                 options.coverage_cutoff,
                 )
             well_assembly_rvs = toil.start(plate_assembly_job)
