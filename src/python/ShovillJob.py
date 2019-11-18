@@ -55,43 +55,44 @@ class ShovillJob(Job):
         corrections_file_name = "shovill.corrections"
         contigs_file_name = "contigs.fa"
 
-        # Read the read files from the file store into the local
-        # temporary directory
-        read_one_file_path = utilities.readGlobalFile(
-            fileStore, self.read_one_file_id, self.read_one_file_name)
-        read_two_file_path = utilities.readGlobalFile(
-            fileStore, self.read_two_file_id, self.read_two_file_name)
+        try:
+            # Read the read files from the file store into the local
+            # temporary directory
+            read_one_file_path = utilities.readGlobalFile(
+                fileStore, self.read_one_file_id, self.read_one_file_name)
+            read_two_file_path = utilities.readGlobalFile(
+                fileStore, self.read_two_file_id, self.read_two_file_name)
 
-        # Mount the Toil local temporary directory to the same path in
-        # the container, and use the path as the working directory in
-        # the container, then call shovill
-        # TODO: Specify the container on construction
-        working_dir = fileStore.localTempDir
-        apiDockerCall(
-            self,
-            image='ralatsdio/shovill:v1.0.9',
-            volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
-            working_dir=working_dir,
-            parameters=["shovill",
-                        "--R1",
-                        read_one_file_path,
-                        "--R2",
-                        read_two_file_path,
-                        "--outdir",
-                        os.path.join(working_dir, self.output_directory),
-                        "--ram",
-                        self.ram,
-                        ])
+            # Mount the Toil local temporary directory to the same path in
+            # the container, and use the path as the working directory in
+            # the container, then call shovill
+            # TODO: Specify the container on construction
+            working_dir = fileStore.localTempDir
+            apiDockerCall(
+                self,
+                image='ralatsdio/shovill:v1.0.9',
+                volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
+                working_dir=working_dir,
+                parameters=["shovill",
+                            "--R1",
+                            read_one_file_path,
+                            "--R2",
+                            read_two_file_path,
+                            "--outdir",
+                            os.path.join(working_dir, self.output_directory),
+                            "--ram",
+                            self.ram,
+                            ])
 
-        # Write the shovill log and corrections files, and contigs
-        # FASTA file from the local temporary directory into the file
-        # store
-        log_file_id = utilities.writeGlobalFile(
-            fileStore, self.output_directory, log_file_name)
-        corrections_file_id = utilities.writeGlobalFile(
-            fileStore, self.output_directory, corrections_file_name)
-        contigs_file_id = utilities.writeGlobalFile(
-            fileStore, self.output_directory, contigs_file_name)
+            # Write the shovill log and corrections files, and contigs
+            # FASTA file from the local temporary directory into the file
+            # store
+            log_file_id = utilities.writeGlobalFile(
+                fileStore, self.output_directory, log_file_name)
+            corrections_file_id = utilities.writeGlobalFile(
+                fileStore, self.output_directory, corrections_file_name)
+            contigs_file_id = utilities.writeGlobalFile(
+                fileStore, self.output_directory, contigs_file_name)
 
         except Exception as exc:
             # Ensure expectred return values on exceptions
