@@ -5,17 +5,21 @@ from toil.job import Job
 from toil.common import Toil
 
 from ApcJob import ApcJob
+from NovoplastyJob import NovoplastyJob
 from SpadesJob import SpadesJob
+from ShovillJob import ShovillJob
 
 import utilities
 
 
 class WellAssemblyJob(Job):
     """
-    Runs a SpadesJob followed by an ApcJob.
+    Runs a SpadesJob or ShovillJob followed by an ApcJob, or a
+    NovoplastyJob
     """
     def __init__(self, read_one_file_id, read_two_file_id,
-                 coverage_cutoff, output_directory, *args, **kwargs):
+                 assembler, coverage_cutoff, output_directory,
+                 *args, **kwargs):
         """
         Parameters
         ----------
@@ -25,6 +29,8 @@ class WellAssemblyJob(Job):
         read_two_file_id : toil.fileStore.FileID
             id of file in file store containing FASTQ Illumina short
             right paired reads
+        assembler : str
+            name of assembler to run, from ['spades', 'shovill', 'novoplasty']
         coverage_cutoff : str
             read coverage cutoff value
         output_directory : str
@@ -33,6 +39,9 @@ class WellAssemblyJob(Job):
         super(WellAssemblyJob, self).__init__(*args, **kwargs)
         self.read_one_file_id = read_one_file_id
         self.read_two_file_id = read_two_file_id
+        if assembler not in ['spades', 'shovill', 'novoplasty']:
+            raise Exception("Unexpected assembler")
+        self.assembler = assembler
         self.coverage_cutoff = coverage_cutoff
         self.output_directory = output_directory
 
@@ -43,19 +52,43 @@ class WellAssemblyJob(Job):
         dict
             the return values of the SpadesJob and ApcJob
         """
-        spades_job = SpadesJob(
-            self.read_one_file_id,
-            self.read_two_file_id,
-            self.coverage_cutoff,
-            self.output_directory,
-        )
-        apc_job = ApcJob(
-            spades_job.rv('spades_rv', 'contigs_file', 'id'),
-            parent_rv=spades_job.rv()
-        )
-        final_job = self.addChild(
-            spades_job).addChild(
-                apc_job)
+        if self.assembler == "spades":
+            spades_job = SpadesJob(
+                self.read_one_file_id,
+                self.read_two_file_id,
+                self.coverage_cutoff,
+                self.output_directory,
+            )
+            apc_job = ApcJob(
+                spades_job.rv('spades_rv', 'contigs_file', 'id'),
+                parent_rv=spades_job.rv()
+            )
+            final_job = self.addChild(
+                spades_job).addChild(
+                    apc_job)
+
+        elif self.assembler == "shovill":
+            shovill_job = ShovillJob(
+                self.read_one_file_id,
+                self.read_two_file_id,
+                self.output_directory,
+            )
+            apc_job = ApcJob(
+                shovill_job.rv('shovill_rv', 'contigs_file', 'id'),
+                parent_rv=shovill_job.rv()
+            )
+            final_job = self.addChild(
+                shovill_job).addChild(
+                    apc_job)
+
+        else:  # self.assembler == "novoplasty"
+            novoplasty_job = NovoplastyJob(
+                self.read_one_file_id,
+                self.read_two_file_id,
+                self.output_directory,
+            )
+            final_job = self.addChild(
+                novoplasty_job)
 
         # Return file ids for export
         return final_job.rv()
@@ -84,10 +117,15 @@ if __name__ == "__main__":
                         help="the plate specification")
     parser.add_argument('-w', '--well-spec', default="B01",
                         help="the well specification")
+    parser.add_argument('-a', '--assembler', default="spades",
+                        choices=['spades', 'shovill', 'novoplaty'],
+                        help="the assembler to run")
     parser.add_argument('-c', '--coverage-cutoff', default="100",
                         help="the coverage cutoff")
     parser.add_argument('-o', '--output-directory', default=None,
                         help="the directory containing all output files")
+
+    # Define and make the output directory, if needed
     options = parser.parse_args()
     if options.output_directory is None:
         options.output_directory = options.plate_spec + "_" + options.well_spec
