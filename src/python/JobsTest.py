@@ -24,6 +24,7 @@ class ToilTestCase(unittest.TestCase):
         self.data_directory = os.sep + os.path.join(*cmps)
         self.plate_spec = "A11967A_sW0154"
         self.well_spec = "B01"
+        self.assembler = "spades"
         self.coverage_cutoff = "100"
 
         self.output_directory = "{0}_{1}".format(self.plate_spec, self.well_spec)
@@ -166,6 +167,7 @@ class WellAssemblyJobTestCase(ToilTestCase):
             well_assembly_job = WellAssemblyJob(
                 read_one_file_ids[0],
                 read_two_file_ids[0],
+                self.assembler,
                 self.coverage_cutoff,
                 self.output_directory,
             )
@@ -198,6 +200,7 @@ class PlateAssemblyJobTestCase(ToilTestCase):
                 read_one_file_ids,
                 read_two_file_ids,
                 self.plate_spec,
+                self.assembler,
                 self.coverage_cutoff,
                 cores=2,
                 disk="3G",

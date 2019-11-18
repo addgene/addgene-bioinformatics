@@ -64,6 +64,7 @@ class PlateAssemblyJob(Job):
                     WellAssemblyJob(
                         self.read_one_file_ids[iW],
                         self.read_two_file_ids[iW],
+                        self.assembler,
                         self.coverage_cutoff,
                         self.plate_spec + "_" + self.well_specs[iW],
                         )).rv())
@@ -158,6 +159,7 @@ if __name__ == "__main__":
                 well_specs,
                 read_one_file_ids,
                 read_two_file_ids,
+                options.assembler,
                 options.plate_spec,
                 options.coverage_cutoff,
                 )

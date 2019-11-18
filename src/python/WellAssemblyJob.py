@@ -145,6 +145,7 @@ if __name__ == "__main__":
             well_assembly_job = WellAssemblyJob(
                 read_one_file_ids[0],
                 read_two_file_ids[0],
+                options.assembler,
                 options.coverage_cutoff,
                 options.output_directory,
                 )
