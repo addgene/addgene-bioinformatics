@@ -90,7 +90,7 @@ class WellAssemblyJob(Job):
             final_job = self.addChild(
                 novoplasty_job)
 
-        # Return file ids for export
+        # Return file ids, and names for export
         return final_job.rv()
 
 
@@ -119,7 +119,7 @@ if __name__ == "__main__":
                         help="the well specification")
     parser.add_argument('-a', '--assembler', default="spades",
                         choices=['spades', 'shovill', 'novoplaty'],
-                        help="the assembler to run")
+                        help="name of assembler to run")
     parser.add_argument('-c', '--coverage-cutoff', default="100",
                         help="the coverage cutoff")
     parser.add_argument('-o', '--output-directory', default=None,
@@ -156,12 +156,12 @@ if __name__ == "__main__":
             # Restart the well assembly job
             well_assembly_rv = toil.restart(well_assembly_job)
 
-        # Export the SPAdes warnings and log files, and contigs FASTA
-        # file from the file store
+        # Export the assembler output files from the file store
         utilities.exportFiles(
-            toil, options.output_directory, well_assembly_rv['spades_rv'])
+            toil, options.output_directory, well_assembly_rv[options.assembler + '_rv'])
 
-        # Export the apc output file, and sequence FASTA file from the
-        # file store
-        utilities.exportFiles(
-            toil, options.output_directory, well_assembly_rv['apc_rv'])
+        if self.assembler in ["spades", "shovill"]:
+            # Export the apc output file, and sequence FASTA file from
+            # the file store
+            utilities.exportFiles(
+                toil, options.output_directory, well_assembly_rv['apc_rv'])

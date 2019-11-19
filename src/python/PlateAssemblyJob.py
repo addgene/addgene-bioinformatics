@@ -92,8 +92,8 @@ if __name__ == "__main__":
     parser.add_argument('-p', '--plate-spec', default="A11967B_sW0154",
                         help="the plate specification")
     parser.add_argument('-a', '--assembler', default="spades",
-                        choices=['spades', 'shovill', 'novoplaty'],
-                        help="the assembler to run")
+                        choices=['spades', 'shovill', 'novoplasty'],
+                        help="name of the assembler to run")
     parser.add_argument('-c', '--coverage-cutoff', default="100",
                         help="the coverage cutoff")
     parser.add_argument('-o', '--output-directory', default=None,
@@ -172,4 +172,4 @@ if __name__ == "__main__":
 
         # Export needed files created by each well assembly job
         utilities.exportWellAssemblyFiles(
-            toil, options.plate_spec, well_specs, well_assembly_rvs)
+            toil, options.assembler, options.plate_spec, well_specs, well_assembly_rvs)

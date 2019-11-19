@@ -209,7 +209,7 @@ class PlateAssemblyJobTestCase(ToilTestCase):
             well_assembly_rvs = toil.start(plate_assembly_job)
 
             utilities.exportWellAssemblyFiles(
-                toil, self.test_directory_b, self.well_specs, well_assembly_rvs)
+                toil, self.assembler, self.test_directory_b, self.well_specs, well_assembly_rvs)
 
         for well_spec in self.well_specs:
             self._assert_true_cmp_fasta(
