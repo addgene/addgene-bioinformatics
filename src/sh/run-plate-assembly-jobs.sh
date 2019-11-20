@@ -149,4 +149,5 @@ if [ -n "$OUTPUT_DIRECTORY" ]; then
 fi
 
 # Archive the plate assembly jobs output directory
-tar -czvf $OUTPUT_DIRECTORY.tar.gz $OUTPUT_DIRECTORY
+tar -czvf $OUTPUT_DIRECTORY.tar.gz \
+    $OUTPUT_DIRECTORY --exclude=*.tar.gz
