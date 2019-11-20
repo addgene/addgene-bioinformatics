@@ -40,6 +40,7 @@ class ToilTestCase(unittest.TestCase):
         if not os.path.exists(self.test_directory_b):
             os.mkdir(self.test_directory_b)
 
+        self.novoplasty_fasta = "contigs.fa"
         self.shovill_fasta = "contigs.fa"
         self.spades_fasta = "contigs.fasta"
         self.apc_fasta = "apc.1.fa"
@@ -68,6 +69,27 @@ class ToilTestCase(unittest.TestCase):
 
 
 class JobsTestCase(ToilTestCase):
+
+    def test_novoplasty_job(self):
+        options = Job.Runner.getDefaultOptions("novoplastyFileStore")
+
+        with Toil(options) as toil:
+
+            read_one_file_ids, read_two_file_ids = self._import_read_files(
+                toil, [self.well_spec])
+
+            novoplasty_job = NovoplastyJob(
+                read_one_file_ids[0],
+                read_two_file_ids[0],
+                self.output_directory,
+            )
+            novoplasty_rv = toil.start(novoplasty_job)
+
+            utilities.exportFiles(
+                toil, self.test_directory_a, novoplasty_rv['novoplasty_rv'])
+
+        self._assert_true_cmp_fasta(
+            self.test_directory_a, self.actual_directory_a, self.novoplasty_fasta)
 
     def test_shovill_job(self):
 
@@ -130,27 +152,6 @@ class JobsTestCase(ToilTestCase):
 
         self._assert_true_cmp_fasta(
             self.test_directory_a, self.actual_directory_a, self.apc_fasta)
-
-    def test_novoplasty_job(self):
-        options = Job.Runner.getDefaultOptions("novoplastyFileStore")
-
-        with Toil(options) as toil:
-
-            read_one_file_ids, read_two_file_ids = self._import_read_files(
-                toil, [self.well_spec])
-
-            novoplasty_job = NovoplastyJob(
-                read_one_file_ids[0],
-                read_two_file_ids[0],
-                self.output_directory,
-            )
-            novoplasty_rv = toil.start(novoplasty_job)
-
-            utilities.exportFiles(
-                toil, self.test_directory_a, novoplasty_rv['novoplasty_rv'])
-
-        self._assert_true_cmp_fasta(
-            self.test_directory_a, self.actual_directory_a, self.novoplasty_fasta)
 
 
 class WellAssemblyJobTestCase(ToilTestCase):
@@ -225,6 +226,8 @@ class PlateAssemblyJobTestCase(ToilTestCase):
 if __name__ == '__main__':
 
     jobsTestSuite = unittest.TestSuite()
+    jobsTestSuite.addTest(JobsTestCase('test_novoplasty_job'))
+    jobsTestSuite.addTest(JobsTestCase('test_shovill_job'))
     jobsTestSuite.addTest(JobsTestCase('test_spades_job'))
     jobsTestSuite.addTest(JobsTestCase('test_apc_job'))
 

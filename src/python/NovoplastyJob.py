@@ -206,6 +206,7 @@ if __name__ == "__main__":
         if not toil.options.restart:
 
             # Import the local read files into the file store
+
             read_one_file_ids, read_two_file_ids = utilities.importReadFiles(
                 toil,
                 options.data_path,
