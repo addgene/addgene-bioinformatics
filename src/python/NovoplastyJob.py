@@ -18,7 +18,6 @@ class NovoplastyJob(Job):
         self,
         read_one_file_id,
         read_two_file_id,
-        output_directory,
         parent_rv={},
         read_one_file_name="R1.fastq.gz",
         read_two_file_name="R2.fastq.gz",
@@ -34,8 +33,6 @@ class NovoplastyJob(Job):
         read_two_file_id : toil.fileStore.FileID
             id of the file in the file store containing FASTQ Illumina
             short right paired reads
-        output_directory : str
-            name of directory for output
         parent_rv : dict
             dictionary of return values from the parent job
         """
@@ -44,7 +41,6 @@ class NovoplastyJob(Job):
         self.read_one_file_name = read_one_file_name
         self.read_two_file_id = read_two_file_id
         self.read_two_file_name = read_two_file_name
-        self.output_directory = output_directory
         self.parent_rv = parent_rv
 
     def run(self, fileStore):
@@ -56,7 +52,9 @@ class NovoplastyJob(Job):
             contigs FASTA file
         """
         # Expected output file names
-        contigs_file_name = "contigs.fa"
+        project_name = "Toil"
+        log_file_name = "log_{0}.txt".format(project_name)
+        contigs_file_name = "Circularized_assembly_1_{0}.fasta".format(project_name)
 
         try:
             # Read the read files from the file store into the local
@@ -70,18 +68,17 @@ class NovoplastyJob(Job):
 
             # Write the NOVOPlasty config file into the local temporary
             # directory
-            working_dir = fileStore.localTempDir
-            with open(os.path.join(working_dir, "config.txt"), "w+") as f:
+            with open(os.path.join(working_dir, "config.txt"), 'w+') as f:
                 config = """Project:
 -----------------------
-Project name          = Assembly
+Project name          = {project_name}
 Type                  = mito
 Genome Range          = 1800-35000
 K-mer                 = 121
 Max memory            = 3
 Extended log          =
 Save assembled reads  =
-Seed Input            = Seed.fasta
+Seed Input            = {seed_file_path}
 Reference sequence    =
 Variance detection    =
 Chloroplast sequence  =
@@ -92,7 +89,7 @@ Read Length           = 251
 Insert size           = 500
 Platform              = illumina
 Single/Paired         = PE
-Combined reads        = 
+Combined reads        =
 Forward reads         = {read_one_file_path}
 Reverse reads         = {read_two_file_path}
 
@@ -109,6 +106,8 @@ Insert Range          = 1.9
 Insert Range strict   = 1.3,
 Use Quality Scores    = no
                  """.format(
+                     project_name=project_name,
+                     seed_file_path=seed_file_path,
                      read_one_file_path=read_one_file_path,
                      read_two_file_path=read_two_file_path,
                 )
@@ -143,20 +142,31 @@ Use Quality Scores    = no
                 ],
             )
 
-            # Write the contigs FASTA file from the local temporary
+            # Write the log, and contigs FASTA files from the local temporary
             # directory into the file store
+            log_file_id = utilities.writeGlobalFile(
+                fileStore, log_file_name
+            )
             contigs_file_id = utilities.writeGlobalFile(
-                fileStore, self.output_directory, contigs_file_name
+                fileStore, contigs_file_name
             )
 
         except Exception as exc:
             # Ensure expectred return values on exceptions
             contigs_file_id = None
+            log_file_id = None
 
         # Return file ids and names for export
         novoplasty_rv = {
-            "novoplasty_rv": {
-                "contigs_file": {"id": contigs_file_id, "name": contigs_file_name},
+            'novoplasty_rv': {
+                'log_file': {
+                    'id': log_file_id,
+                    'name': log_file_name,
+                },
+                'contigs_file': {
+                    'id': contigs_file_id,
+                    'name': contigs_file_name,
+                },
             }
         }
         novoplasty_rv.update(self.parent_rv)
@@ -217,7 +227,7 @@ if __name__ == "__main__":
 
             # Construct and start the NOVOPlasty job
             novoplasty_job = NovoplastyJob(
-                read_one_file_ids[0], read_two_file_ids[0], options.output_directory
+                read_one_file_ids[0], read_two_file_ids[0]
             )
             novoplasty_rv = toil.start(novoplasty_job)
 
@@ -226,8 +236,8 @@ if __name__ == "__main__":
             # Restart the NOVOPlasty job
             novoplasty_rv = toil.restart(novoplasty_job)
 
-        # Export the NOVOPlasty log and corrections files, and contigs
-        # FASTA file from the file store
+        # Export the NOVOPlasty log, and circularized contig FASTA
+        # file from the file store
         utilities.exportFiles(
-            toil, options.output_directory, novoplasty_rv["novoplasty_rv"]
+            toil, options.output_directory, novoplasty_rv['novoplasty_rv']
         )
