@@ -226,10 +226,10 @@ class PlateAssemblyJobTestCase(ToilTestCase):
 if __name__ == '__main__':
 
     jobsTestSuite = unittest.TestSuite()
-    jobsTestSuite.addTest(JobsTestCase('test_novoplasty_job'))
-    jobsTestSuite.addTest(JobsTestCase('test_shovill_job'))
-    jobsTestSuite.addTest(JobsTestCase('test_spades_job'))
-    jobsTestSuite.addTest(JobsTestCase('test_apc_job'))
+    jobsTestSuite.addTest(JobsTestCase("test_novoplasty_job"))
+    jobsTestSuite.addTest(JobsTestCase("test_shovill_job"))
+    jobsTestSuite.addTest(JobsTestCase("test_spades_job"))
+    jobsTestSuite.addTest(JobsTestCase("test_apc_job"))
 
     wellAssemblyJobTestSuite = unittest.TestLoader().loadTestsFromTestCase(
         WellAssemblyJobTestCase)

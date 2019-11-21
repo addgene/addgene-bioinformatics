@@ -52,7 +52,7 @@ class WellAssemblyJob(Job):
         dict
             the return values of the SpadesJob and ApcJob
         """
-        if self.assembler == "spades":
+        if self.assembler == 'spades':
             spades_job = SpadesJob(
                 self.read_one_file_id,
                 self.read_two_file_id,
@@ -67,7 +67,7 @@ class WellAssemblyJob(Job):
                 spades_job).addChild(
                     apc_job)
 
-        elif self.assembler == "shovill":
+        elif self.assembler == 'shovill':
             shovill_job = ShovillJob(
                 self.read_one_file_id,
                 self.read_two_file_id,
@@ -81,7 +81,7 @@ class WellAssemblyJob(Job):
                 shovill_job).addChild(
                     apc_job)
 
-        else:  # self.assembler == "novoplasty"
+        else:  # self.assembler == 'novoplasty'
             novoplasty_job = NovoplastyJob(
                 self.read_one_file_id,
                 self.read_two_file_id,
@@ -158,9 +158,9 @@ if __name__ == "__main__":
 
         # Export the assembler output files from the file store
         utilities.exportFiles(
-            toil, options.output_directory, well_assembly_rv[options.assembler + '_rv'])
+            toil, options.output_directory, well_assembly_rv[options.assembler + "_rv"])
 
-        if self.assembler in ["spades", "shovill"]:
+        if self.assembler in ['spades', 'shovill']:
             # Export the apc output file, and sequence FASTA file from
             # the file store
             utilities.exportFiles(

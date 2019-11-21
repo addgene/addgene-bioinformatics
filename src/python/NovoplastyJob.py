@@ -133,7 +133,7 @@ Use Quality Scores    = no
             apiDockerCall(
                 self,
                 image="ralatsdio/novoplasty:v3.7.0",
-                volumes={working_dir: {"bind": working_dir, "mode": "rw"}},
+                volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
                 working_dir=working_dir,
                 parameters=[
                     "perl",
@@ -175,23 +175,23 @@ if __name__ == "__main__":
     cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-3]
     cmps.extend(["dat", "miscellaneous"])
     parser.add_argument(
-        "-d",
-        "--data-path",
+        '-d',
+        '--data-path',
         default=os.sep + os.path.join(*cmps),
         help="path containing plate and well FASTQ source",
     )
     parser.add_argument(
-        "-s", "--source-scheme", default="file", help="scheme used for the source URL"
+        '-s', '--source-scheme', default="file", help="scheme used for the source URL"
     )
     parser.add_argument(
-        "-p", "--plate-spec", default="A11967A_sW0154", help="the plate specification"
+        '-p', '--plate-spec', default="A11967A_sW0154", help="the plate specification"
     )
     parser.add_argument(
-        "-w", "--well-spec", default="B01", help="the well specification"
+        '-w', '--well-spec', default="A01", help="the well specification"
     )
     parser.add_argument(
-        "-o",
-        "--output-directory",
+        '-o',
+        '--output-directory',
         default=None,
         help="the directory containing all output files",
     )

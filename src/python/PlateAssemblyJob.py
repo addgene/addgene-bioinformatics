@@ -115,7 +115,7 @@ if __name__ == "__main__":
             well_specs = []
             read_one_file_ids = []
             read_two_file_ids = []
-            if options.source_scheme == "file":
+            if options.source_scheme == 'file':
 
                 # Find read one and two files
                 read_one_files = glob(os.path.join(
@@ -127,7 +127,7 @@ if __name__ == "__main__":
                     "{0}_FASTQ".format(options.plate_spec),
                     "{0}_*_R2_001.fastq.gz".format(options.plate_spec)))
 
-            elif options.source_scheme == "s3":
+            elif options.source_scheme == 's3':
 
                 # Find the bucket name and path to the data source
                 cmps = options.data_path.split(os.sep)

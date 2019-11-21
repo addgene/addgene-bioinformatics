@@ -189,7 +189,7 @@ def exportWellAssemblyFiles(toil, assembler, output_directory, well_specs, well_
         if not os.path.exists(well_output_directory):
             os.mkdir(well_output_directory)
         exportFiles(
-            toil, well_output_directory, well_assembly_rvs[iW][assembler + '_rv'])
-        if assembler in ["spades", "shovill"]:
+            toil, well_output_directory, well_assembly_rvs[iW][assembler + "_rv"])
+        if assembler in ['spades', 'shovill']:
             exportFiles(
                 toil, well_output_directory, well_assembly_rvs[iW]['apc_rv'])
