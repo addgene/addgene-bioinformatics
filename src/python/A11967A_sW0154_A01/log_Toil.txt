@@ -1,0 +1,79 @@
+
+
+-----------------------------------------------
+NOVOPlasty: The Organelle Assembler
+Version 3.7
+Author: Nicolas Dierckxsens, (c) 2015-2019
+-----------------------------------------------
+
+
+Input parameters from the configuration file:   *** Verify if everything is correct ***
+
+Project:
+----------------------
+Project name          = Toil
+Type                  = mito
+Genome range          = 1800-35000
+K-mer                 = 121
+Max memory            = 3
+Extended log          = 
+Save assembled reads  = 
+Seed Input            = /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/toil-38d7e7d3-8133-4cdc-8a28-1ab2ab142291-154505276368670/tmpnoQ0k4/afd8d863-2980-46ea-af27-eb71eae42685/Seed.fasta
+Reference sequence    = 
+Variance detection    = 
+Chloroplast sequence  = 
+
+Dataset 1:
+----------------------
+Read Length           = 251
+Insert size           = 500
+Platform              = illumina
+Single/Paired         = PE
+Combined reads        = 
+Forward reads         = /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/toil-38d7e7d3-8133-4cdc-8a28-1ab2ab142291-154505276368670/tmpnoQ0k4/afd8d863-2980-46ea-af27-eb71eae42685/R1.fastq.gz
+Reverse reads         = /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/toil-38d7e7d3-8133-4cdc-8a28-1ab2ab142291-154505276368670/tmpnoQ0k4/afd8d863-2980-46ea-af27-eb71eae42685/R2.fastq.gz
+
+Heteroplasmy:
+-----------------------
+Heteroplasmy          = 
+HP exclude list       = 
+PCR-free              = 
+
+Optional:
+----------------------
+Insert size auto      = yes
+Insert range          = 1.9
+Insert range strict   = 1.3,
+Use Quality Scores    = 
+
+Subsampled fraction: 99.96 %
+Forward reads without pair: 212
+Reverse reads without pair: 179
+
+Retrieve Seed...
+
+Initial read retrieved successfully: CATAACACCCCTTGTTTGCCTGGCGGCAGTAGCGCGGTGGTCCCACCTGACCCCATGCCGAACTCAGAAGTGAAACGCCGTAGCGCCGATGGTAGTGTGGGGACTCCCCATGCGAGAGTAGGGAACTGCCAGGCATCAAATAAAACGAAAGGCTCAGTCGAAAGACTGGGCCTTTCGCCCGGGCTAATTATGGGGTGTCGCCCTTATTCGACTCTATAGTGAAGTTCCTATTCTCTAGAAAGTATAGGAA
+
+Start Assembly...
+
+
+-----------------Assembly 1 finished successfully: The genome has been circularized-----------------
+
+Contig 1                  : 5818 bp
+
+Total contigs              : 1
+Largest contig             : 5818 bp
+Smallest contig            : 5818 bp
+Average insert size        : 399 bp
+
+
+-----------------------------------------Input data metrics-----------------------------------------
+
+Total reads                : 75904
+Aligned reads              : 56008
+Assembled reads            : 38254
+Organelle genome %         : 73.79 %
+Average organelle coverage : 2416
+
+-----------------------------------------------------------------------------------------------------
+
