@@ -72,10 +72,11 @@ class ToilTestCase(unittest.TestCase):
         return contigs_file_id
 
     def _assert_true_cmp_fasta(self, test_directory, actual_directory, fasta):
-        self.assertTrue(
-            filecmp.cmp(
-                os.path.join(test_directory, fasta),
-                os.path.join(actual_directory, fasta)))
+        with open(os.path.join(test_directory, fasta), 'r') as f:
+            test_lines = f.readlines()
+        with open(os.path.join(actual_directory, fasta), 'r') as f:
+            actual_lines = f.readlines()
+        self.assertTrue(test_lines[1:] == actual_lines[1:])
 
 
 class JobsTestCase(ToilTestCase):
