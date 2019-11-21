@@ -66,6 +66,22 @@ class NovoplastyJob(Job):
                 fileStore, self.read_two_file_id, self.read_two_file_name
             )
 
+            # Select a read sequence as the seed, and write it
+            # into the local temporary directory
+            working_dir = fileStore.localTempDir
+            seed_file_path = os.path.join(working_dir, "Seed.fasta")
+            with open(seed_file_path, 'w+') as f:
+                with gzip.open(read_one_file_path, 'rt') as g:
+                    do_write = False
+                    for line in g:
+                        if line[0] == "@":
+                            if do_write:
+                                break
+                            else:
+                                do_write = True
+                        if do_write:
+                            f.write(line)
+
             # Write the NOVOPlasty config file into the local temporary
             # directory
             with open(os.path.join(working_dir, "config.txt"), 'w+') as f:
@@ -112,18 +128,6 @@ Use Quality Scores    = no
                      read_two_file_path=read_two_file_path,
                 )
                 f.write(config)
-
-            # Select a read sequence as the seed here, and write it
-            # into the local temporary directory
-            with open(os.path.join(working_dir, "Seed.fasta"), "w+") as f:
-                with gzip.open(os.path.join(working_dir, read_one_file_path), "rt") as g:
-                    for line in g:
-                        # ignore the comment line
-                        if line[0] == "@":
-                            continue
-                        # just write the first read as the seed
-                        f.write(">seed\n" + line)
-                        break
 
             # Mount the Toil local temporary directory to the same path in
             # the container, and use the path as the working directory in
