@@ -48,7 +48,7 @@ class ToilTestCase(unittest.TestCase):
         if not os.path.exists(self.test_directory_bg):
             os.mkdir(self.test_directory_bg)
 
-        self.novoplasty_fasta = "contigs.fa"
+        self.novoplasty_fasta = "Circularized_assembly_1_Toil.fasta"
         self.shovill_fasta = "contigs.fa"
         self.spades_fasta = "contigs.fasta"
         self.apc_fasta = "apc.1.fa"
