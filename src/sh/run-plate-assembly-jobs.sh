@@ -19,6 +19,7 @@ DESCRIPTION
 OPTIONS
 -d   Directory in which to place assembler output files. Default is
      selected assembler.
+-s   Date and time stamp the ouput directory
 -t   Use a test plate containing two wells
 
 EOF
