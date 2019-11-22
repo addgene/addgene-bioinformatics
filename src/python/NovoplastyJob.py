@@ -54,7 +54,8 @@ class NovoplastyJob(Job):
         # Expected output file names
         project_name = "Toil"
         log_file_name = "log_{0}.txt".format(project_name)
-        contigs_file_name = "Circularized_assembly_1_{0}.fasta".format(project_name)
+        contigs_file_name = "Circularized_assembly_1_{0}.fasta".format(
+            project_name)
 
         try:
             # Read the read files from the file store into the local
@@ -186,26 +187,21 @@ if __name__ == "__main__":
     cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-3]
     cmps.extend(["dat", "miscellaneous"])
     parser.add_argument(
-        '-d',
-        '--data-path',
+        '-d', '--data-path',
         default=os.sep + os.path.join(*cmps),
-        help="path containing plate and well FASTQ source",
-    )
+        help="path containing plate and well FASTQ source")
     parser.add_argument(
-        '-s', '--source-scheme', default="file", help="scheme used for the source URL"
-    )
+        '-s', '--source-scheme',
+        default="file", help="scheme used for the source URL")
     parser.add_argument(
-        '-p', '--plate-spec', default="A11967A_sW0154", help="the plate specification"
-    )
+        '-p', '--plate-spec',
+        default="A11967A_sW0154", help="the plate specification")
     parser.add_argument(
-        '-w', '--well-spec', default="A01", help="the well specification"
-    )
+        '-w', '--well-spec',
+        default="A01", help="the well specification")
     parser.add_argument(
-        '-o',
-        '--output-directory',
-        default=None,
-        help="the directory containing all output files",
-    )
+        '-o', '--output-directory',
+        default=None, help="the directory containing all output files")
     options = parser.parse_args()
     if options.output_directory is None:
         options.output_directory = options.plate_spec + "_" + options.well_spec

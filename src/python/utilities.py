@@ -165,10 +165,11 @@ def exportFiles(toil, output_directory, job_rv):
                 os.path.join(output_directory, spec['name'])))
 
 
-def exportWellAssemblyFiles(toil, assembler, output_directory, well_specs, well_assembly_rvs):
+def exportWellAssemblyFiles(toil, assembler, output_directory, well_specs,
+                            well_assembly_rvs):
     """
-    Export the assembler output files, and the apc output file, and sequence FASTA file from the file
-    store.
+    Export the assembler output files, and the apc output file, and
+    sequence FASTA file from the file store.
 
     Parameters
     ----------
@@ -188,8 +189,8 @@ def exportWellAssemblyFiles(toil, assembler, output_directory, well_specs, well_
         well_output_directory = os.path.join(output_directory, well_specs[iW])
         if not os.path.exists(well_output_directory):
             os.mkdir(well_output_directory)
-        exportFiles(
-            toil, well_output_directory, well_assembly_rvs[iW][assembler + "_rv"])
+        exportFiles(toil, well_output_directory,
+                    well_assembly_rvs[iW][assembler + "_rv"])
         if assembler in ['spades', 'shovill']:
-            exportFiles(
-                toil, well_output_directory, well_assembly_rvs[iW]['apc_rv'])
+            exportFiles(toil, well_output_directory,
+                        well_assembly_rvs[iW]['apc_rv'])

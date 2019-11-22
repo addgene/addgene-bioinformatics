@@ -138,8 +138,8 @@ if __name__ == "__main__":
 
             # Import the local read files into the file store
             read_one_file_ids, read_two_file_ids = utilities.importReadFiles(
-                toil, options.data_path, options.plate_spec, [options.well_spec],
-                options.source_scheme)
+                toil, options.data_path, options.plate_spec,
+                [options.well_spec], options.source_scheme)
 
             # Construct and start the well assembly job
             well_assembly_job = WellAssemblyJob(
@@ -157,8 +157,8 @@ if __name__ == "__main__":
             well_assembly_rv = toil.restart(well_assembly_job)
 
         # Export the assembler output files from the file store
-        utilities.exportFiles(
-            toil, options.output_directory, well_assembly_rv[options.assembler + "_rv"])
+        utilities.exportFiles(toil, options.output_directory,
+                              well_assembly_rv[options.assembler + "_rv"])
 
         if self.assembler in ['spades', 'shovill']:
             # Export the apc output file, and sequence FASTA file from

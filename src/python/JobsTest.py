@@ -28,13 +28,15 @@ class ToilTestCase(unittest.TestCase):
         self.assembler = "spades"
         self.coverage_cutoff = "100"
 
-        self.output_directory_aa = "{0}_{1}".format(self.plate_spec_a, self.well_spec_a)
+        self.output_directory_aa = "{0}_{1}".format(
+            self.plate_spec_a, self.well_spec_a)
         self.actual_directory_aa = self.output_directory_aa
         self.test_directory_aa = self.output_directory_aa + "_TEST"
         if not os.path.exists(self.test_directory_aa):
             os.mkdir(self.test_directory_aa)
 
-        self.output_directory_ab = "{0}_{1}".format(self.plate_spec_a, self.well_spec_b)
+        self.output_directory_ab = "{0}_{1}".format(
+            self.plate_spec_a, self.well_spec_b)
         self.actual_directory_ab = self.output_directory_ab
         self.test_directory_ab = self.output_directory_ab + "_TEST"
         if not os.path.exists(self.test_directory_ab):
@@ -99,7 +101,8 @@ class JobsTestCase(ToilTestCase):
                 toil, self.test_directory_aa, novoplasty_rv['novoplasty_rv'])
 
         self._assert_true_cmp_fasta(
-            self.test_directory_aa, self.actual_directory_aa, self.novoplasty_fasta)
+            self.test_directory_aa, self.actual_directory_aa,
+            self.novoplasty_fasta)
 
     def test_shovill_job(self):
 
@@ -121,7 +124,8 @@ class JobsTestCase(ToilTestCase):
                 toil, self.test_directory_ab, shovill_rv['shovill_rv'])
 
         self._assert_true_cmp_fasta(
-            self.test_directory_ab, self.actual_directory_ab, self.shovill_fasta)
+            self.test_directory_ab, self.actual_directory_ab,
+            self.shovill_fasta)
 
     def test_spades_job(self):
 
@@ -144,7 +148,8 @@ class JobsTestCase(ToilTestCase):
                 toil, self.test_directory_ab, spades_rv['spades_rv'])
 
         self._assert_true_cmp_fasta(
-            self.test_directory_ab, self.actual_directory_ab, self.spades_fasta)
+            self.test_directory_ab, self.actual_directory_ab,
+            self.spades_fasta)
 
     def test_apc_job(self):
 
@@ -161,7 +166,8 @@ class JobsTestCase(ToilTestCase):
                 toil, self.test_directory_ab, apc_rv['apc_rv'])
 
         self._assert_true_cmp_fasta(
-            self.test_directory_ab, self.actual_directory_ab, self.apc_fasta)
+            self.test_directory_ab, self.actual_directory_ab,
+            self.apc_fasta)
 
 
 class WellAssemblyJobTestCase(ToilTestCase):
@@ -190,9 +196,11 @@ class WellAssemblyJobTestCase(ToilTestCase):
                 toil, self.test_directory_ab, well_assembly_rv['apc_rv'])
 
         self._assert_true_cmp_fasta(
-            self.test_directory_ab, self.actual_directory_ab, self.spades_fasta)
+            self.test_directory_ab, self.actual_directory_ab,
+            self.spades_fasta)
         self._assert_true_cmp_fasta(
-            self.test_directory_ab, self.actual_directory_ab, self.apc_fasta)
+            self.test_directory_ab, self.actual_directory_ab,
+            self.apc_fasta)
 
 
 class PlateAssemblyJobTestCase(ToilTestCase):
@@ -220,7 +228,8 @@ class PlateAssemblyJobTestCase(ToilTestCase):
             well_assembly_rvs = toil.start(plate_assembly_job)
 
             utilities.exportWellAssemblyFiles(
-                toil, self.assembler, self.test_directory_bg, self.well_specs, well_assembly_rvs)
+                toil, self.assembler, self.test_directory_bg, self.well_specs,
+                well_assembly_rvs)
 
         for well_spec in self.well_specs:
             self._assert_true_cmp_fasta(

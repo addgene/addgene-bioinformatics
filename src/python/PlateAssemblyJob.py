@@ -172,4 +172,5 @@ if __name__ == "__main__":
 
         # Export needed files created by each well assembly job
         utilities.exportWellAssemblyFiles(
-            toil, options.assembler, options.plate_spec, well_specs, well_assembly_rvs)
+            toil, options.assembler, options.plate_spec, well_specs,
+            well_assembly_rvs)
