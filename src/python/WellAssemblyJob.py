@@ -159,7 +159,7 @@ if __name__ == "__main__":
         utilities.exportFiles(toil, options.output_directory,
                               well_assembly_rv[options.assembler + "_rv"])
 
-        if self.assembler in ['spades', 'shovill']:
+        if options.assembler in ['spades', 'shovill']:
             # Export the apc output file, and sequence FASTA file from
             # the file store
             utilities.exportFiles(
