@@ -75,10 +75,9 @@ class NovoplastyJob(Job):
                     do_write = False
                     for line in g:
                         if line[0] == "@":
-                            if do_write:
-                                break
-                            else:
-                                do_write = True
+                            do_write = True
+                        if line[0] == "+":
+                            break
                         if do_write:
                             f.write(line)
 
