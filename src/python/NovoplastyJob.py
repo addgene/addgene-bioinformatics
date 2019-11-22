@@ -148,11 +148,9 @@ Use Quality Scores    = no
             # Write the log, and contigs FASTA files from the local temporary
             # directory into the file store
             log_file_id = utilities.writeGlobalFile(
-                fileStore, log_file_name
-            )
+                fileStore, log_file_name)
             contigs_file_id = utilities.writeGlobalFile(
-                fileStore, contigs_file_name
-            )
+                fileStore, contigs_file_name)
 
         except Exception as exc:
             # Ensure expectred return values on exceptions
