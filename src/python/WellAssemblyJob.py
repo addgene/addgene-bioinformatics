@@ -85,7 +85,6 @@ class WellAssemblyJob(Job):
             novoplasty_job = NovoplastyJob(
                 self.read_one_file_id,
                 self.read_two_file_id,
-                self.output_directory,
             )
             final_job = self.addChild(
                 novoplasty_job)
