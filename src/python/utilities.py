@@ -3,7 +3,8 @@ import os
 
 def importFile(toil, source_path, scheme="file"):
     """
-    Import the source path using the specified shecme into the file store.
+    Import the source path using the specified shecme into the file
+    store.
 
     Parameters
     ----------
@@ -164,17 +165,19 @@ def exportFiles(toil, output_directory, job_rv):
                 os.path.join(output_directory, spec['name'])))
 
 
-def exportWellAssemblyFiles(toil, output_directory, well_specs, well_assembly_rvs):
+def exportWellAssemblyFiles(toil, assembler, output_directory, well_specs,
+                            well_assembly_rvs):
     """
-    Export the SPAdes warnings and log files, and contigs FASTA file
-    and the apc output file, and sequence FASTA file from the file
-    store.
+    Export the assembler output files, and the apc output file, and
+    sequence FASTA file from the file store.
 
     Parameters
     ----------
     toil : toil.common.Toil
         instance of a Toil context manager
-    output_directory : string
+    assembler : str
+        name of assembler run, from ['spades', 'shovill', 'novoplasty']
+    output_directory : str
         name of directory for export destination
     well_specs : list
         string specifications of the wells
@@ -186,7 +189,8 @@ def exportWellAssemblyFiles(toil, output_directory, well_specs, well_assembly_rv
         well_output_directory = os.path.join(output_directory, well_specs[iW])
         if not os.path.exists(well_output_directory):
             os.mkdir(well_output_directory)
-        exportFiles(
-            toil, well_output_directory, well_assembly_rvs[iW]['spades_rv'])
-        exportFiles(
-            toil, well_output_directory, well_assembly_rvs[iW]['apc_rv'])
+        exportFiles(toil, well_output_directory,
+                    well_assembly_rvs[iW][assembler + "_rv"])
+        if assembler in ['spades', 'shovill']:
+            exportFiles(toil, well_output_directory,
+                        well_assembly_rvs[iW]['apc_rv'])

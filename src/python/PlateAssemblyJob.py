@@ -18,7 +18,8 @@ class PlateAssemblyJob(Job):
     FASTQ read files were found.
     """
     def __init__(self, well_specs, read_one_file_ids, read_two_file_ids,
-                 plate_spec, coverage_cutoff, *args, **kwargs):
+                 plate_spec, assembler, coverage_cutoff,
+                 *args, **kwargs):
         """
         Parameters
         ----------
@@ -33,6 +34,8 @@ class PlateAssemblyJob(Job):
             right paired reads
         plate_spec : str
             Specification for plate containing the specified wells
+        assembler : str
+            name of assembler to run, from ['spades', 'shovill', 'novoplasty']
         coverage_cutoff : str
             read coverage cutoff value
         """
@@ -41,6 +44,9 @@ class PlateAssemblyJob(Job):
         self.read_one_file_ids = read_one_file_ids
         self.read_two_file_ids = read_two_file_ids
         self.plate_spec = plate_spec
+        if assembler not in ['spades', 'shovill', 'novoplasty']:
+            raise Exception("Unexpected assembler")
+        self.assembler = assembler
         self.coverage_cutoff = coverage_cutoff
 
     def run(self, fileStore):
@@ -58,6 +64,7 @@ class PlateAssemblyJob(Job):
                     WellAssemblyJob(
                         self.read_one_file_ids[iW],
                         self.read_two_file_ids[iW],
+                        self.assembler,
                         self.coverage_cutoff,
                         self.plate_spec + "_" + self.well_specs[iW],
                         )).rv())
@@ -84,13 +91,16 @@ if __name__ == "__main__":
                         help="scheme used for the source URL")
     parser.add_argument('-p', '--plate-spec', default="A11967B_sW0154",
                         help="the plate specification")
+    parser.add_argument('-a', '--assembler', default="spades",
+                        choices=['spades', 'shovill', 'novoplasty'],
+                        help="name of the assembler to run")
     parser.add_argument('-c', '--coverage-cutoff', default="100",
                         help="the coverage cutoff")
     parser.add_argument('-o', '--output-directory', default=None,
                         help="the directory containing all output files")
-    options = parser.parse_args()
 
     # Define and make the output directory, if needed
+    options = parser.parse_args()
     if options.output_directory is None:
         options.output_directory = options.plate_spec
     if not os.path.exists(options.output_directory):
@@ -105,7 +115,7 @@ if __name__ == "__main__":
             well_specs = []
             read_one_file_ids = []
             read_two_file_ids = []
-            if options.source_scheme == "file":
+            if options.source_scheme == 'file':
 
                 # Find read one and two files
                 read_one_files = glob(os.path.join(
@@ -117,7 +127,7 @@ if __name__ == "__main__":
                     "{0}_FASTQ".format(options.plate_spec),
                     "{0}_*_R2_001.fastq.gz".format(options.plate_spec)))
 
-            elif options.source_scheme == "s3":
+            elif options.source_scheme == 's3':
 
                 # Find the bucket name and path to the data source
                 cmps = options.data_path.split(os.sep)
@@ -150,6 +160,7 @@ if __name__ == "__main__":
                 read_one_file_ids,
                 read_two_file_ids,
                 options.plate_spec,
+                options.assembler,
                 options.coverage_cutoff,
                 )
             well_assembly_rvs = toil.start(plate_assembly_job)
@@ -161,4 +172,5 @@ if __name__ == "__main__":
 
         # Export needed files created by each well assembly job
         utilities.exportWellAssemblyFiles(
-            toil, options.plate_spec, well_specs, well_assembly_rvs)
+            toil, options.assembler, options.plate_spec, well_specs,
+            well_assembly_rvs)

@@ -16,7 +16,8 @@ class SpadesJob(Job):
 
     def __init__(self, read_one_file_id, read_two_file_id,
                  coverage_cutoff, output_directory, parent_rv={},
-                 read_one_file_name="R1.fastq.gz", read_two_file_name="R2.fastq.gz",
+                 read_one_file_name="R1.fastq.gz",
+                 read_two_file_name="R2.fastq.gz",
                  *args, **kwargs):
         """
         Parameters
@@ -159,8 +160,8 @@ if __name__ == "__main__":
 
             # Import the local read files into the file store
             read_one_file_ids, read_two_file_ids = utilities.importReadFiles(
-                toil, options.data_path, options.plate_spec, [options.well_spec],
-                options.source_scheme)
+                toil, options.data_path, options.plate_spec,
+                [options.well_spec], options.source_scheme)
 
             # Construct and start the SPAdes job
             spades_job = SpadesJob(

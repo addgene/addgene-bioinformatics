@@ -45,7 +45,7 @@ class ApcJob(Job):
         # Expected output file names
         log_file_name = self.base_file_name + ".log"
         sequence_file_name = self.base_file_name + ".1.fa"
-        
+
         try:
             # Read the contigs FASTA file from the file store into the
             # local temporary directory
@@ -79,7 +79,7 @@ class ApcJob(Job):
             # Ensure expectred return values on exceptions
             log_file_id = None
             sequence_file_id = None
-            
+
         # Return file ids and names for export
         apc_rv = {
             'apc_rv': {
@@ -95,7 +95,6 @@ class ApcJob(Job):
         }
         apc_rv.update(self.parent_rv)
         return apc_rv
-
 
 
 if __name__ == "__main__":
