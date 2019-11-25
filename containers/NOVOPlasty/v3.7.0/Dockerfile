@@ -1,8 +1,8 @@
-############################### Dockerfile ##################################
+##### Base image ###############################################################
 
 FROM biocontainers/biocontainers:v1.0.0_cv4
 
-################################# METADATA ###################################
+##### Metadata #################################################################
 
 LABEL base_image="biocontainers:v1.0.0_cv4"
 LABEL version="3"
@@ -17,15 +17,12 @@ LABEL about.tags="Genomics"
 LABEL extra.identifiers.biotools="NOVOPlasty"
 LABEL extra.binaries="NOVOPlasty.pl"
 
-################## BEGIN INSTALLATION ######################
+##### Installation #############################################################
 
-# Change user to root
 USER root
-
-# Shared environment
 ENV INSTALL_PFX=/home/biodocker
 
-# Install NOVOPlasty
+# NOVOPlasty
 ENV NOVOPLASTY_URL=https://github.com/ndierckx/NOVOPlasty
 ENV NOVOPLASTY_SRC=NOVOPlasty
 ENV NOVOPLASTY_TAG=NOVOPlasty3.7
@@ -36,16 +33,13 @@ RUN git clone $NOVOPLASTY_URL && \
     cd .. && \
     rm -rf $NOVOPLASTY_SRC
 
-# Change user to back to biodocker
+
+##### Configuration ############################################################
+
 USER biodocker
-
-# Change WORKDIR to /data
 WORKDIR /data
-
-# Define default command
 # CMD ['NOVOPlasty.pl']
 
-##################### INSTALLATION END #####################
+##### Maintainer ###############################################################
 
-# File Author / Maintainer
 MAINTAINER Raymond LeClair <raymond.leclair@springbok.io>
