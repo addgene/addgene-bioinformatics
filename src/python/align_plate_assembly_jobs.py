@@ -17,6 +17,7 @@ def to_int(a_str):
     ----------
     a_str : str
         a str
+
     Returns
     -------
     int
@@ -136,7 +137,7 @@ def align_cp_to_qc_sequences(assembler_data_dir,
 
     # Consider each plate directory contained in the run directory
     output_file = open(
-        os.path.join(assembler_data_dir, assembler_run_dir), 'r')
+        os.path.join(assembler_data_dir, assembler_run_dir + ".csv"), 'w')
 
     plate_specs = sorted(
         os.listdir(
@@ -199,11 +200,11 @@ def align_cp_to_qc_sequences(assembler_data_dir,
 
             # Assign candidate process apc sequence values
             # Note: apc is not called after every assembler
+            cp_sequences[plate][well]['apc'] = {}
             apc_sequence = Seq("", IUPAC.unambiguous_dna)
             apc_sequence_score = 0
             apc_doubled_sequence_score = 0
             if assembler in ["shovill", "spades"]:
-                cp_sequences[plate][well]['apc'] = {}
                 try:
                     apc_sequence = SeqIO.parse(
                         os.path.join(assembler_data_dir,
