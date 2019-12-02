@@ -8,6 +8,9 @@ from Bio import SeqIO
 from Bio.Alphabet import IUPAC
 from Bio.Seq import Seq
 
+from matplotlib import pyplot as plt
+import numpy as np
+
 
 def to_int(a_str):
     """
@@ -166,7 +169,7 @@ def align_cp_to_qc_sequences(assembler_data_dir,
                 qc_sequence = qc_sequences[plate][well]['sequence']
                 qc_sequence_len = qc_sequences[plate][well]['sequence_len']
                 qc_doubled_sequence = qc_sequences[plate][well]['doubled_sequence']
-            except Exception:
+            except Exception as e:
                 continue
 
             # Assign candidate process assembler sequence values
@@ -181,62 +184,148 @@ def align_cp_to_qc_sequences(assembler_data_dir,
             elif assembler == "spades":
                 cp_sequence_fNm = "contigs.fasta"
             try:
-                cp_sequence = SeqIO.parse(
+                cp_sequence = next(SeqIO.parse(
                     os.path.join(assembler_data_dir,
                                  assembler_run_dir,
                                  plate_spec,
                                  well,
                                  cp_sequence_fNm),
-                    "fasta").next().seq
-                cp_sequence_score = aligner.score(qc_sequence, cp_sequence)
-                cp_doubled_sequence_score = aligner.score(qc_doubled_sequence, cp_sequence)
-            except Exception:
+                    "fasta", IUPAC.unambiguous_dna)).seq
+                cp_complement = cp_sequence.complement()
+                cp_reverse = cp_sequence[len(cp_sequence):0:-1]
+                cp_reverse_complement = cp_complement[len(cp_complement):0:-1]
+
+                cp_sequence_score = aligner.score(
+                    qc_doubled_sequence, cp_sequence)
+                cp_complement_score = aligner.score(
+                    qc_doubled_sequence, cp_complement)
+                cp_reverse_score = aligner.score(
+                    qc_doubled_sequence, cp_reverse)
+                cp_reverse_complement_score = aligner.score(
+                    qc_doubled_sequence, cp_reverse_complement)
+
+            except Exception as e:
                 cp_sequence = Seq("", IUPAC.unambiguous_dna)
+                cp_complement = Seq("", IUPAC.unambiguous_dna)
+                cp_reverse = Seq("", IUPAC.unambiguous_dna)
+                cp_reverse_complement = Seq("", IUPAC.unambiguous_dna)
+
                 cp_sequence_score = 0
-                cp_doubled_sequence_score = 0
+                cp_complement_score = 0
+                cp_reverse_score = 0
+                cp_reverse_complement_score = 0
+
             cp_sequences[plate][well][assembler]['sequence'] = cp_sequence
+            cp_sequences[plate][well][assembler]['complement'] = cp_complement
+            cp_sequences[plate][well][assembler]['reverse'] = cp_reverse
+            cp_sequences[plate][well][assembler]['reverse_complement'] = cp_reverse_complement
+
             cp_sequences[plate][well][assembler]['sequence_score'] = cp_sequence_score
-            cp_sequences[plate][well][assembler]['doubled_sequence_score'] = cp_doubled_sequence_score
+            cp_sequences[plate][well][assembler]['complement_score'] = cp_complement_score
+            cp_sequences[plate][well][assembler]['reverse_score'] = cp_reverse_score
+            cp_sequences[plate][well][assembler]['reverse_complement_score'] = cp_reverse_complement_score
 
             # Assign candidate process apc sequence values
             # Note: apc is not called after every assembler
             cp_sequences[plate][well]['apc'] = {}
+
             apc_sequence = Seq("", IUPAC.unambiguous_dna)
+            apc_complement = Seq("", IUPAC.unambiguous_dna)
+            apc_reverse = Seq("", IUPAC.unambiguous_dna)
+            apc_reverse_complement = Seq("", IUPAC.unambiguous_dna)
+
             apc_sequence_score = 0
-            apc_doubled_sequence_score = 0
+            apc_complement_score = 0
+            apc_reverse_score = 0
+            apc_reverse_complement_score = 0
+
             if assembler in ["shovill", "spades"]:
                 try:
-                    apc_sequence = SeqIO.parse(
+                    apc_sequence = next(SeqIO.parse(
                         os.path.join(assembler_data_dir,
                                      assembler_run_dir,
                                      plate_spec,
                                      well,
                                      "apc.1.fa"),
-                        "fasta").next().seq
-                    apc_sequence_score = aligner.score(qc_sequence, apc_sequence)
-                    apc_doubled_sequence_score = aligner.score(qc_doubled_sequence, apc_sequence)
-                except Exception:
+                        "fasta", IUPAC.unambiguous_dna)).seq
+                    apc_complement = apc_sequence.complement()
+                    apc_reverse = apc_sequence[len(apc_sequence):0:-1]
+                    apc_reverse_complement = apc_complement[len(apc_complement):0:-1]
+
+                    apc_sequence_score = aligner.score(
+                        qc_doubled_sequence, apc_sequence)
+                    apc_complement_score = aligner.score(
+                        qc_doubled_sequence, apc_complement)
+                    apc_reverse_score = aligner.score(
+                        qc_doubled_sequence, apc_reverse)
+                    apc_reverse_complement_score = aligner.score(
+                        qc_doubled_sequence, apc_reverse_complement)
+
+                except Exception as e:
                     apc_sequence = Seq("", IUPAC.unambiguous_dna)
+                    apc_complement = Seq("", IUPAC.unambiguous_dna)
+                    apc_reverse = Seq("", IUPAC.unambiguous_dna)
+                    apc_reverse_complement = Seq("", IUPAC.unambiguous_dna)
+
                     apc_sequence_score = 0
-                    apc_doubled_sequence_score = 0
+                    apc_complement_score = 0
+                    apc_reverse_score = 0
+                    apc_reverse_complement_score = 0
+
             cp_sequences[plate][well]['apc']['sequence'] = apc_sequence
+            cp_sequences[plate][well]['apc']['complement'] = apc_complement
+            cp_sequences[plate][well]['apc']['reverse'] = apc_reverse
+            cp_sequences[plate][well]['apc']['reverse_complement'] = apc_reverse_complement
+
             cp_sequences[plate][well]['apc']['sequence_score'] = apc_sequence_score
-            cp_sequences[plate][well]['apc']['doubled_sequence_score'] = apc_doubled_sequence_score
+            cp_sequences[plate][well]['apc']['complement_score'] = apc_complement_score
+            cp_sequences[plate][well]['apc']['reverse_score'] = apc_reverse_score
+            cp_sequences[plate][well]['apc']['reverse_complement_score'] = apc_reverse_complement_score
 
             # Print results to a file, and stdout
-            result = "{:10s},{:7s},{:3s},{:10s},{:5d},{:5d},{:7.1f},{:7.1f},{:5d},{:7.1f},{:7.1f}".format(
-                assembler,
-                plate,
-                well,
-                qc_sequence[0:10],
-                len(qc_sequence),
-                len(cp_sequence),
-                cp_sequence_score,
-                cp_doubled_sequence_score,
-                len(apc_sequence),
-                apc_sequence_score,
-                apc_doubled_sequence_score,
-            )
+            result = ""
+
+            result += "{:10s}".format(assembler)
+            result += ", {:7s}".format(plate)
+            result += ", {:3s}".format(well)
+
+            result += ", {:10s}".format(
+                str(qc_sequence[0:min(10, len(qc_sequence))]))
+            result += ", {:10s}".format(
+                str(cp_sequence[0:min(10, len(cp_sequence))]))
+            result += ", {:10s}".format(
+                str(apc_sequence[0:min(10, len(apc_sequence))]))
+
+            if len(qc_sequence) > 0:
+                result += ", {:5.1f}".format(
+                    100 * cp_sequence_score / len(qc_sequence))
+                result += ", {:5.1f}".format(
+                    100 * cp_complement_score / len(qc_sequence))
+                result += ", {:5.1f}".format(
+                    100 * cp_reverse_score / len(qc_sequence))
+                result += ", {:5.1f}".format(
+                    100 * cp_reverse_complement_score / len(qc_sequence))
+
+                result += ", {:5.1f}".format(
+                    100 * apc_sequence_score / len(qc_sequence))
+                result += ", {:5.1f}".format(
+                    100 * apc_complement_score / len(qc_sequence))
+                result += ", {:5.1f}".format(
+                    100 * apc_reverse_score / len(qc_sequence))
+                result += ", {:5.1f}".format(
+                    100 * apc_reverse_complement_score / len(qc_sequence))
+
+            else:
+                result += ", {:5.1f}".format(0)
+                result += ", {:5.1f}".format(0)
+                result += ", {:5.1f}".format(0)
+                result += ", {:5.1f}".format(0)
+
+                result += ", {:5.1f}".format(0)
+                result += ", {:5.1f}".format(0)
+                result += ", {:5.1f}".format(0)
+                result += ", {:5.1f}".format(0)
+
             output_file.write(result + '\n')
             print(result)
 
@@ -304,3 +393,21 @@ if __name__ == "__main__":
                 cp_sequences = pickle.load(f)
 
         cp_alignment[assembler] = cp_sequences
+
+        """
+        assembler_sequences = []
+        circularizer_sequences = []
+
+        for plate, wells in cp_sequences.items():
+            if not wells:
+                continue
+            
+            for well, sequences in wells.items():
+                if not sequences:
+                    continue
+                assembler_sequences.append(sequences[assembler])
+                if assembler in ["shovill", "spades"]:
+                    circularizer_sequences.append(sequences['apc'])
+
+    fig, axs = plt.subplots()
+    """
