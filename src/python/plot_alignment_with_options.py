@@ -3,49 +3,14 @@ import os
 import pickle
 from random import choice, choices
 
+from utilities import create_r_seq
+
 from Bio import Align
 from Bio.Alphabet import IUPAC
 from Bio.Seq import Seq
 
 import matplotlib.pyplot as plt
 import numpy as np
-
-
-def create_r_seq_str(seq_len):
-    """Create a string of randomly selected nucleotides.
-
-    Parameters
-    ----------
-    seq_len : int
-        the length of the string to creeate
-
-    Returns
-    -------
-    str
-        the sequence string
-    """
-    r_seq_str = ""
-    for count in range(seq_len):
-        r_seq_str += choice("CGTA")
-    return r_seq_str
-
-
-def create_r_seq(seq_len):
-    """Creates a sequence of randomly selected nucleotides.
-
-    Parameters
-    ----------
-    seq_len : int
-        the length of the sequence to create
-
-    Returns
-    -------
-    Bio.Seq.Seq
-        the sequence
-    """
-    r_seq_str = create_r_seq_str(seq_len)
-    r_seq = Seq(r_seq_str, IUPAC.unambiguous_dna)
-    return r_seq
 
 
 def create_o_seq(a_seq, n_off):
