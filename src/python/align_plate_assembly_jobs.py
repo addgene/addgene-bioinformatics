@@ -3,6 +3,8 @@ import csv
 import os
 import pickle
 
+from utilities import create_r_seq
+
 from Bio import Align
 from Bio import SeqIO
 from Bio.Alphabet import IUPAC
@@ -104,7 +106,7 @@ def align_cp_to_qc_sequences(assembler_data_dir,
 
     Returns
     -------
-    dict
+    dct
         assembler, and apc if relevant, sequence, sequence length,
         doubled sequence, and corresponding alignment scores for each
         well in each plate in the run directory
@@ -192,8 +194,13 @@ def align_cp_to_qc_sequences(assembler_data_dir,
                                  cp_sequence_fNm),
                     "fasta", IUPAC.unambiguous_dna)).seq
                 cp_complement = cp_sequence.complement()
-                cp_reverse = cp_sequence[len(cp_sequence):0:-1]
-                cp_reverse_complement = cp_complement[len(cp_complement):0:-1]
+                cp_reverse = cp_sequence[::-1]
+                cp_reverse_complement = cp_complement[::-1]
+
+                r_sequence = create_r_seq(len(cp_sequence))
+
+                cp_random_score = aligner.score(
+                    qc_doubled_sequence, r_sequence)
 
                 cp_sequence_score = aligner.score(
                     qc_doubled_sequence, cp_sequence)
@@ -203,6 +210,7 @@ def align_cp_to_qc_sequences(assembler_data_dir,
                     qc_doubled_sequence, cp_reverse)
                 cp_reverse_complement_score = aligner.score(
                     qc_doubled_sequence, cp_reverse_complement)
+
 
             except Exception as e:
                 cp_sequence = Seq("", IUPAC.unambiguous_dna)
@@ -220,6 +228,7 @@ def align_cp_to_qc_sequences(assembler_data_dir,
             cp_sequences[plate][well][assembler]['reverse'] = cp_reverse
             cp_sequences[plate][well][assembler]['reverse_complement'] = cp_reverse_complement
 
+            cp_sequences[plate][well][assembler]['random_score'] = cp_random_score
             cp_sequences[plate][well][assembler]['sequence_score'] = cp_sequence_score
             cp_sequences[plate][well][assembler]['complement_score'] = cp_complement_score
             cp_sequences[plate][well][assembler]['reverse_score'] = cp_reverse_score
@@ -233,6 +242,8 @@ def align_cp_to_qc_sequences(assembler_data_dir,
             apc_complement = Seq("", IUPAC.unambiguous_dna)
             apc_reverse = Seq("", IUPAC.unambiguous_dna)
             apc_reverse_complement = Seq("", IUPAC.unambiguous_dna)
+
+            apc_random_score = 0
 
             apc_sequence_score = 0
             apc_complement_score = 0
@@ -249,8 +260,13 @@ def align_cp_to_qc_sequences(assembler_data_dir,
                                      "apc.1.fa"),
                         "fasta", IUPAC.unambiguous_dna)).seq
                     apc_complement = apc_sequence.complement()
-                    apc_reverse = apc_sequence[len(apc_sequence):0:-1]
-                    apc_reverse_complement = apc_complement[len(apc_complement):0:-1]
+                    apc_reverse = apc_sequence[::-1]
+                    apc_reverse_complement = apc_complement[::-1]
+
+                    r_sequence = create_r_seq(len(apc_sequence))
+
+                    apc_random_score = aligner.score(
+                        qc_doubled_sequence, r_sequence)
 
                     apc_sequence_score = aligner.score(
                         qc_doubled_sequence, apc_sequence)
@@ -277,6 +293,7 @@ def align_cp_to_qc_sequences(assembler_data_dir,
             cp_sequences[plate][well]['apc']['reverse'] = apc_reverse
             cp_sequences[plate][well]['apc']['reverse_complement'] = apc_reverse_complement
 
+            cp_sequences[plate][well]['apc']['random_score'] = apc_random_score
             cp_sequences[plate][well]['apc']['sequence_score'] = apc_sequence_score
             cp_sequences[plate][well]['apc']['complement_score'] = apc_complement_score
             cp_sequences[plate][well]['apc']['reverse_score'] = apc_reverse_score
@@ -289,42 +306,53 @@ def align_cp_to_qc_sequences(assembler_data_dir,
             result += ", {:7s}".format(plate)
             result += ", {:3s}".format(well)
 
-            result += ", {:10s}".format(
-                str(qc_sequence[0:min(10, len(qc_sequence))]))
-            result += ", {:10s}".format(
-                str(cp_sequence[0:min(10, len(cp_sequence))]))
-            result += ", {:10s}".format(
-                str(apc_sequence[0:min(10, len(apc_sequence))]))
+            result += ", {:5d}".format(qc_sequence_len)
 
-            if len(qc_sequence) > 0:
-                result += ", {:5.1f}".format(
-                    100 * cp_sequence_score / len(qc_sequence))
-                result += ", {:5.1f}".format(
-                    100 * cp_complement_score / len(qc_sequence))
-                result += ", {:5.1f}".format(
-                    100 * cp_reverse_score / len(qc_sequence))
-                result += ", {:5.1f}".format(
-                    100 * cp_reverse_complement_score / len(qc_sequence))
+            result += ", {:5d}".format(len(cp_sequence))
+            result += ", {:7.1f}".format(cp_random_score)
 
-                result += ", {:5.1f}".format(
-                    100 * apc_sequence_score / len(qc_sequence))
-                result += ", {:5.1f}".format(
-                    100 * apc_complement_score / len(qc_sequence))
-                result += ", {:5.1f}".format(
-                    100 * apc_reverse_score / len(qc_sequence))
-                result += ", {:5.1f}".format(
-                    100 * apc_reverse_complement_score / len(qc_sequence))
+            if qc_sequence_len > 0 and cp_sequence_score > 0:
+                result += ", {:7.1f}".format(
+                    100 * (cp_sequence_score - cp_random_score)
+                    / (qc_sequence_len - cp_random_score))
+                result += ", {:7.1f}".format(
+                    100 * (cp_complement_score - cp_random_score)
+                    / (qc_sequence_len - cp_random_score))
+                result += ", {:7.1f}".format(
+                    100 * (cp_reverse_score - cp_random_score)
+                    / (qc_sequence_len - cp_random_score))
+                result += ", {:7.1f}".format(
+                    100 * (cp_reverse_complement_score - cp_random_score)
+                    / (qc_sequence_len - cp_random_score))
 
             else:
-                result += ", {:5.1f}".format(0)
-                result += ", {:5.1f}".format(0)
-                result += ", {:5.1f}".format(0)
-                result += ", {:5.1f}".format(0)
+                result += ", {:7.1f}".format(0)
+                result += ", {:7.1f}".format(0)
+                result += ", {:7.1f}".format(0)
+                result += ", {:7.1f}".format(0)
 
-                result += ", {:5.1f}".format(0)
-                result += ", {:5.1f}".format(0)
-                result += ", {:5.1f}".format(0)
-                result += ", {:5.1f}".format(0)
+            result += ", {:5d}".format(len(apc_sequence))
+            result += ", {:7.1f}".format(cp_random_score)
+
+            if qc_sequence_len > 0 and apc_sequence_score > 0:
+                result += ", {:7.1f}".format(
+                    100 * (apc_sequence_score - apc_random_score)
+                    / (qc_sequence_len - apc_random_score))
+                result += ", {:7.1f}".format(
+                    100 * (apc_complement_score - apc_random_score)
+                    / (qc_sequence_len - apc_random_score))
+                result += ", {:7.1f}".format(
+                    100 * (apc_reverse_score - apc_random_score)
+                    / (qc_sequence_len - apc_random_score))
+                result += ", {:7.1f}".format(
+                    100 * (apc_reverse_complement_score - apc_random_score)
+                    / (qc_sequence_len - apc_random_score))
+
+            else:
+                result += ", {:7.1f}".format(0)
+                result += ", {:7.1f}".format(0)
+                result += ", {:7.1f}".format(0)
+                result += ", {:7.1f}".format(0)
 
             output_file.write(result + '\n')
             print(result)
@@ -334,13 +362,151 @@ def align_cp_to_qc_sequences(assembler_data_dir,
     return cp_sequences
 
 
+def plot_alignment_socres(assembler, cp_sequences):
+    """Plot histograms of absolute and relative alignment scores
+    resulting form assembled and circularized sequences.
+
+    Parameters
+    ----------
+    assembler : str
+        assembler: 'novoplasty', 'shovill', 'spades'
+    cp_sequences : dct
+        assembler, and apc if relevant, sequence, sequence length,
+        doubled sequence, and corresponding alignment scores for each
+        well in each plate in the run directory
+    """
+    # Accumulate alignement results for plotting
+    assembler_random_score = []
+    assembler_maximum_score = []
+    assembler_sequence_len = []
+
+    circularizer_random_score = []
+    circularizer_maximum_score = []
+    circularizer_sequence_len = []
+
+    for plate, wells in cp_sequences.items():
+        if not wells:
+            continue
+
+        for well, sequences in wells.items():
+            if not sequences:
+                continue
+
+            assembler_sequence_len.append(
+                len(sequences[assembler]['sequence']))
+            assembler_random_score.append(
+                sequences[assembler]['random_score'])
+            assembler_maximum_score.append(max(
+                [sequences[assembler]['sequence_score'],
+                 sequences[assembler]['complement_score'],
+                 sequences[assembler]['reverse_score'],
+                 sequences[assembler]['reverse_complement_score']]))
+
+            if assembler in ["shovill", "spades"]:
+                circularizer_sequence_len.append(
+                    len(sequences['apc']['sequence']))
+                circularizer_random_score.append(
+                    sequences['apc']['random_score'])
+                circularizer_maximum_score.append(max(
+                    [sequences['apc']['sequence_score'],
+                     sequences['apc']['complement_score'],
+                     sequences['apc']['reverse_score'],
+                     sequences['apc']['reverse_complement_score']]))
+
+    assembler_sequence_len = np.array(assembler_sequence_len)
+    assembler_random_score = np.array(assembler_random_score)
+    assembler_maximum_score = np.array(assembler_maximum_score)
+
+    circularizer_sequence_len = np.array(circularizer_sequence_len)
+    circularizer_random_score = np.array(circularizer_random_score)
+    circularizer_maximum_score = np.array(circularizer_maximum_score)
+
+    # Plot results, by assembler
+    if assembler in ["shovill", "spades"]:
+        if assembler_sequence_len.size != circularizer_sequence_len.size:
+            raise(Exception(
+                "Number of assembler and circularizer sequences differs"))
+
+        # Only plot results for which the sequence length is
+        # greater than zero, and not equal to the random sequence
+        # score
+        vld_idx = ((assembler_sequence_len > 0) &
+                   (circularizer_sequence_len > 0) &
+                   (assembler_sequence_len !=
+                    assembler_random_score) &
+                   (circularizer_sequence_len !=
+                    circularizer_random_score))
+
+        # Plot histogram of maximum score
+        fig, ax = plt.subplots()
+        ax.hist([assembler_maximum_score[vld_idx],
+                 circularizer_maximum_score[vld_idx]], 20)
+        ax.set_title(assembler)
+        ax.set_xlabel("Absolute score")
+        ax.set_ylabel("Count")
+        plt.show()
+
+        # Compute relative score
+        assembler_relative_score = (
+            (assembler_maximum_score[vld_idx]
+             - assembler_random_score[vld_idx])
+            / (assembler_sequence_len[vld_idx]
+               - assembler_random_score[vld_idx]))
+
+        circularizer_relative_score = (
+            (circularizer_maximum_score[vld_idx]
+             - circularizer_random_score[vld_idx])
+            / (circularizer_sequence_len[vld_idx]
+               - circularizer_random_score[vld_idx]))
+
+        # Plot histogram of maximum score
+        fig, ax = plt.subplots()
+        ax.hist([assembler_relative_score,
+                 circularizer_relative_score],
+                np.arange(90, 100.1, 0.2) / 100)
+        ax.set_title(assembler)
+        ax.set_xlabel("Relative score")
+        ax.set_ylabel("Count")
+        plt.show()
+
+    else:
+
+        # Only plot results for which the sequence length is
+        # greater than zero, and not equal to the random sequence
+        # score
+        vld_idx = ((assembler_sequence_len > 0) &
+                   (assembler_sequence_len
+                    != assembler_random_score))
+
+        # Plot histogram of maximum score
+        fig, ax = plt.subplots()
+        ax.hist(assembler_maximum_score[vld_idx], 20)
+        ax.set_title(assembler)
+        ax.set_xlabel("Absolute score")
+        ax.set_ylabel("Count")
+        plt.show()
+
+        # Compute relative score
+        assembler_relative_score = (
+            (assembler_maximum_score[vld_idx]
+             - assembler_random_score[vld_idx])
+            / (assembler_sequence_len[vld_idx]
+               - assembler_random_score[vld_idx]))
+
+        # Plot histogram of maximum score
+        fig, ax = plt.subplots()
+        ax.hist(assembler_relative_score,
+                np.arange(90, 100.1, 0.2) / 100)
+        ax.set_title(assembler)
+        ax.set_xlabel("Relative score")
+        ax.set_ylabel("Count")
+        plt.show()
+
+
 if __name__ == "__main__":
 
     # And and parse arguments
     parser = ArgumentParser()
-    parser.add_argument('-r', '--reprocess',
-                        action='store_true',
-                        help="reprocess each run directory")
     cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-4]
     parser.add_argument('-d', '--assembler-data-directory',
                         default=os.path.join(os.sep + os.path.join(*cmps),
@@ -351,6 +517,12 @@ if __name__ == "__main__":
                                              "addgene-assembler-data",
                                              "2018_QC_Sequences.csv"),
                         help="file containing QC sequences")
+    parser.add_argument('-p', '--plot',
+                        action='store_true',
+                        help="plot alignment results")
+    parser.add_argument('-r', '--reprocess',
+                        action='store_true',
+                        help="reprocess each run directory")
     options = parser.parse_args()
 
     # Identify run directories
@@ -363,7 +535,6 @@ if __name__ == "__main__":
 
     # Initialize candidate process alignment dictionary
     cp_alignment = {}
-
     for assembler_run_dir in assembler_run_dirs:
         assembler = assembler_run_dir.split('-')[0]
 
@@ -392,22 +563,8 @@ if __name__ == "__main__":
             with open(cp_alignment_pth, 'rb') as f:
                 cp_sequences = pickle.load(f)
 
-        cp_alignment[assembler] = cp_sequences
+        cp_alignment[assembler]['sequences'] = cp_sequences
 
-        """
-        assembler_sequences = []
-        circularizer_sequences = []
-
-        for plate, wells in cp_sequences.items():
-            if not wells:
-                continue
-            
-            for well, sequences in wells.items():
-                if not sequences:
-                    continue
-                assembler_sequences.append(sequences[assembler])
-                if assembler in ["shovill", "spades"]:
-                    circularizer_sequences.append(sequences['apc'])
-
-    fig, axs = plt.subplots()
-    """
+        # Plot alignment results
+        if options.plot:
+            plot_alignment_socres(assembler, cp_sequences)
