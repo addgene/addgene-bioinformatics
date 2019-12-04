@@ -21,7 +21,7 @@ LABEL extra.identifiers.biotools="SPAdes"
 USER root
 ENV INSTALL_PFX=/home/biodocker
 
-# SPAdes
+# Install SPAdes
 ENV ZIP=SPAdes-3.13.1-Linux.tar.gz
 ENV URL=http://cab.spbu.ru/files/release3.13.1
 ENV FOLDER=SPAdes-3.13.1-Linux
