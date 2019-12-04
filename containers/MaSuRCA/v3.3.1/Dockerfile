@@ -19,7 +19,7 @@ LABEL about.tags="Genomics"
 ARG MASURCA_VERSION=3.3.1
 
 RUN apt-get update && \
-    apt-get install -y
+    apt-get install -y \
         wget \
         libboost-all-dev \
 	libbz2-dev && \
