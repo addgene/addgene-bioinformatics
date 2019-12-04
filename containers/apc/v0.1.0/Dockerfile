@@ -1,8 +1,8 @@
-############################### Dockerfile ##################################
+##### Base image ###############################################################
 
 FROM biocontainers/biocontainers:v1.0.0_cv4
 
-################################# METADATA ###################################
+##### Metadata #################################################################
 
 LABEL base_image="biocontainers:v1.0.0_cv4"
 LABEL version="3"
@@ -17,12 +17,9 @@ LABEL about.tags="Genomics"
 LABEL extra.identifiers.biotools="apc"
 LABEL extra.binaries="apc.pl"
 
-################## BEGIN INSTALLATION ######################
+##### Installation #############################################################
 
-# Change user to root
 USER root
-
-# Shared environment
 ENV INSTALL_PFX=/home/biodocker
 
 # Install LAST
@@ -77,16 +74,12 @@ RUN git clone $APC_URL && \
     cd .. && \
     rm -rf $APC_SRC
 
-# Change user to back to biodocker
+##### Configuration ############################################################
+
 USER biodocker
-
-# Change WORKDIR to /data
 WORKDIR /data
-
-# Define default command
 # CMD ['apc.pl']
 
-##################### INSTALLATION END #####################
+##### Maintainer ###############################################################
 
-# File Author / Maintainer
 MAINTAINER Raymond LeClair <raymond.leclair@springbok.io>
