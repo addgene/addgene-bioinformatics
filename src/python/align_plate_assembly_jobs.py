@@ -177,13 +177,13 @@ def align_cp_to_qc_sequences(assembler_data_dir,
             # Assign candidate process assembler sequence values
             cp_sequences[plate][well][assembler] = {}
             cp_sequence_fNm = ""
-            if assembler == "novoplasty":
+            if assembler == 'novoplasty':
                 cp_sequence_fNm = "Circularized_assembly_1_Toil.fasta"
 
-            elif assembler == "shovill":
+            elif assembler == 'shovill':
                 cp_sequence_fNm = "contigs.fa"
 
-            elif assembler == "spades":
+            elif assembler == 'spades':
                 cp_sequence_fNm = "contigs.fasta"
             try:
                 cp_sequence = next(SeqIO.parse(
@@ -250,7 +250,10 @@ def align_cp_to_qc_sequences(assembler_data_dir,
             apc_reverse_score = 0
             apc_reverse_complement_score = 0
 
-            if assembler in ["shovill", "spades"]:
+            if assembler in ['novoplsty']:
+                pass
+
+            elif assembler in ['shovill', 'spades']:
                 try:
                     apc_sequence = next(SeqIO.parse(
                         os.path.join(assembler_data_dir,
@@ -362,27 +365,29 @@ def align_cp_to_qc_sequences(assembler_data_dir,
     return cp_sequences
 
 
-def plot_alignment_socres(assembler, cp_sequences):
-    """Plot histograms of absolute and relative alignment scores
-    resulting form assembled and circularized sequences.
+def accumulate_alignment_scores(assembler, cp_sequences):
+    """Accumulate alignement results.
 
     Parameters
     ----------
     assembler : str
-        assembler: 'novoplasty', 'shovill', 'spades'
+        the assembler used to create candidate process sequences
     cp_sequences : dct
         assembler, and apc if relevant, sequence, sequence length,
         doubled sequence, and corresponding alignment scores for each
         well in each plate in the run directory
     """
-    # Accumulate alignement results for plotting
+    assembler_sequence_len = []
     assembler_random_score = []
     assembler_maximum_score = []
-    assembler_sequence_len = []
+    assembler_valid_score = []
+    assembler_relative_score = []
 
+    circularizer_sequence_len = []
     circularizer_random_score = []
     circularizer_maximum_score = []
-    circularizer_sequence_len = []
+    circularizer_valid_score = []
+    circularizer_relative_score = []
 
     for plate, wells in cp_sequences.items():
         if not wells:
@@ -402,7 +407,10 @@ def plot_alignment_socres(assembler, cp_sequences):
                  sequences[assembler]['reverse_score'],
                  sequences[assembler]['reverse_complement_score']]))
 
-            if assembler in ["shovill", "spades"]:
+            if assembler in ['novoplasty']:
+                pass
+
+            elif assembler in ['shovill', 'spades']:
                 circularizer_sequence_len.append(
                     len(sequences['apc']['sequence']))
                 circularizer_random_score.append(
@@ -416,18 +424,33 @@ def plot_alignment_socres(assembler, cp_sequences):
     assembler_sequence_len = np.array(assembler_sequence_len)
     assembler_random_score = np.array(assembler_random_score)
     assembler_maximum_score = np.array(assembler_maximum_score)
+    assembler_valid_score = np.zeros(assembler_maximum_score.shape)
+    assembler_relative_score = np.zeros(assembler_maximum_score.shape)
 
     circularizer_sequence_len = np.array(circularizer_sequence_len)
     circularizer_random_score = np.array(circularizer_random_score)
     circularizer_maximum_score = np.array(circularizer_maximum_score)
+    circularizer_valid_score = np.zeros(assembler_maximum_score.shape)
+    circularizer_relative_score = np.zeros(assembler_maximum_score.shape)
 
-    # Plot results, by assembler
-    if assembler in ["shovill", "spades"]:
-        if assembler_sequence_len.size != circularizer_sequence_len.size:
-            raise(Exception(
-                "Number of assembler and circularizer sequences differs"))
+    if assembler in ['novoplasty']:
+        # Identify results for which the sequence length is
+        # greater than zero, and not equal to the random sequence
+        # score
+        vld_idx = ((assembler_sequence_len > 0) &
+                   (assembler_sequence_len
+                    != assembler_random_score))
+        assembler_valid_score[vld_idx] = assembler_maximum_score[vld_idx]
 
-        # Only plot results for which the sequence length is
+        # Compute relative score
+        assembler_relative_score[vld_idx] = (
+            (assembler_maximum_score[vld_idx]
+             - assembler_random_score[vld_idx])
+            / (assembler_sequence_len[vld_idx]
+               - assembler_random_score[vld_idx]))
+
+    elif assembler in ['shovill', 'spades']:
+        # Identify results for which the sequence length is
         # greater than zero, and not equal to the random sequence
         # score
         vld_idx = ((assembler_sequence_len > 0) &
@@ -436,66 +459,99 @@ def plot_alignment_socres(assembler, cp_sequences):
                     assembler_random_score) &
                    (circularizer_sequence_len !=
                     circularizer_random_score))
-
-        # Plot histogram of maximum score
-        fig, ax = plt.subplots()
-        ax.hist([assembler_maximum_score[vld_idx],
-                 circularizer_maximum_score[vld_idx]], 20)
-        ax.set_title(assembler)
-        ax.set_xlabel("Absolute score")
-        ax.set_ylabel("Count")
-        plt.show()
+        assembler_valid_score[vld_idx] = assembler_maximum_score[vld_idx]
+        circularizer_valid_score[vld_idx] = circularizer_maximum_score[vld_idx]
 
         # Compute relative score
-        assembler_relative_score = (
+        assembler_relative_score[vld_idx] = (
             (assembler_maximum_score[vld_idx]
              - assembler_random_score[vld_idx])
             / (assembler_sequence_len[vld_idx]
                - assembler_random_score[vld_idx]))
 
-        circularizer_relative_score = (
+        circularizer_relative_score[vld_idx] = (
             (circularizer_maximum_score[vld_idx]
              - circularizer_random_score[vld_idx])
             / (circularizer_sequence_len[vld_idx]
                - circularizer_random_score[vld_idx]))
 
+    cp_sequences['assembler_sequence_len'] = assembler_sequence_len
+    cp_sequences['assembler_random_score'] = assembler_random_score
+    cp_sequences['assembler_maximum_score'] = assembler_maximum_score
+    cp_sequences['assembler_valid_score'] = assembler_valid_score
+    cp_sequences['assembler_relative_score'] = assembler_relative_score
+
+    cp_sequences['circularizer_sequence_len'] = circularizer_sequence_len
+    cp_sequences['circularizer_random_score'] = circularizer_random_score
+    cp_sequences['circularizer_maximum_score'] = circularizer_maximum_score
+    cp_sequences['circularizer_valid_score'] = circularizer_valid_score
+    cp_sequences['circularizer_relative_score'] = circularizer_relative_score
+
+    return cp_sequences
+
+
+def plot_alignment_socres(assembler, cp_sequences):
+    """Plot histograms of absolute and relative alignment scores
+    resulting form assembled and circularized sequences.
+
+    Parameters
+    ----------
+    assembler : str
+        the assembler used to create candidate process sequences
+    cp_sequences : dct
+        assembler, and apc if relevant, sequence, sequence length,
+        doubled sequence, and corresponding alignment scores for each
+        well in each plate in the run directory
+    """
+    # Assign alignement results.
+    # assembler_sequence_len = cp_sequences['assembler_sequence_len']
+    # assembler_random_score = cp_sequences['assembler_random_score']
+    # assembler_maximum_score = cp_sequences['assembler_maximum_score']
+    vld_idx = cp_sequences['assembler_valid_score'] != 0.0
+    assembler_valid_score = cp_sequences['assembler_valid_score'][vld_idx]
+    assembler_relative_score = cp_sequences['assembler_relative_score'][vld_idx]
+
+    # circularizer_sequence_len = cp_sequences['circularizer_sequence_len']
+    # circularizer_random_score = cp_sequences['circularizer_random_score']
+    # circularizer_maximum_score = cp_sequences['circularizer_maximum_score']
+    circularizer_valid_score = cp_sequences['circularizer_valid_score'][vld_idx]
+    circularizer_relative_score = cp_sequences['circularizer_relative_score'][vld_idx]
+
+    # Plot results, by assembler
+    if assembler in ['novoplasty']:
+
         # Plot histogram of maximum score
         fig, ax = plt.subplots()
-        ax.hist([assembler_relative_score,
-                 circularizer_relative_score],
+        ax.hist(assembler_valid_score, 20)
+        ax.set_title(assembler)
+        ax.set_xlabel("Absolute score")
+        ax.set_ylabel("Count")
+        plt.show()
+
+        # Plot histogram of maximum score
+        fig, ax = plt.subplots()
+        ax.hist(assembler_relative_score,
                 np.arange(90, 100.1, 0.2) / 100)
         ax.set_title(assembler)
         ax.set_xlabel("Relative score")
         ax.set_ylabel("Count")
         plt.show()
 
-    else:
-
-        # Only plot results for which the sequence length is
-        # greater than zero, and not equal to the random sequence
-        # score
-        vld_idx = ((assembler_sequence_len > 0) &
-                   (assembler_sequence_len
-                    != assembler_random_score))
+    elif assembler in ['shovill', 'spades']:
 
         # Plot histogram of maximum score
         fig, ax = plt.subplots()
-        ax.hist(assembler_maximum_score[vld_idx], 20)
+        ax.hist([assembler_valid_score,
+                 circularizer_valid_score], 20)
         ax.set_title(assembler)
         ax.set_xlabel("Absolute score")
         ax.set_ylabel("Count")
         plt.show()
 
-        # Compute relative score
-        assembler_relative_score = (
-            (assembler_maximum_score[vld_idx]
-             - assembler_random_score[vld_idx])
-            / (assembler_sequence_len[vld_idx]
-               - assembler_random_score[vld_idx]))
-
         # Plot histogram of maximum score
         fig, ax = plt.subplots()
-        ax.hist(assembler_relative_score,
+        ax.hist([assembler_relative_score,
+                 circularizer_relative_score],
                 np.arange(90, 100.1, 0.2) / 100)
         ax.set_title(assembler)
         ax.set_xlabel("Relative score")
@@ -565,6 +621,56 @@ if __name__ == "__main__":
 
         cp_alignment[assembler]['sequences'] = cp_sequences
 
+        # Accumulate alignement results
+        cp_sequences = accumulate_alignment_scores(assembler, cp_sequences)
+
         # Plot alignment results
         if options.plot:
             plot_alignment_socres(assembler, cp_sequences)
+
+        # Print alignment results
+        print("")
+        print("Assembler: {}".format(assembler))
+        print("    Assembled (nozero length): {:.1f}%".format(
+            100 * sum(cp_sequences['assembler_sequence_len'] > 0)
+            / len(cp_sequences['assembler_sequence_len'])))
+
+        fraction_aligned = 0.10
+        if assembler in ['novoplasty']:
+            print("    Aligned (within {:.1f}%): {:.1f}%".format(
+                100 * fraction_aligned,
+                100 * sum((1.0 - fraction_aligned <=
+                           cp_sequences['assembler_relative_score']) &
+                          (cp_sequences['assembler_relative_score'] <=
+                           1.0))
+                / len(cp_sequences['assembler_sequence_len'])))
+
+        elif assembler in ['shovill', 'spades']:
+            print("    Aligned (within {:.1f}%): {:.1f}%".format(
+                100 * fraction_aligned,
+                100 * sum(
+                    (1.0 - fraction_aligned <= cp_sequences['circularizer_relative_score']) &
+                    (cp_sequences['circularizer_relative_score'] <= 1.0)
+                    )
+                / len(cp_sequences['assembler_sequence_len'])))
+
+    print("")
+    print("Assembler: any")
+    print("    Assembled (nozero length): {:.1f}%".format(
+        100 * sum(
+            (cp_alignment['novoplasty']['sequences']['assembler_sequence_len'] > 0) |
+            (cp_alignment['spades']['sequences']['assembler_sequence_len'] > 0) |
+            (cp_alignment['shovill']['sequences']['assembler_sequence_len'] > 0))
+        / len(cp_sequences['assembler_sequence_len'])))
+
+    print("    Percent aligned (within {:.1f}%): {:.1f}".format(
+        100 * fraction_aligned,
+        100 * sum(
+            ((1.0 - fraction_aligned <= cp_alignment['novoplasty']['sequences']['assembler_relative_score']) &
+             (cp_alignment['novoplasty']['sequences']['assembler_relative_score'] <= 1.0)) |
+            ((1.0 - fraction_aligned <= cp_alignment['shovill']['sequences']['circularizer_relative_score']) &
+             (cp_alignment['shovill']['sequences']['circularizer_relative_score'] <= 1.0)) |
+            ((1.0 - fraction_aligned <= cp_alignment['spades']['sequences']['circularizer_relative_score']) &
+             (cp_alignment['spades']['sequences']['circularizer_relative_score'] <= 1.0))
+             )
+        / len(cp_alignment['novoplasty']['sequences']['assembler_sequence_len'])))
