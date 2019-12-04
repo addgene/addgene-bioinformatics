@@ -1,7 +1,8 @@
-# Base image
+##### Base image ###############################################################
+
 FROM ubuntu:16.04
 
-################## METADATA ######################
+##### Metadata #################################################################
 
 LABEL base_image="ubuntu:16.04"
 LABEL version="2"
@@ -14,8 +15,7 @@ LABEL about.license_file="https://github.com/BioContainers/containers/blob/maste
 LABEL about.license="SPDX:Apache-2.0"
 LABEL about.tags="Genomics,Proteomics,Transcriptomics,General,Metabolomics"
 
-################## MAINTAINER ######################
-MAINTAINER Felipe da Veiga Leprevost <felipe@leprevost.com.br>
+##### Installation #############################################################
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -70,6 +70,8 @@ RUN groupadd fuse && \
 # Change user
 USER biodocker
 
+##### Configuration ############################################################
+
 ENV PATH=$PATH:/opt/conda/bin
 ENV PATH=$PATH:/home/biodocker/bin
 ENV HOME=/home/biodocker
@@ -87,3 +89,8 @@ VOLUME ["/data", "/config"]
 # CMD ["/bin/bash"]
 
 WORKDIR /data
+
+##### Maintainer ###############################################################
+
+MAINTAINER Felipe da Veiga Leprevost <felipe@leprevost.com.br>
+MAINTAINER Raymond LeClair <raymond.leclair@springbok.io>
