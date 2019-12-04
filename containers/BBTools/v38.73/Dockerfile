@@ -1,11 +1,11 @@
 ##### Base image ###############################################################
 
-FROM ubuntu:xenial
+FROM ralatsdio/biocontainers:v1.1.0
 
 ##### Metadata #################################################################
 
-LABEL base.image="ubuntu:xenial"
-LABEL version="1.0.0"
+LABEL base.image="ralatsdio/biocontainers"
+LABEL version="1.1.0"
 LABEL software="BBTools"
 LABEL software.version="v38.72"
 LABEL about.summary="BBMap, a short read aligner, as well as various other bioinformatic tools"
@@ -19,22 +19,28 @@ LABEL extra.binaries="Various"
 
 ##### Installation #############################################################
 
+USER root
+ENV INSTALL_PFX=/home/biodocker
+
+# Install dependencies
 RUN apt-get update && \
     apt-get install -y \
-        openjdk-9-jre \
-        wget
+        openjdk-9-jre && \
+    apt-get clean && \
+    apt-get purge && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install BBTools
-RUN mkdir bbtools && \
-  cd bbtools && \
+RUN mkdir $INSTALL_PFX/bbtools && \
+  cd $INSTALL_PFX/bbtools && \
   wget https://sourceforge.net/projects/bbmap/files/BBMap_38.73.tar.gz && \
-  tar -zxvf BBMap_38.73.tar.gz
+  tar -zxvf BBMap_38.73.tar.gz \
+  cp bbmap/* $INSTALL_PFX/bin
 
 ##### Configuration ############################################################
 
-RUN mkdir /data
+USER biodocker
 WORKDIR /data
-ENV PATH=${PATH}:/bbtools/bbmap
 # CMD ['Various']
 
 ##### Maintainer ###############################################################

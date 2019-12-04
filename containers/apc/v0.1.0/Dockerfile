@@ -1,11 +1,11 @@
 ##### Base image ###############################################################
 
-FROM biocontainers/biocontainers:v1.0.0_cv4
+FROM ralatsdio/biocontainers:v1.1.0
 
 ##### Metadata #################################################################
 
-LABEL base_image="biocontainers:v1.0.0_cv4"
-LABEL version="3"
+LABEL base_image="ralatsdio/biocontainers"
+LABEL version="1.1.0"
 LABEL software="apc"
 LABEL software.version="v0.1.0"
 LABEL about.summary="Perl script to test each sequence in a multi-fasta file for overlapping ends"
@@ -59,7 +59,7 @@ RUN wget $HTSLIB_URL/$HTSLIB_ZIP -O $HTSLIB_ZIP && \
     cd .. && \
     rm -rf $HTSLIB_SRC
 
-# Install samtools (Use BioContainers install)
+# Install Samtools (Use BioContainers install)
 ENV SAMTOOLS_VER=1.7.0
 RUN conda install ncurses samtools=$SAMTOOLS_VER
 

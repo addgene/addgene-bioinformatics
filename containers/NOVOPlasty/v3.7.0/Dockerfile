@@ -1,11 +1,11 @@
 ##### Base image ###############################################################
 
-FROM biocontainers/biocontainers:v1.0.0_cv4
+FROM ralatsdio/biocontainers:v1.1.0
 
 ##### Metadata #################################################################
 
-LABEL base_image="biocontainers:v1.0.0_cv4"
-LABEL version="3"
+LABEL base_image="ralatsdio/biocontainers"
+LABEL version="1.1.1"
 LABEL software="NOVOPlasty"
 LABEL software.version="v3.7.0"
 LABEL about.summary="The organelle assembler and heteroplasmy caller"

@@ -1,35 +1,40 @@
 ##### Base image ###############################################################
 
-FROM ubuntu:xenial
+FROM ralatsdio/biocontainers:v1.1.0
 
 ##### Metadata #################################################################
 
-LABEL base.image="ubuntu:xenial"
-LABEL version="1.0.0"
+LABEL base.image="ralatsdio/biocontainers"
+LABEL version="1.1.0"
 LABEL software="SKESA"
 LABEL software.version="2.3.0"
-LABEL description="Strategic Kmer Extension for Scrupulous Assemblies"
-LABEL website="https://github.com/ncbi/SKESA"
-LABEL lisence="https://github.com/ncbi/SKESA/blob/master/LICENSE"
-LABEL maintainer="Curtis Kapsak"
-LABEL maintainer.email="pjx8@cdc.gov"
+LABEL about.summary="Strategic Kmer Extension for Scrupulous Assemblies"
+LABEL about.home="https://github.com/ncbi/SKESA"
+LABEL about.provides="SKESA v2.3.0"
+LABEL about.license_file="https://github.com/ncbi/SKESA/blob/master/LICENSE"
+LABEL about.license="?"
+LABEL about.tags="Genomics"
+LABEL extra.identifiers.biotools="SKESA"
+LABEL extra.binaries="skesa"
 
 ##### Installation #############################################################
 
-RUN apt-get update && apt-get install -y wget
+USER root
+ENV INSTALL_PFX=/home/biodocker
 
 # Install SKESA
-RUN mkdir skesa && \
-  cd skesa && \
-  wget https://github.com/ncbi/SKESA/releases/download/v2.3.0/skesa.centos6.10 && \
-  mv skesa.centos6.10 skesa && \
-  chmod +x skesa
+RUN cd $INSTALL_PFX && \
+    mkdir skesa && \
+    cd skesa && \  
+    wget https://github.com/ncbi/SKESA/releases/download/v2.3.0/skesa.centos6.10 && \
+    mv skesa.centos6.10 $INSTALL_PFX/bin/skesa && \
+    chmod +x $INSTALL_PFX/bin/skesa
 
 ##### Configuration ############################################################
 
-RUN mkdir /data
+USER biodocker
 WORKDIR /data
-ENV PATH=${PATH}:/skesa
+# CMD ['skesa']
 
 ##### Maintainer ###############################################################
 

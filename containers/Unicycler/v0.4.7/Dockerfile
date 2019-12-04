@@ -1,99 +1,123 @@
 ##### Base image ###############################################################
 
-FROM ubuntu:xenial
+FROM ralatsdio/biocontainers:v1.1.0
 
 ##### Metadata #################################################################
 
-LABEL base.image="ubuntu:xenial"
-LABEL version="1"
+LABEL base.image="ralatsdio/biocontainers"
+LABEL container.version="1.1.0"
 LABEL software="Unicycler"
 LABEL software.version="0.4.7"
-LABEL description="Unicycler is an assembly pipeline for bacterial genomes"
-LABEL website="https://github.com/rrwick/Unicycler"
-LABEL license="https://github.com/rrwick/Unicycler#license"
-LABEL maintainer="Kelsey Florek"
-LABEL maintainer.email="kelsey.florek@slh.wisc.edu"
+LABEL about.summary="Unicycler is an assembly pipeline for bacterial genomes"
+LABEL about.home="https://github.com/rrwick/Unicycler"
+LABEL about.provides="Unicycler v0.4.7"
+LABEL about.license_file="https://github.com/rrwick/Unicycler#license"
+LABEL about.license="?"
+LABEL about.tags="Genomics"
+LABEL extra.identifiers.biotools="Unicycler"
+LABEL extra.binaries="unicyler.py"
 
 ##### Installation #############################################################
 
-RUN apt-get update && apt-get install -y software-properties-common && \
- add-apt-repository -y ppa:openjdk-r/ppa && apt-get update && apt-get install -y \
- python3 \
- python3-pip \
- libz-dev \
- bowtie2 \
- ncbi-blast+ \
- openjdk-11-jre \
- wget \
- bzip2 \
- libncurses5-dev \
- libncursesw5-dev \
- libbz2-dev \
- liblzma-dev \
- cmake
+USER root
+ENV INSTALL_PFX=/home/biodocker
 
-# Install Unicycler
-RUN wget https://github.com/rrwick/Unicycler/archive/v0.4.7.tar.gz && \
- mkdir unicycler && \
- tar -xzvf v0.4.7.tar.gz -C unicycler --strip-components 1 && \
- rm v0.4.7.tar.gz
+# Install dependencies
+RUN apt-get update && \
+    apt-get install -y software-properties-common && \
+    add-apt-repository -y ppa:openjdk-r/ppa && \
+    apt-get update && \
+    apt-get install -y \
+        python3 \
+        python3-pip \
+        libz-dev \
+        bowtie2 \
+        ncbi-blast+ \
+        openjdk-11-jre \
+        libncurses5-dev \
+        libncursesw5-dev \
+        libbz2-dev \
+        liblzma-dev \
+        cmake && \
+    apt-get clean && \
+    apt-get purge && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install Pilon
-RUN wget https://github.com/broadinstitute/pilon/releases/download/v1.22/pilon-1.22.jar -P /pilon
+RUN cd $INSTALL_PFX && \
+    wget https://github.com/broadinstitute/pilon/releases/download/v1.22/pilon-1.22.jar -P /pilon
 
 # Install SPAdes
-RUN wget http://cab.spbu.ru/files/release3.13.0/SPAdes-3.13.0-Linux.tar.gz && \
- mkdir spades && \
- tar -xzvf SPAdes-3.13.0-Linux.tar.gz -C spades --strip-components 1 && \
- rm SPAdes-3.13.0-Linux.tar.gz
+ENV SPADES_VER=3.13.0
+RUN cd $INSTALL_PFX && \
+    wget http://cab.spbu.ru/files/release$SPADES_VER/SPAdes-$SPADES_VER-Linux.tar.gz && \
+    mkdir spades && \
+    tar -xzvf SPAdes-$SPADES_VER-Linux.tar.gz -C spades --strip-components 1 && \
+    rm SPAdes-$SPADES_VER-Linux.tar.gz
 
 # Install Samtools and BCFtools
-RUN wget https://github.com/samtools/samtools/releases/download/1.9/samtools-1.9.tar.bz2 && \
- wget https://github.com/samtools/bcftools/releases/download/1.9/bcftools-1.9.tar.bz2 && \
- mkdir samtools && \
- tar -vxjf samtools-1.9.tar.bz2 -C samtools --strip-components 1 && \
- rm samtools-1.9.tar.bz2 && \
- mkdir bcftools && \
- tar -vxjf bcftools-1.9.tar.bz2 -C bcftools --strip-components 1 && \
- rm bcftools-1.9.tar.bz2 && \
- cd samtools && \
- make && \
- make install && \
- cd ../bcftools && \
- make && \
- make install
+ENV SAMTOOLS_VER=1.9
+ENV BCFTOOLS_VER=1.9
+RUN cd $INSTALL_PFX && \
+    wget https://github.com/samtools/samtools/releases/download/$SAMTOOLS_VER/samtools-$SAMTOOLS_VER.tar.bz2 && \
+    mkdir samtools && \
+    tar -vxjf samtools-$SAMTOOLS_VER.tar.bz2 -C samtools --strip-components 1 && \
+    rm samtools-$SAMTOOLS_VER.tar.bz2 && \
+    cd samtools && \
+    make && \
+    make install && \
+    cd $INSTALL_PFX && \
+    wget https://github.com/samtools/bcftools/releases/download/$BCFTOOLS_VER/bcftools-$BCFTOOLS_VER.tar.bz2 && \
+    mkdir bcftools && \
+    tar -vxjf bcftools-$BCFTOOLS_VER.tar.bz2 -C bcftools --strip-components 1 && \
+    rm bcftools-$BCFTOOLS_VER.tar.bz2 && \
+    cd ../bcftools && \
+    make && \
+    make install
 
 # Install Racon
-RUN wget https://github.com/isovic/racon/releases/download/1.3.1/racon-v1.3.1.tar.gz && \
- mkdir racon && \
- tar -xzvf racon-v1.3.1.tar.gz -C racon --strip-components 1 && \
- rm racon-v1.3.1.tar.gz && \
- cd racon && \
- mkdir build && \
- cd build && \
- cmake -DCMAKE_BUILD_TYPE=Release ../ && \
- make && \
- make install
+ENV RACON_VER=1.3.1
+RUN cd $INSTALL_PFX && \
+    wget https://github.com/isovic/racon/releases/download/$RACON_VER/racon-v$RACON_VER.tar.gz && \
+    mkdir racon && \
+    tar -xzvf racon-v$RACON_VER.tar.gz -C racon --strip-components 1 && \
+    rm racon-v$RACON_VER.tar.gz && \
+    cd racon && \
+    mkdir build && \
+    cd build && \
+    cmake -DCMAKE_BUILD_TYPE=Release ../ && \
+    make && \
+    make install
 
 # Install Miniasm
-RUN wget https://github.com/lh3/miniasm/archive/v0.3.tar.gz && \
- mkdir miniasm && \
- tar -xzvf v0.3.tar.gz -C miniasm --strip-components 1 && \
- rm v0.3.tar.gz && \
- cd miniasm && \
- make
+ENV MINIASM_VER=0.3
+RUN cd $INSTALL_PFX && \
+    wget https://github.com/lh3/miniasm/archive/v$MINIASM_VER.tar.gz && \
+    mkdir miniasm && \
+    tar -xzvf v$MINIASM_VER.tar.gz -C miniasm --strip-components 1 && \
+    rm v$MINIASM_VER.tar.gz && \
+    cd miniasm && \
+    make
 
 # Install Unicycler
-RUN python3 /unicycler/setup.py install
-
+ENV UNICYCLER_VER=0.4.7
+RUN cd $INSTALL_PFX && \
+    wget https://github.com/rrwick/Unicycler/archive/v$UNICYCLER_VER.tar.gz && \
+    mkdir unicycler && \
+    tar -xzvf v$UNICYCLER_VER.tar.gz -C unicycler --strip-components 1 && \
+    rm v$UNICYCLER_VER.tar.gz && \
+    python3 /unicycler/setup.py install
+    
 ##### Configuration ############################################################
 
-RUN mkdir /data
+USER biodocker
 WORKDIR /data
+# CMD ['shovill.pl']
+
+# Set path to executables
 ENV PATH="/pilon:${PATH}"
 ENV PATH="/spades/bin:${PATH}"
 ENV PATH="/miniasm:${PATH}"
-# CMD ['unicycler.py']
 
 ##### Maintainer ###############################################################
 

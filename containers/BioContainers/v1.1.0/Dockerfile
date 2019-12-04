@@ -4,8 +4,8 @@ FROM ubuntu:16.04
 
 ##### Metadata #################################################################
 
-LABEL base_image="ubuntu:16.04"
-LABEL version="2"
+LABEL base_image="ubuntu"
+LABEL version="16.04"
 LABEL software="biocontainers"
 LABEL software.version="1.1.0"
 LABEL about.summary="Base image for BioDocker"
@@ -44,9 +44,9 @@ RUN apt-get clean all && \
         pkg-config      \
         bzip2           \
         ca-certificates && \
-        apt-get clean && \
-        apt-get purge && \
-        rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    apt-get clean && \
+    apt-get purge && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install conda and give write permissions to conda folder
 RUN echo 'export PATH=/opt/conda/bin:$PATH' > /etc/profile.d/conda.sh && \
@@ -68,10 +68,10 @@ RUN groupadd fuse && \
     chown biodocker:biodocker /data && \
     chown biodocker:biodocker /config
 
+##### Configuration ############################################################
+
 # Change user
 USER biodocker
-
-##### Configuration ############################################################
 
 ENV PATH=$PATH:/opt/conda/bin
 ENV PATH=$PATH:/home/biodocker/bin
@@ -93,5 +93,4 @@ WORKDIR /data
 
 ##### Maintainer ###############################################################
 
-MAINTAINER Felipe da Veiga Leprevost <felipe@leprevost.com.br>
 MAINTAINER Raymond LeClair <raymond.leclair@springbok.io>

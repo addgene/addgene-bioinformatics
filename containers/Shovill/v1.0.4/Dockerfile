@@ -1,171 +1,208 @@
 ##### Base image ###############################################################
 
-FROM ubuntu:xenial
+FROM ralatsdio/biocontainers:v1.1.0
 
 ##### Metadata #################################################################
 
-LABEL base.image="ubuntu:xenial"
-LABEL container.version="2"
+LABEL base.image="ralatsdio/biocontainers"
+LABEL container.version="1.1.0"
 LABEL software="Shovill"
 LABEL software.version="1.0.4"
-LABEL description="faster than SPAdes de novo DBG genome assembler (with assembler options!)"
-LABEL website="https://github.com/tseemann/shovill"
-LABEL lisence="https://github.com/tseemann/shovill/blob/master/LICENSE"
-LABEL maintainer="Curtis Kapsak"
-LABEL maintainer.email="pjx8@cdc.gov"
+LABEL about.summary="Faster than SPAdes de novo DBG genome assembler (with assembler options!)"
+LABEL about.home="https://github.com/tseemann/shovill"
+LABEL about.provides="shovill v1.0.4"
+LABEL about.license_file="https://github.com/tseemann/shovill/blob/master/LICENSE"
+LABEL about.license="?"
+LABEL about.tags="Genomics"
+LABEL extra.identifiers.biotools="Shovill"
+LABEL extra.binaries="shovill"
 
 ##### Installation #############################################################
 
-RUN apt-get update && apt-get install -y python \
-  wget \
-  pigz \
-  zlib1g-dev \
-  make \
-  gcc \
-  g++ \
-  libpthread-stubs0-dev \
-  openjdk-9-jre \
-  unzip \
-  bzip2 \
-  libncurses5-dev \
-  libbz2-dev \
-  liblzma-dev \
-  libcurl4-gnutls-dev \
-  libssl-dev \
-  libfindbin-libs-perl
+USER root
+ENV INSTALL_PFX=/home/biodocker
+
+# Install dependencies
+RUN apt-get update && \
+    apt-get install -y python \
+        pigz \
+        zlib1g-dev \
+        make \
+        gcc \
+        g++ \
+        libpthread-stubs0-dev \
+        openjdk-9-jre \
+        unzip \
+        libncurses5-dev \
+        libbz2-dev \
+        liblzma-dev \
+        libcurl4-gnutls-dev \
+        libssl-dev \
+        libfindbin-libs-perl && \
+    apt-get clean && \
+    apt-get purge && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install SPAdes
-RUN wget http://cab.spbu.ru/files/release3.13.0/SPAdes-3.13.0-Linux.tar.gz &&\
-  tar -xzf SPAdes-3.13.0-Linux.tar.gz &&\
-  rm SPAdes-3.13.0-Linux.tar.gz
+ENV SPADES_VER=3.13.0
+RUN cd $INSTALL_PFX && \
+    wget http://cab.spbu.ru/files/release$SPADES_VER/SPAdes-$SPADES_VER-Linux.tar.gz && \
+    tar -xzf SPAdes-$SPADES_VER-Linux.tar.gz && \
+    rm SPAdes-$SPADES_VER-Linux.tar.gz
 
 # Install Seqtk
-RUN mkdir seqtk &&\ 
-  cd seqtk &&\
-  wget https://github.com/lh3/seqtk/archive/v1.3.tar.gz &&\
-  tar -zxf v1.3.tar.gz &&\
-  rm v1.3.tar.gz &&\
-  cd seqtk-1.3/ &&\
-  make &&\
-  make install
+ENV SEQTK_VER=1.3
+RUN cd $INSTALL_PFX && \
+    mkdir seqtk && \ 
+    cd seqtk && \
+    wget https://github.com/lh3/seqtk/archive/v$SEQTK_VER.tar.gz && \
+    tar -zxf v$SEQTK_VER.tar.gz && \
+    rm v$SEQTK_VER.tar.gz && \
+    cd seqtk-$SEQTK_VER/ && \
+    make && \
+    make install
 
 # Install Mash
-RUN wget https://github.com/marbl/Mash/releases/download/v2.1/mash-Linux64-v2.1.tar && \
-  tar -xvf mash-Linux64-v2.1.tar && \
-  rm -rf mash-Linux64-v2.1.tar
+ENV MASH_VER=2.1
+RUN cd $INSTALL_PFX && \
+    wget https://github.com/marbl/Mash/releases/download/v$MASH_VER/mash-Linux64-v$MASH_VER.tar && \
+    tar -xvf mash-Linux64-v$MASH_VER.tar && \
+    rm -rf mash-Linux64-v$MASH_VER.tar
 
 # Install Lighter
-RUN wget https://github.com/mourisl/Lighter/archive/v1.1.1.tar.gz &&\
-  tar -zxf v1.1.1.tar.gz &&\
-  rm -rf v1.1.1.tar.gz &&\
-  cd Lighter-1.1.1 &&\
-  make
+ENV LIGHTER_VER=1.1.1
+RUN cd $INSTALL_PFX && \
+    wget https://github.com/mourisl/Lighter/archive/v$LIGHTER_VER.tar.gz && \
+    tar -zxf v$LIGHTER_VER.tar.gz && \
+    rm -rf v$LIGHTER_VER.tar.gz && \
+    cd Lighter-$LIGHTER_VER && \
+    make
 
 # Install Trimmomatic
-RUN mkdir trimmomatic &&\
-  cd trimmomatic &&\
-  wget http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-0.38.zip && \
-  unzip Trimmomatic-0.38.zip && \
-  rm -rf Trimmomatic-0.38.zip && \
-  chmod +x Trimmomatic-0.38/trimmomatic-0.38.jar && \
-  echo "#!/bin/bash" >> trimmomatic && \
-  echo "exec java -jar /trimmomatic/Trimmomatic-0.38/trimmomatic-0.38.jar """"$""@"""" " >> trimmomatic && \
-  chmod +x trimmomatic
+ENV TRIMMOMATIC_VER=0.38
+RUN cd $INSTALL_PFX && \
+    mkdir trimmomatic && \
+    cd trimmomatic && \
+    wget http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/Trimmomatic-$TRIMMOMATIC_VER.zip && \
+    unzip Trimmomatic-$TRIMMOMATIC_VER.zip && \
+    rm -rf Trimmomatic-$TRIMMOMATIC_VER.zip && \
+    chmod +x Trimmomatic-$TRIMMOMATIC_VER/trimmomatic-$TRIMMOMATIC_VER.jar && \
+    echo "#!/bin/bash" >> trimmomatic && \
+    echo "exec java -jar /trimmomatic/Trimmomatic-$TRIMMOMATIC_VER/trimmomatic-$TRIMMOMATIC_VER.jar """"$""@"""" " >> trimmomatic && \
+    chmod +x trimmomatic
 
 # Install BWA-MEM
-RUN mkdir bwa && \
-  cd bwa && \
-  wget https://github.com/lh3/bwa/releases/download/v0.7.17/bwa-0.7.17.tar.bz2 && \
-  tar -xjf bwa-0.7.17.tar.bz2 && \
-  rm bwa-0.7.17.tar.bz2 && \
-  cd bwa-0.7.17 && \
-  make
+ENV BWA_VER=0.7.17
+RUN cd $INSTALL_PFX && \
+    mkdir bwa && \
+    cd bwa && \
+    wget https://github.com/lh3/bwa/releases/download/v$BWA_VER/bwa-$BWA_VER.tar.bz2 && \
+    tar -xjf bwa-$BWA_VER.tar.bz2 && \
+    rm bwa-$BWA_VER.tar.bz2 && \
+    cd bwa-$BWA_VER && \
+    make
 
 # Install Samtools 
-RUN mkdir samtools && \
-  cd samtools && \
-  wget https://github.com/samtools/samtools/releases/download/1.9/samtools-1.9.tar.bz2 && \
-  tar -xjf samtools-1.9.tar.bz2 && \
-  rm samtools-1.9.tar.bz2 && \
-  cd samtools-1.9 && \
-  ./configure && \
-  make && \
-  make install
+ENV SAMTOOLS_VER=1.9
+RUN cd $INSTALL_PFX && \
+    mkdir samtools && \
+    cd samtools && \
+    wget https://github.com/samtools/samtools/releases/download/$SAMTOOLS_VER/samtools-$SAMTOOLS_VER.tar.bz2 && \
+    tar -xjf samtools-$SAMTOOLS_VER.tar.bz2 && \
+    rm samtools-$SAMTOOLS_VER.tar.bz2 && \
+    cd samtools-$SAMTOOLS_VER && \
+    ./configure && \
+    make && \
+    make install
 
 # Install SKESA
-RUN mkdir skesa && \
-  cd skesa && \
-  wget https://github.com/ncbi/SKESA/releases/download/v2.3.0/skesa.centos6.10 && \
-  mv skesa.centos6.10 skesa && \
-  chmod +x skesa
+RUN cd $INSTALL_PFX && \
+    mkdir skesa && \
+    cd skesa && \
+    wget https://github.com/ncbi/SKESA/releases/download/v2.3.0/skesa.centos6.10 && \
+    mv skesa.centos6.10 skesa && \
+    chmod +x skesa
 
 # Install MEGAHIT
-RUN mkdir megahit && \
-  cd megahit && \
-  wget https://github.com/voutcn/megahit/releases/download/v1.1.4/megahit_v1.1.4_LINUX_CPUONLY_x86_64-bin.tar.gz && \
-  tar -xzf megahit_v1.1.4_LINUX_CPUONLY_x86_64-bin.tar.gz && \
-  rm megahit_v1.1.4_LINUX_CPUONLY_x86_64-bin.tar.gz
+ENV MAGAHIT_VER=1.1.4
+RUN cd $INSTALL_PFX && \
+    mkdir megahit && \
+    cd megahit && \
+    wget https://github.com/voutcn/megahit/releases/download/v$MAGAHIT_VER/megahit_v$MAGAHIT_VER_LINUX_CPUONLY_x86_64-bin.tar.gz && \
+    tar -xzf megahit_v$MAGAHIT_VER_LINUX_CPUONLY_x86_64-bin.tar.gz && \
+    rm megahit_v$MAGAHIT_VER_LINUX_CPUONLY_x86_64-bin.tar.gz
 
 # Install Velvet
-RUN mkdir velvet && \
-  cd velvet && \
-  wget https://github.com/dzerbino/velvet/archive/v1.2.10.tar.gz && \
-  tar -xzf v1.2.10.tar.gz && \
-  rm -rf v1.2.10.tar.gz && \
-  cd velvet-1.2.10 && \
-  make
+ENV VELVET_VER=1.2.10
+RUN cd $INSTALL_PFX && \
+    mkdir velvet && \
+    cd velvet && \
+    wget https://github.com/dzerbino/velvet/archive/v$VELVET_VER.tar.gz && \
+    tar -xzf v$VELVET_VER.tar.gz && \
+    rm -rf v$VELVET_VER.tar.gz && \
+    cd velvet-$VELVET_VER && \
+    make
 
 # Install Flash
-RUN mkdir flash && \
-  cd flash && \
-  wget https://sourceforge.net/projects/flashpage/files/FLASH-1.2.11.tar.gz && \
-  tar -zxf FLASH-1.2.11.tar.gz && \
-  rm -rf FLASH-1.2.11.tar.gz && \
-  cd FLASH-1.2.11 && \
-  make
+ENV FLASH_VER=1.2.11
+RUN cd $INSTALL_PFX && \
+    mkdir flash && \
+    cd flash && \
+    wget https://sourceforge.net/projects/flashpage/files/FLASH-$FLASH_VER.tar.gz && \
+    tar -zxf FLASH-$FLASH_VER.tar.gz && \
+    rm -rf FLASH-$FLASH_VER.tar.gz && \
+    cd FLASH-$FLASH_VER && \
+    make
 
 # Install Pilon
-RUN mkdir pilon && \
-  cd pilon && \
-  wget https://github.com/broadinstitute/pilon/releases/download/v1.22/pilon-1.22.jar && \
-  chmod +x pilon-1.22.jar && \
-  echo "#!/bin/bash" >> pilon && \
-  echo "exec java -jar /pilon/pilon-1.22.jar """"$""@"""" " >> pilon && \
-  chmod +x pilon
+ENV PILON_VER=1.22
+RUN cd $INSTALL_PFX && \
+    mkdir pilon && \
+    cd pilon && \
+    wget https://github.com/broadinstitute/pilon/releases/download/v$PILON_VER/pilon-$PILON_VER.jar && \
+    chmod +x pilon-$PILON_VER.jar && \
+    echo "#!/bin/bash" >> pilon && \
+    echo "exec java -jar /pilon/pilon-$PILON_VER.jar """"$""@"""" " >> pilon && \
+    chmod +x pilon
 
 # Install Samclip
-RUN mkdir samclip && \
-  cd samclip && \
-  wget https://raw.githubusercontent.com/tseemann/samclip/master/samclip && \
-  chmod +x samclip
+RUN cd $INSTALL_PFX && \
+    mkdir samclip && \
+    cd samclip && \
+    wget https://raw.githubusercontent.com/tseemann/samclip/master/samclip && \
+    chmod +x samclip
 
 # Install shovill
+ENV SHOVILL_ENV=1.0.4
 RUN mkdir shovill && \
   cd shovill && \
-  wget https://github.com/tseemann/shovill/archive/v1.0.4.tar.gz && \
-  tar -xzf v1.0.4.tar.gz && \
-  rm v1.0.4.tar.gz
+  wget https://github.com/tseemann/shovill/archive/v$SHOVILL_ENV.tar.gz && \
+  tar -xzf v$SHOVILL_ENV.tar.gz && \
+  rm v$SHOVILL_ENV.tar.gz
 
 ##### Configuration ############################################################
 
-RUN mkdir /data
+USER biodocker
 WORKDIR /data
+# CMD ['shovill.pl']
+
+# Set path to executables
 ENV PATH="${PATH}:\
-/SPAdes-3.13.0-Linux/bin:\
-/mash-Linux64-v2.1:\
-/Lighter-1.1.1:\
+/SPAdes-$SPADES_VER-Linux/bin:\
+/mash-Linux64-v$MASH_VER:\
+/Lighter-$LIGHTER_VER:\
 /trimmomatic:\
-/bwa/bwa-0.7.17:\
+/bwa/bwa-$BWA_VER:\
 /skesa:\
-/megahit/megahit_v1.1.4_LINUX_CPUONLY_x86_64-bin:\
-/velvet/velvet-1.2.10:\
-/flash/FLASH-1.2.11:\
-/shovill/shovill-1.0.4/bin:\
+/megahit/megahit_v$MAGAHIT_VER_LINUX_CPUONLY_x86_64-bin:\
+/velvet/velvet-$VELVET_VER:\
+/flash/FLASH-$FLASH_VER:\
+/shovill/shovill-$SHOVILL_ENV/bin:\
 /pilon:\
 /samclip"
+
 # Set Perl locale settings
 ENV LC_ALL=C
-# CMD ['shovill.pl']
 
 ##### Maintainer ###############################################################
 
