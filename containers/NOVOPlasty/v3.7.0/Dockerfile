@@ -22,7 +22,7 @@ LABEL extra.binaries="NOVOPlasty.pl"
 USER root
 ENV INSTALL_PFX=/home/biodocker
 
-# NOVOPlasty
+# Install NOVOPlasty
 ENV NOVOPLASTY_URL=https://github.com/ndierckx/NOVOPlasty
 ENV NOVOPLASTY_SRC=NOVOPlasty
 ENV NOVOPLASTY_TAG=NOVOPlasty3.7
@@ -32,7 +32,6 @@ RUN git clone $NOVOPLASTY_URL && \
     cp NOVOPlasty3.7.pl $INSTALL_PFX/bin/NOVOPlasty.pl && \
     cd .. && \
     rm -rf $NOVOPLASTY_SRC
-
 
 ##### Configuration ############################################################
 
