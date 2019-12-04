@@ -88,8 +88,13 @@ def read_qc_sequences(assembler_data_dir, qc_sequences_fNm):
 
 
 def align_cp_to_qc_sequences(assembler_data_dir,
+                             assembler_run_dir,
                              qc_sequences_fNm,
-                             assembler_run_dir):
+                             mode='global',
+                             match_score=1.0,
+                             mismatch_score=0.0,
+                             open_gap_score=0.0,
+                             extend_gap_score=0.0):
     """
     Aligns sequences produced by candidate sequence assembly processes
     to curated quality control full public sequences.
@@ -99,10 +104,20 @@ def align_cp_to_qc_sequences(assembler_data_dir,
     assembler_data_dir : str
         directory containing QC sequences file and candidate process
         run directories
-    qc_sequences_fNm : str
-        file containing QC sequences
     assembler_run_dir : str
         directory containing candidate process runs
+    qc_sequences_fNm : str
+        file containing QC sequences
+    mode " str
+        the alignment mode: 'global' | 'local'
+    match_score : flt
+        the score of a match
+    mismatch_score : flt
+        the score of a mismatch
+    open_gap_score : flt
+        the score of opening a gap (in the target or query)
+    extend_gap_score : flt
+        the score of extending a gap (in the target or query)
 
     Returns
     -------
@@ -132,10 +147,17 @@ def align_cp_to_qc_sequences(assembler_data_dir,
     #     query_right_open_gap_score: 0.000000
     #     query_right_extend_gap_score: 0.000000
     #     mode: global
-    aligner = Align.PairwiseAligner()
+    aligner = Align.PairwiseAligner(mode=mode,
+                                    match_score=match_score,
+                                    mismatch_score=mismatch_score,
+                                    target_open_gap_score=open_gap_score,
+                                    target_extend_gap_score=extend_gap_score,
+                                    query_open_gap_score=open_gap_score,
+                                    query_extend_gap_score=extend_gap_score)
 
     # Read quality control (QC) sequences
-    qc_sequences = read_qc_sequences(assembler_data_dir, qc_sequences_fNm)
+    qc_sequences = read_qc_sequences(
+        assembler_data_dir, assembler_run_dir, qc_sequences_fNm)
 
     # Initialize candidate process (CP) sequences dictionary
     cp_sequences = {}
@@ -573,6 +595,21 @@ if __name__ == "__main__":
                                              "addgene-assembler-data",
                                              "2018_QC_Sequences.csv"),
                         help="file containing QC sequences")
+    parser.add_argument('-o', '--mode', type=str,
+                        choices=['global', 'local'], default='global',
+                        help="the alignment mode")
+    parser.add_argument('-m', '--match-score', type=float,
+                        default=1.0,
+                        help="the score of a match")
+    parser.add_argument('-s', '--mismatch-score', type=float,
+                        default=0.0,
+                        help="the score of a mismatch")
+    parser.add_argument('-g', '--open-gap-score', type=float,
+                        default=0.0,
+                        help="the score of opening a gap")
+    parser.add_argument('-e', '--extend-gap-score', type=float,
+                        default=0.0,
+                        help="the score of extending a gap")
     parser.add_argument('-p', '--plot',
                         action='store_true',
                         help="plot alignment results")
@@ -608,8 +645,13 @@ if __name__ == "__main__":
             # sequences
             cp_sequences = align_cp_to_qc_sequences(
                 options.assembler_data_directory,
+                assembler_run_dir,
                 options.qc_sequences_file,
-                assembler_run_dir)
+                mode=options.mode,
+                match_score=options.match_score,
+                mismatch_score=options.mismatch_score,
+                open_gap_score=options.open_gap_score,
+                extend_gap_score=options.extend_gap_score)
 
             with open(cp_alignment_pth, 'wb') as f:
                 pickle.dump(cp_sequences, f, pickle.HIGHEST_PROTOCOL)
