@@ -28,17 +28,17 @@ RUN apt-get update && \
     add-apt-repository -y ppa:openjdk-r/ppa && \
     apt-get update && \
     apt-get install -y \
-        python3 \
-        python3-pip \
-        libz-dev \
         bowtie2 \
-        ncbi-blast+ \
-        openjdk-11-jre \
-        libncurses5-dev \
-        libncursesw5-dev \
+        cmake \
         libbz2-dev \
         liblzma-dev \
-        cmake && \
+        libncurses5-dev \
+        libncursesw5-dev \
+        libz-dev \
+        ncbi-blast+ \
+        openjdk-11-jre \
+        python3 \
+        python3-pip && \
     apt-get clean && \
     apt-get purge && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
@@ -52,7 +52,7 @@ ENV SPADES_VER=3.13.0
 RUN cd $INSTALL_PFX && \
     wget http://cab.spbu.ru/files/release$SPADES_VER/SPAdes-$SPADES_VER-Linux.tar.gz && \
     mkdir spades && \
-    tar -xzvf SPAdes-$SPADES_VER-Linux.tar.gz -C spades --strip-components 1 && \
+    tar -zxvf SPAdes-$SPADES_VER-Linux.tar.gz -C spades --strip-components 1 && \
     rm SPAdes-$SPADES_VER-Linux.tar.gz
 
 # Install Samtools and BCFtools
@@ -61,7 +61,7 @@ ENV BCFTOOLS_VER=1.9
 RUN cd $INSTALL_PFX && \
     wget https://github.com/samtools/samtools/releases/download/$SAMTOOLS_VER/samtools-$SAMTOOLS_VER.tar.bz2 && \
     mkdir samtools && \
-    tar -vxjf samtools-$SAMTOOLS_VER.tar.bz2 -C samtools --strip-components 1 && \
+    tar -jxvf samtools-$SAMTOOLS_VER.tar.bz2 -C samtools --strip-components 1 && \
     rm samtools-$SAMTOOLS_VER.tar.bz2 && \
     cd samtools && \
     make && \
@@ -69,9 +69,9 @@ RUN cd $INSTALL_PFX && \
     cd $INSTALL_PFX && \
     wget https://github.com/samtools/bcftools/releases/download/$BCFTOOLS_VER/bcftools-$BCFTOOLS_VER.tar.bz2 && \
     mkdir bcftools && \
-    tar -vxjf bcftools-$BCFTOOLS_VER.tar.bz2 -C bcftools --strip-components 1 && \
+    tar -jxvf bcftools-$BCFTOOLS_VER.tar.bz2 -C bcftools --strip-components 1 && \
     rm bcftools-$BCFTOOLS_VER.tar.bz2 && \
-    cd ../bcftools && \
+    cd bcftools && \
     make && \
     make install
 
@@ -80,7 +80,7 @@ ENV RACON_VER=1.3.1
 RUN cd $INSTALL_PFX && \
     wget https://github.com/isovic/racon/releases/download/$RACON_VER/racon-v$RACON_VER.tar.gz && \
     mkdir racon && \
-    tar -xzvf racon-v$RACON_VER.tar.gz -C racon --strip-components 1 && \
+    tar -zxvf racon-v$RACON_VER.tar.gz -C racon --strip-components 1 && \
     rm racon-v$RACON_VER.tar.gz && \
     cd racon && \
     mkdir build && \
@@ -94,7 +94,7 @@ ENV MINIASM_VER=0.3
 RUN cd $INSTALL_PFX && \
     wget https://github.com/lh3/miniasm/archive/v$MINIASM_VER.tar.gz && \
     mkdir miniasm && \
-    tar -xzvf v$MINIASM_VER.tar.gz -C miniasm --strip-components 1 && \
+    tar -zxvf v$MINIASM_VER.tar.gz -C miniasm --strip-components 1 && \
     rm v$MINIASM_VER.tar.gz && \
     cd miniasm && \
     make
@@ -104,9 +104,9 @@ ENV UNICYCLER_VER=0.4.7
 RUN cd $INSTALL_PFX && \
     wget https://github.com/rrwick/Unicycler/archive/v$UNICYCLER_VER.tar.gz && \
     mkdir unicycler && \
-    tar -xzvf v$UNICYCLER_VER.tar.gz -C unicycler --strip-components 1 && \
+    tar -zxvf v$UNICYCLER_VER.tar.gz -C unicycler --strip-components 1 && \
     rm v$UNICYCLER_VER.tar.gz && \
-    python3 /unicycler/setup.py install
+    python3 $INSTALL_PFX/unicycler/setup.py install
     
 ##### Configuration ############################################################
 
