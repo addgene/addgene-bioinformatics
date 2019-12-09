@@ -32,18 +32,17 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install MaSuRCA
-ENV MASURCA_VERSION=3.3.1
-WORKDIR /software
+ENV MASURCA_VER=3.3.1
 RUN cd $INSTALL_PFX && \
-    wget https://github.com/alekseyzimin/masurca/releases/download/v$MASURCA_VERSION/MaSuRCA-$MASURCA_VERSION.tar.gz
-    tar -xf *.tar.gz && \
-    rm *.tar.gz && \
-    mv * masurca && \
+    wget https://github.com/alekseyzimin/masurca/releases/download/v$MASURCA_VER/MaSuRCA-$MASURCA_VER.tar.gz && \
+    mkdir masurca && \
+    tar -zxvf MaSuRCA-$MASURCA_VER.tar.gz -C masurca --strip-components 1 && \
+    rm MaSuRCA-$MASURCA_VER.tar.gz && \ 
     cd masurca && \
     chmod +x install.sh && \
     ./install.sh && \
     cp bin/masurca $INSTALL_PFX/bin && \
-    chmod +x $INSTALL_PFX/bin
+    chmod +x $INSTALL_PFX/bin/masurca
 
 ##### Configuration ############################################################
 
