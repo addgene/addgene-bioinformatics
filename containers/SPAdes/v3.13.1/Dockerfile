@@ -27,7 +27,7 @@ ENV ZIP=SPAdes-3.13.1-Linux.tar.gz
 ENV URL=http://cab.spbu.ru/files/release3.13.1
 ENV FOLDER=SPAdes-3.13.1-Linux
 RUN wget $URL/$ZIP -O $INSTALL_PFX/$ZIP && \
-    tar xvf $INSTALL_PFX/$ZIP -C $INSTALL_PFX && \
+    tar -zxvf $INSTALL_PFX/$ZIP -C $INSTALL_PFX && \
     rm $INSTALL_PFX/$ZIP && \
     cd $INSTALL_PFX/$FOLDER && \
     mv $INSTALL_PFX/$FOLDER/bin/* $INSTALL_PFX/bin && \
