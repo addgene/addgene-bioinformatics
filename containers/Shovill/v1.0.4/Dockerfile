@@ -25,20 +25,15 @@ ENV INSTALL_PFX=/home/biodocker
 # Install dependencies
 RUN apt-get update && \
     apt-get install -y python \
-        pigz \
-        zlib1g-dev \
-        make \
-        gcc \
-        g++ \
-        libpthread-stubs0-dev \
-        openjdk-9-jre \
-        unzip \
-        libncurses5-dev \
         libbz2-dev \
-        liblzma-dev \
         libcurl4-gnutls-dev \
+        libfindbin-libs-perl \
+        liblzma-dev \
+        libncurses5-dev \
+        libpthread-stubs0-dev \
         libssl-dev \
-        libfindbin-libs-perl && \
+        openjdk-9-jre \
+        pigz && \
     apt-get clean && \
     apt-get purge && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
@@ -47,7 +42,7 @@ RUN apt-get update && \
 ENV SPADES_VER=3.13.0
 RUN cd $INSTALL_PFX && \
     wget http://cab.spbu.ru/files/release$SPADES_VER/SPAdes-$SPADES_VER-Linux.tar.gz && \
-    tar -xzf SPAdes-$SPADES_VER-Linux.tar.gz && \
+    tar -zxvf SPAdes-$SPADES_VER-Linux.tar.gz && \
     rm SPAdes-$SPADES_VER-Linux.tar.gz
 
 # Install Seqtk
@@ -56,7 +51,7 @@ RUN cd $INSTALL_PFX && \
     mkdir seqtk && \ 
     cd seqtk && \
     wget https://github.com/lh3/seqtk/archive/v$SEQTK_VER.tar.gz && \
-    tar -zxf v$SEQTK_VER.tar.gz && \
+    tar -zxvf v$SEQTK_VER.tar.gz && \
     rm v$SEQTK_VER.tar.gz && \
     cd seqtk-$SEQTK_VER/ && \
     make && \
@@ -73,7 +68,7 @@ RUN cd $INSTALL_PFX && \
 ENV LIGHTER_VER=1.1.1
 RUN cd $INSTALL_PFX && \
     wget https://github.com/mourisl/Lighter/archive/v$LIGHTER_VER.tar.gz && \
-    tar -zxf v$LIGHTER_VER.tar.gz && \
+    tar -zxvf v$LIGHTER_VER.tar.gz && \
     rm -rf v$LIGHTER_VER.tar.gz && \
     cd Lighter-$LIGHTER_VER && \
     make
@@ -97,7 +92,7 @@ RUN cd $INSTALL_PFX && \
     mkdir bwa && \
     cd bwa && \
     wget https://github.com/lh3/bwa/releases/download/v$BWA_VER/bwa-$BWA_VER.tar.bz2 && \
-    tar -xjf bwa-$BWA_VER.tar.bz2 && \
+    tar -jxvf bwa-$BWA_VER.tar.bz2 && \
     rm bwa-$BWA_VER.tar.bz2 && \
     cd bwa-$BWA_VER && \
     make
@@ -108,7 +103,7 @@ RUN cd $INSTALL_PFX && \
     mkdir samtools && \
     cd samtools && \
     wget https://github.com/samtools/samtools/releases/download/$SAMTOOLS_VER/samtools-$SAMTOOLS_VER.tar.bz2 && \
-    tar -xjf samtools-$SAMTOOLS_VER.tar.bz2 && \
+    tar -jxvf samtools-$SAMTOOLS_VER.tar.bz2 && \
     rm samtools-$SAMTOOLS_VER.tar.bz2 && \
     cd samtools-$SAMTOOLS_VER && \
     ./configure && \
@@ -138,7 +133,7 @@ RUN cd $INSTALL_PFX && \
     mkdir velvet && \
     cd velvet && \
     wget https://github.com/dzerbino/velvet/archive/v$VELVET_VER.tar.gz && \
-    tar -xzf v$VELVET_VER.tar.gz && \
+    tar -zxvf v$VELVET_VER.tar.gz && \
     rm -rf v$VELVET_VER.tar.gz && \
     cd velvet-$VELVET_VER && \
     make
@@ -149,7 +144,7 @@ RUN cd $INSTALL_PFX && \
     mkdir flash && \
     cd flash && \
     wget https://sourceforge.net/projects/flashpage/files/FLASH-$FLASH_VER.tar.gz && \
-    tar -zxf FLASH-$FLASH_VER.tar.gz && \
+    tar -zxvf FLASH-$FLASH_VER.tar.gz && \
     rm -rf FLASH-$FLASH_VER.tar.gz && \
     cd FLASH-$FLASH_VER && \
     make
@@ -177,7 +172,7 @@ ENV SHOVILL_ENV=1.0.4
 RUN mkdir shovill && \
   cd shovill && \
   wget https://github.com/tseemann/shovill/archive/v$SHOVILL_ENV.tar.gz && \
-  tar -xzf v$SHOVILL_ENV.tar.gz && \
+  tar -zxvf v$SHOVILL_ENV.tar.gz && \
   rm v$SHOVILL_ENV.tar.gz
 
 ##### Configuration ############################################################
