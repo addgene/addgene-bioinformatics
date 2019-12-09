@@ -51,7 +51,7 @@ ENV HTSLIB_ZIP=htslib-1.2.1.tar.bz2
 ENV HTSLIB_URL=https://github.com/BioDocker/software-archive/releases/download/htslib
 ENV HTSLIB_SRC=htslib-1.2.1
 RUN wget $HTSLIB_URL/$HTSLIB_ZIP -O $HTSLIB_ZIP && \
-    tar xvf $HTSLIB_ZIP && \
+    tar -jxvf $HTSLIB_ZIP && \
     rm $HTSLIB_ZIP && \
     cd $HTSLIB_SRC && \
     make && \
