@@ -34,8 +34,8 @@ RUN apt-get update && \
 RUN mkdir $INSTALL_PFX/bbtools && \
   cd $INSTALL_PFX/bbtools && \
   wget https://sourceforge.net/projects/bbmap/files/BBMap_38.73.tar.gz && \
-  tar -zxvf BBMap_38.73.tar.gz \
-  cp bbmap/* $INSTALL_PFX/bin
+  tar -zxvf BBMap_38.73.tar.gz && \
+  cp -r bbmap/* $INSTALL_PFX/bin
 
 ##### Configuration ############################################################
 
