@@ -6,7 +6,7 @@ FROM ubuntu:16.04
 
 LABEL base_image="ubuntu"
 LABEL version="16.04"
-LABEL software="biocontainers"
+LABEL software="Biocontainers base Image"
 LABEL software.version="1.1.0"
 LABEL about.summary="Base image for BioDocker"
 LABEL about.home="http://biocontainers.pro"
@@ -31,19 +31,33 @@ RUN apt-get clean all && \
     apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y  \
-        curl            \
-        grep            \
-        sed             \
-        dpkg            \
-        fuse            \
-        git             \
-        emacs           \
-        wget            \
-        zip             \
+        automake \
+        autotools-dev \
         build-essential \
-        pkg-config      \
-        bzip2           \
-        ca-certificates && \
+        bzip2 \
+        ca-certificates \
+        cmake \
+        curl \
+        dpkg \
+        emacs \
+        fuse \
+        git \
+        grep \
+        libglib2.0-0 \
+        libsm6 \
+        libxext6 \
+        libxrender1 \
+        mercurial \
+        openjdk-8-jre \
+        pkg-config \
+        python \
+        python-dev \
+        python-pip \
+        sed \
+        subversion \
+        wget \
+        zip \
+        zlib1g-dev && \
     apt-get clean && \
     apt-get purge && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
@@ -62,6 +76,7 @@ RUN TINI_VERSION=`curl https://github.com/krallin/tini/releases/latest | grep -o
 
 RUN mkdir /data /config
 
+# Add user biodocker with password biodocker
 RUN groupadd fuse && \
     useradd --create-home --shell /bin/bash --user-group --uid 1000 --groups sudo,fuse biodocker && \
     echo `echo "biodocker\nbiodocker\n" | passwd biodocker` && \
