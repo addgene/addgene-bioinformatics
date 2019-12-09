@@ -119,13 +119,14 @@ RUN cd $INSTALL_PFX && \
     chmod +x skesa
 
 # Install MEGAHIT
-ENV MAGAHIT_VER=1.1.4
+
+ENV MEGAHIT_VER=1.1.4
 RUN cd $INSTALL_PFX && \
     mkdir megahit && \
     cd megahit && \
-    wget https://github.com/voutcn/megahit/releases/download/v$MAGAHIT_VER/megahit_v$MAGAHIT_VER_LINUX_CPUONLY_x86_64-bin.tar.gz && \
-    tar -xzf megahit_v$MAGAHIT_VER_LINUX_CPUONLY_x86_64-bin.tar.gz && \
-    rm megahit_v$MAGAHIT_VER_LINUX_CPUONLY_x86_64-bin.tar.gz
+    wget https://github.com/voutcn/megahit/releases/download/v$MEGAHIT_VER/megahit_v${MEGAHIT_VER}_LINUX_CPUONLY_x86_64-bin.tar.gz && \
+    tar -zxvf megahit_v${MEGAHIT_VER}_LINUX_CPUONLY_x86_64-bin.tar.gz && \
+    rm megahit_v${MEGAHIT_VER}_LINUX_CPUONLY_x86_64-bin.tar.gz
 
 # Install Velvet
 ENV VELVET_VER=1.2.10
