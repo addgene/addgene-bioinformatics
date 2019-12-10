@@ -59,7 +59,7 @@ class ApcJob(Job):
             working_dir = fileStore.localTempDir
             apiDockerCall(
                 self,
-                image='ralatsdio/apc',
+                image='ralatsdio/apc:v0.1.0',
                 volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
                 working_dir=working_dir,
                 parameters=["apc.pl",
