@@ -38,7 +38,7 @@ RUN wget $URL/$ZIP -O $INSTALL_PFX/$ZIP && \
 
 USER biodocker
 WORKDIR /data
-# CMD ['NOVOPlasty.pl']
+# CMD ['spades.py']
 
 ##### Maintainer ###############################################################
 
