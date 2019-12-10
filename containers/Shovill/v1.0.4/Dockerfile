@@ -7,10 +7,10 @@ FROM ralatsdio/biocontainers:v1.1.0
 LABEL base.image="ralatsdio/biocontainers"
 LABEL container.version="1.1.0"
 LABEL software="Shovill"
-LABEL software.version="1.0.4"
+LABEL software.version="1.0.9"
 LABEL about.summary="Faster than SPAdes de novo DBG genome assembler (with assembler options!)"
 LABEL about.home="https://github.com/tseemann/shovill"
-LABEL about.provides="shovill v1.0.4"
+LABEL about.provides="shovill v1.0.9"
 LABEL about.license_file="https://github.com/tseemann/shovill/blob/master/LICENSE"
 LABEL about.license="?"
 LABEL about.tags="Genomics"
@@ -83,7 +83,7 @@ RUN cd $INSTALL_PFX && \
     rm -rf Trimmomatic-$TRIMMOMATIC_VER.zip && \
     chmod +x Trimmomatic-$TRIMMOMATIC_VER/trimmomatic-$TRIMMOMATIC_VER.jar && \
     echo "#!/bin/bash" >> trimmomatic && \
-    echo "exec java -jar /trimmomatic/Trimmomatic-$TRIMMOMATIC_VER/trimmomatic-$TRIMMOMATIC_VER.jar """"$""@"""" " >> trimmomatic && \
+    echo "exec java -jar $INSTALL_PFX/trimmomatic/Trimmomatic-$TRIMMOMATIC_VER/trimmomatic-$TRIMMOMATIC_VER.jar """"$""@"""" " >> trimmomatic && \
     chmod +x trimmomatic
 
 # Install BWA-MEM
@@ -158,7 +158,7 @@ RUN cd $INSTALL_PFX && \
     wget https://github.com/broadinstitute/pilon/releases/download/v$PILON_VER/pilon-$PILON_VER.jar && \
     chmod +x pilon-$PILON_VER.jar && \
     echo "#!/bin/bash" >> pilon && \
-    echo "exec java -jar /pilon/pilon-$PILON_VER.jar """"$""@"""" " >> pilon && \
+    echo "exec java -jar $INSTALL_PFX/pilon/pilon-$PILON_VER.jar """"$""@"""" " >> pilon && \
     chmod +x pilon
 
 # Install Samclip
@@ -169,12 +169,13 @@ RUN cd $INSTALL_PFX && \
     chmod +x samclip
 
 # Install shovill
-ENV SHOVILL_ENV=1.0.4
-RUN mkdir shovill && \
-  cd shovill && \
-  wget https://github.com/tseemann/shovill/archive/v$SHOVILL_ENV.tar.gz && \
-  tar -zxvf v$SHOVILL_ENV.tar.gz && \
-  rm v$SHOVILL_ENV.tar.gz
+ENV SHOVILL_ENV=1.0.9
+RUN cd $INSTALL_PFX && \
+    mkdir shovill && \
+    cd shovill && \
+    wget https://github.com/tseemann/shovill/archive/v$SHOVILL_ENV.tar.gz && \
+    tar -zxvf v$SHOVILL_ENV.tar.gz && \
+    rm v$SHOVILL_ENV.tar.gz
 
 ##### Configuration ############################################################
 
@@ -183,19 +184,20 @@ WORKDIR /data
 # CMD ['shovill.pl']
 
 # Set path to executables
+# TODO: Sort which executables are required, then create link in $INSTALL_PFX/bin
 ENV PATH="${PATH}:\
-/SPAdes-$SPADES_VER-Linux/bin:\
-/mash-Linux64-v$MASH_VER:\
-/Lighter-$LIGHTER_VER:\
-/trimmomatic:\
-/bwa/bwa-$BWA_VER:\
-/skesa:\
-/megahit/megahit_v$MAGAHIT_VER_LINUX_CPUONLY_x86_64-bin:\
-/velvet/velvet-$VELVET_VER:\
-/flash/FLASH-$FLASH_VER:\
-/shovill/shovill-$SHOVILL_ENV/bin:\
-/pilon:\
-/samclip"
+$INSTALL_PFX/SPAdes-$SPADES_VER-Linux/bin:\
+$INSTALL_PFX/mash-Linux64-v$MASH_VER:\
+$INSTALL_PFX/Lighter-$LIGHTER_VER:\
+$INSTALL_PFX/trimmomatic:\
+$INSTALL_PFX/bwa/bwa-$BWA_VER:\
+$INSTALL_PFX/skesa:\
+$INSTALL_PFX/megahit/megahit_v${MEGAHIT_VER}_LINUX_CPUONLY_x86_64-bin:\
+$INSTALL_PFX/velvet/velvet-$VELVET_VER:\
+$INSTALL_PFX/flash/FLASH-$FLASH_VER:\
+$INSTALL_PFX/shovill/shovill-$SHOVILL_ENV/bin:\
+$INSTALL_PFX/pilon:\
+$INSTALL_PFX/samclip"
 
 # Set Perl locale settings
 ENV LC_ALL=C
