@@ -141,7 +141,8 @@ def align_cp_to_qc_sequences(assembler_data_dir,
     qc_sequences = read_qc_sequences(assembler_data_dir, qc_sequences_fNm)
 
     # Initialize candidate process (CP) sequences dictionary
-    cp_sequences = dict(aligner_config)
+    cp_sequences = {}
+    cp_sequences['config'] = dict(aligner_config)
 
     # Consider each plate directory contained in the run directory
     output_file = open(
@@ -396,7 +397,7 @@ def accumulate_alignment_scores(assembler, cp_sequences):
     circularizer_relative_score = []
 
     for plate, wells in cp_sequences.items():
-        if not wells:
+        if plate == 'config' or not wells:
             continue
 
         for well, sequences in wells.items():

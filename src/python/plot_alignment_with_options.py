@@ -129,7 +129,8 @@ def plot_alignment_with_random(aligner_config, reprocess=False):
         r_seq_score = np.array(r_seq_score)
 
         # Dump alignments
-        alignments = dict(aligner_config)
+        alignments = {}
+        alignments['config'] = dict(aligner_config)
         alignments['seq_len'] = seq_len
         alignments['seq_lens'] = seq_lens
         alignments['r_seq_score'] = r_seq_score
@@ -235,7 +236,8 @@ def plot_alignment_with_offsets(aligner_config, reprocess=False):
         o_seq_score_2_l = np.array(o_seq_score_2_l)
 
         # Dump alignments
-        alignments = dict(aligner_config)
+        alignments = {}
+        alignments['config'] = dict(aligner_config)
         alignments['seq_len'] = seq_len
         alignments['r_seq_score_1_g'] = r_seq_score_1_g
         alignments['r_seq_score_1_l'] = r_seq_score_1_l
@@ -337,7 +339,8 @@ def plot_alignment_with_errors(aligner_config, reprocess=False):
         e_seq_score = np.array(e_seq_score)
 
         # Dump alignments
-        alignments = dict(aligner_config)
+        alignments = {}
+        alignments['config'] = dict(aligner_config)
         alignments['seq_len'] = seq_len
         alignments['r_seq_score'] = r_seq_score
         alignments['n_errs'] = n_errs
