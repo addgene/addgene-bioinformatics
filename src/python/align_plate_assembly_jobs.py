@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+from configparser import ConfigParser
 import csv
 import os
 import pickle
@@ -90,11 +91,7 @@ def read_qc_sequences(assembler_data_dir, qc_sequences_fNm):
 def align_cp_to_qc_sequences(assembler_data_dir,
                              assembler_run_dir,
                              qc_sequences_fNm,
-                             mode='global',
-                             match_score=1.0,
-                             mismatch_score=0.0,
-                             open_gap_score=0.0,
-                             extend_gap_score=0.0):
+                             aligner_config):
     """
     Aligns sequences produced by candidate sequence assembly processes
     to curated quality control full public sequences.
@@ -108,16 +105,8 @@ def align_cp_to_qc_sequences(assembler_data_dir,
         directory containing candidate process runs
     qc_sequences_fNm : str
         file containing QC sequences
-    mode " str
-        the alignment mode: 'global' | 'local'
-    match_score : flt
-        the score of a match
-    mismatch_score : flt
-        the score of a mismatch
-    open_gap_score : flt
-        the score of opening a gap (in the target or query)
-    extend_gap_score : flt
-        the score of extending a gap (in the target or query)
+    aligner_config : dct
+        pairwise aligner configuration
 
     Returns
     -------
@@ -130,42 +119,36 @@ def align_cp_to_qc_sequences(assembler_data_dir,
     # Identify assembler corresponding to the run directory
     assembler = assembler_run_dir.split('-')[0]
 
-    # Create a pairwise aligner with these parameters:
-    #     algorithm: 'Needleman-Wunsch'
-    #     match_score: 1.000000
-    #     mismatch_score: 0.000000
-    #     target_open_gap_score: 0.000000
-    #     target_extend_gap_score: 0.000000
-    #     target_left_open_gap_score: 0.000000
-    #     target_left_extend_gap_score: 0.000000
-    #     target_right_open_gap_score: 0.000000
-    #     target_right_extend_gap_score: 0.000000
-    #     query_open_gap_score: 0.000000
-    #     query_extend_gap_score: 0.000000
-    #     query_left_open_gap_score: 0.000000
-    #     query_left_extend_gap_score: 0.000000
-    #     query_right_open_gap_score: 0.000000
-    #     query_right_extend_gap_score: 0.000000
-    #     mode: global
-    aligner = Align.PairwiseAligner(mode=mode,
-                                    match_score=match_score,
-                                    mismatch_score=mismatch_score,
-                                    target_open_gap_score=open_gap_score,
-                                    target_extend_gap_score=extend_gap_score,
-                                    query_open_gap_score=open_gap_score,
-                                    query_extend_gap_score=extend_gap_score)
+    # Create a pairwise aligner with the specified configuration
+    aligner = Align.PairwiseAligner()
+    aligner.match_score = float(aligner_config['match_score'])
+    aligner.mismatch_score = float(aligner_config['mismatch_score'])
+    aligner.target_open_gap_score = float(aligner_config['target_open_gap_score'])
+    aligner.target_extend_gap_score = float(aligner_config['target_extend_gap_score'])
+    aligner.target_left_open_gap_score = float(aligner_config['target_left_open_gap_score'])
+    aligner.target_left_extend_gap_score = float(aligner_config['target_left_extend_gap_score'])
+    aligner.target_right_open_gap_score = float(aligner_config['target_right_open_gap_score'])
+    aligner.target_right_extend_gap_score = float(aligner_config['target_right_extend_gap_score'])
+    aligner.query_open_gap_score = float(aligner_config['query_open_gap_score'])
+    aligner.query_extend_gap_score = float(aligner_config['query_extend_gap_score'])
+    aligner.query_left_open_gap_score = float(aligner_config['query_left_open_gap_score'])
+    aligner.query_left_extend_gap_score = float(aligner_config['query_left_extend_gap_score'])
+    aligner.query_right_open_gap_score = float(aligner_config['query_right_open_gap_score'])
+    aligner.query_right_extend_gap_score = float(aligner_config['query_right_extend_gap_score'])
+    aligner.mode = aligner_config['mode']
 
     # Read quality control (QC) sequences
-    qc_sequences = read_qc_sequences(
-        assembler_data_dir, assembler_run_dir, qc_sequences_fNm)
+    qc_sequences = read_qc_sequences(assembler_data_dir, qc_sequences_fNm)
 
     # Initialize candidate process (CP) sequences dictionary
-    cp_sequences = {}
+    cp_sequences = dict(aligner_config)
 
     # Consider each plate directory contained in the run directory
     output_file = open(
-        os.path.join(assembler_data_dir, assembler_run_dir + ".csv"), 'w')
-
+        os.path.join(
+            assembler_data_dir,
+            assembler_run_dir + "-" + os.path.basename(aligner_config['file'])
+            ).replace(".cfg", ".csv"), 'w')
     plate_specs = sorted(
         os.listdir(
             os.path.join(assembler_data_dir, assembler_run_dir)))
@@ -181,7 +164,8 @@ def align_cp_to_qc_sequences(assembler_data_dir,
         # Consider each well directory contained in the plate directory
         wells = sorted(
             os.listdir(
-                os.path.join(assembler_data_dir, assembler_run_dir, plate_spec)))
+                os.path.join(
+                    assembler_data_dir, assembler_run_dir, plate_spec)))
         for well in wells:
 
             # Initialize well dictionary
@@ -583,33 +567,23 @@ def plot_alignment_socres(assembler, cp_sequences):
 
 if __name__ == "__main__":
 
-    # And and parse arguments
+    # Add and parse arguments
     parser = ArgumentParser()
-    cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-4]
+    parser.add_argument('-c', '--config-file',
+                        default=os.path.abspath(
+                            __file__).replace(".py", ".cfg"),
+                        help="configuration file")
+    base_dir = os.path.join(
+        os.sep, *os.path.abspath(__file__).split(os.sep)[0:-4])
     parser.add_argument('-d', '--assembler-data-directory',
-                        default=os.path.join(os.sep + os.path.join(*cmps),
+                        default=os.path.join(base_dir,
                                              "addgene-assembler-data"),
                         help="directory containing assembler run directory")
     parser.add_argument('-q', '--qc-sequences-file',
-                        default=os.path.join(os.sep + os.path.join(*cmps),
+                        default=os.path.join(base_dir,
                                              "addgene-assembler-data",
                                              "2018_QC_Sequences.csv"),
                         help="file containing QC sequences")
-    parser.add_argument('-o', '--mode', type=str,
-                        choices=['global', 'local'], default='global',
-                        help="the alignment mode")
-    parser.add_argument('-m', '--match-score', type=float,
-                        default=1.0,
-                        help="the score of a match")
-    parser.add_argument('-s', '--mismatch-score', type=float,
-                        default=0.0,
-                        help="the score of a mismatch")
-    parser.add_argument('-g', '--open-gap-score', type=float,
-                        default=0.0,
-                        help="the score of opening a gap")
-    parser.add_argument('-e', '--extend-gap-score', type=float,
-                        default=0.0,
-                        help="the score of extending a gap")
     parser.add_argument('-p', '--plot',
                         action='store_true',
                         help="plot alignment results")
@@ -617,6 +591,11 @@ if __name__ == "__main__":
                         action='store_true',
                         help="reprocess each run directory")
     options = parser.parse_args()
+
+    # Read and parse configuration
+    config = ConfigParser()
+    config.read(options.config_file)
+    config['aligner']['file'] = options.config_file
 
     # Identify run directories
     assembler_run_dirs = []
@@ -627,7 +606,7 @@ if __name__ == "__main__":
             assembler_run_dirs.append(assembler_run_dir)
 
     # Initialize candidate process alignment dictionary
-    cp_alignment = {}
+    cp_alignment = dict(config['aligner'])
     for assembler_run_dir in assembler_run_dirs:
         assembler = assembler_run_dir.split('-')[0]
 
@@ -635,10 +614,11 @@ if __name__ == "__main__":
         cp_alignment[assembler] = {}
 
         # Create and dump, or load candidate process sequences pickle
-        cp_alignment_pNm = assembler_run_dir + ".pickle"
-        cp_alignment_pth = os.path.join(
-            options.assembler_data_directory, cp_alignment_pNm)
-        if not os.path.isfile(cp_alignment_pth) or options.reprocess:
+        cp_alignment_path = os.path.join(
+            options.assembler_data_directory,
+            assembler_run_dir + "-" + os.path.basename(options.config_file)
+            ).replace(".cfg", ".pickle")
+        if not os.path.isfile(cp_alignment_path) or options.reprocess:
 
             # Align sequences produced by candidate sequence assembly
             # processes to curated quality control full public
@@ -647,18 +627,14 @@ if __name__ == "__main__":
                 options.assembler_data_directory,
                 assembler_run_dir,
                 options.qc_sequences_file,
-                mode=options.mode,
-                match_score=options.match_score,
-                mismatch_score=options.mismatch_score,
-                open_gap_score=options.open_gap_score,
-                extend_gap_score=options.extend_gap_score)
+                config['aligner'])
 
-            with open(cp_alignment_pth, 'wb') as f:
+            with open(cp_alignment_path, 'wb') as f:
                 pickle.dump(cp_sequences, f, pickle.HIGHEST_PROTOCOL)
 
         else:
 
-            with open(cp_alignment_pth, 'rb') as f:
+            with open(cp_alignment_path, 'rb') as f:
                 cp_sequences = pickle.load(f)
 
         cp_alignment[assembler]['sequences'] = cp_sequences
