@@ -72,7 +72,7 @@ class SpadesJob(Job):
             working_dir = fileStore.localTempDir
             apiDockerCall(
                 self,
-                image='biocontainers/spades:v3.13.1_cv1',
+                image='ralatsdio/spades:v3.13.1',
                 volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
                 working_dir=working_dir,
                 parameters=["spades.py",

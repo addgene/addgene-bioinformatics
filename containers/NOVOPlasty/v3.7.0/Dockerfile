@@ -1,11 +1,11 @@
-############################### Dockerfile ##################################
+##### Base image ###############################################################
 
-FROM biocontainers/biocontainers:v1.0.0_cv4
+FROM ralatsdio/biocontainers:v1.1.0
 
-################################# METADATA ###################################
+##### Metadata #################################################################
 
-LABEL base_image="biocontainers:v1.0.0_cv4"
-LABEL version="3"
+LABEL base_image="ralatsdio/biocontainers"
+LABEL version="1.1.1"
 LABEL software="NOVOPlasty"
 LABEL software.version="v3.7.0"
 LABEL about.summary="The organelle assembler and heteroplasmy caller"
@@ -17,12 +17,9 @@ LABEL about.tags="Genomics"
 LABEL extra.identifiers.biotools="NOVOPlasty"
 LABEL extra.binaries="NOVOPlasty.pl"
 
-################## BEGIN INSTALLATION ######################
+##### Installation #############################################################
 
-# Change user to root
 USER root
-
-# Shared environment
 ENV INSTALL_PFX=/home/biodocker
 
 # Install NOVOPlasty
@@ -36,16 +33,12 @@ RUN git clone $NOVOPLASTY_URL && \
     cd .. && \
     rm -rf $NOVOPLASTY_SRC
 
-# Change user to back to biodocker
+##### Configuration ############################################################
+
 USER biodocker
-
-# Change WORKDIR to /data
 WORKDIR /data
-
-# Define default command
 # CMD ['NOVOPlasty.pl']
 
-##################### INSTALLATION END #####################
+##### Maintainer ###############################################################
 
-# File Author / Maintainer
 MAINTAINER Raymond LeClair <raymond.leclair@springbok.io>
