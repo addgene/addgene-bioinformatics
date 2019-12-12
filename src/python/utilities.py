@@ -1,4 +1,8 @@
 import os
+from random import choice
+
+from Bio.Alphabet import IUPAC
+from Bio.Seq import Seq
 
 
 def importFile(toil, source_path, scheme="file"):
@@ -194,3 +198,40 @@ def exportWellAssemblyFiles(toil, assembler, output_directory, well_specs,
         if assembler in ['spades', 'shovill']:
             exportFiles(toil, well_output_directory,
                         well_assembly_rvs[iW]['apc_rv'])
+
+
+def create_r_seq_str(seq_len):
+    """Create a string of randomly selected nucleotides.
+
+    Parameters
+    ----------
+    seq_len : int
+        the length of the string to creeate
+
+    Returns
+    -------
+    str
+        the sequence string
+    """
+    r_seq_str = ""
+    for count in range(seq_len):
+        r_seq_str += choice("CGTA")
+    return r_seq_str
+
+
+def create_r_seq(seq_len):
+    """Creates a sequence of randomly selected nucleotides.
+
+    Parameters
+    ----------
+    seq_len : int
+        the length of the sequence to create
+
+    Returns
+    -------
+    Bio.Seq.Seq
+        the sequence
+    """
+    r_seq_str = create_r_seq_str(seq_len)
+    r_seq = Seq(r_seq_str, IUPAC.unambiguous_dna)
+    return r_seq
