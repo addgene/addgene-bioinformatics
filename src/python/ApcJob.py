@@ -16,7 +16,6 @@ class ApcJob(Job):
     output sequence. The join location is appended to the sequence
     header, to allow confirmation.
     """
-
     def __init__(self, contigs_file_id, parent_rv={},
                  contigs_file_name="contigs.fasta", base_file_name="apc",
                  *args, **kwargs):
@@ -100,7 +99,6 @@ class ApcJob(Job):
 if __name__ == "__main__":
     """
     Circularize contigs corresponding to a single well.
-
     """
     # Parse FASTA data path and file name, and output directory,
     # making the output directory if needed

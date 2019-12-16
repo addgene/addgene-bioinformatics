@@ -13,7 +13,6 @@ class ShovillJob(Job):
     Accepts paired-end Illumina reads for assembly using SPAdes,
     SKESA, MEGAHIT, or Velvet.
     """
-
     def __init__(self, read_one_file_id, read_two_file_id,
                  output_directory, parent_rv={},
                  read_one_file_name="R1.fastq.gz",
@@ -125,7 +124,6 @@ class ShovillJob(Job):
 if __name__ == "__main__":
     """
     Assemble reads corresponding to a single well.
-
     """
     # Parse FASTQ data path, plate and well specification, and output
     # directory, making the output directory if needed

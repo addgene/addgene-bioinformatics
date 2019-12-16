@@ -97,7 +97,6 @@ if __name__ == "__main__":
     """
     Assemble reads and circularize contigs corresponding to a single
     well.
-
     """
     # Parse FASTQ data path, plate and well specification, coverage
     # cutoff, and output directory, making the output directory if

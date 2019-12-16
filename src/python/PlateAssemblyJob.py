@@ -76,7 +76,6 @@ if __name__ == "__main__":
     Assemble reads for each well of a specified plate for which both
     FASTQ read files are found.
     """
-
     # Parse FASTQ data path, plate specification, coverage cutoff, and
     # output directory
     parser = ArgumentParser()

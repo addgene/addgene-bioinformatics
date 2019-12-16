@@ -13,7 +13,6 @@ class SpadesJob(Job):
     Accepts paired-end Illumina reads for assembly with a coverage
     cutoff specification.
     """
-
     def __init__(self, read_one_file_id, read_two_file_id,
                  coverage_cutoff, output_directory, parent_rv={},
                  read_one_file_name="R1.fastq.gz",
@@ -125,7 +124,6 @@ class SpadesJob(Job):
 if __name__ == "__main__":
     """
     Assemble reads corresponding to a single well.
-
     """
     # Parse FASTQ data path, plate and well specification, coverage
     # cutoff, and output directory, making the output directory if

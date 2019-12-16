@@ -12,7 +12,6 @@ class SkesaJob(Job):
     """
     Accepts paired-end Illumina reads for assembly using SKESA.
     """
-
     def __init__(self, read_one_file_id, read_two_file_id,
                  parent_rv={},
                  read_one_file_name="R1.fastq.gz",
@@ -112,7 +111,6 @@ class SkesaJob(Job):
 if __name__ == "__main__":
     """
     Assemble reads corresponding to a single well.
-
     """
     # Parse FASTQ data path, plate and well specification, and output
     # directory, making the output directory if needed

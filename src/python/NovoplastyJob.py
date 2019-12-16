@@ -13,7 +13,6 @@ class NovoplastyJob(Job):
     """
     Accepts paired-end Illumina reads for assembly using NOVOPlasty.
     """
-
     def __init__(
         self,
         read_one_file_id,
@@ -178,7 +177,6 @@ Use Quality Scores    = no
 if __name__ == "__main__":
     """
     Assemble reads corresponding to a single well.
-
     """
     # Parse FASTQ data path, plate and well specification, and output
     # directory, making the output directory if needed

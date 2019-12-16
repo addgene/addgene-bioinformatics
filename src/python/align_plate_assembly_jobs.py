@@ -115,7 +115,6 @@ def align_cp_to_qc_sequences(assembler_data_dir,
         doubled sequence, and corresponding alignment scores for each
         well in each plate in the run directory
     """
-
     # Identify assembler corresponding to the run directory
     assembler = assembler_run_dir.split('-')[0]
 

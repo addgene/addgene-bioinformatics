@@ -388,7 +388,6 @@ if __name__ == "__main__":
     """Create some simple plots to understand operation of the
     Biopython PairwiseAligner.
     """
-
     # Add and parse arguments
     parser = ArgumentParser()
     parser.add_argument('-c', '--config-file',
