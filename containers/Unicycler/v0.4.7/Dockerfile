@@ -117,9 +117,9 @@ WORKDIR /data
 # CMD ['shovill.pl']
 
 # Set path to executables
-ENV PATH="/pilon:${PATH}"
-ENV PATH="/spades/bin:${PATH}"
-ENV PATH="/miniasm:${PATH}"
+ENV PATH="$INSTALL_PFX/pilon:${PATH}"
+ENV PATH="$INSTALL_PFX/spades/bin:${PATH}"
+ENV PATH="$INSTALL_PFX/miniasm:${PATH}"
 
 ##### Maintainer ###############################################################
 
