@@ -61,7 +61,7 @@ class SkesaJob(Job):
 
             # Mount the Toil local temporary directory to the same path in
             # the container, and use the path as the working directory in
-            # the container, then call shovill
+            # the container, then call SKESA
             # TODO: Specify the container on construction
             working_dir = fileStore.localTempDir
             apiDockerCall(
@@ -79,7 +79,7 @@ class SkesaJob(Job):
                 # steamfile=log_file_name,
                 )
 
-            # Write the skesa log, and contigs FASTA file from the
+            # Write the SKESA log, and contigs FASTA file from the
             # local temporary directory into the file store
             # log_file_id = utilities.writeGlobalFile(
             #     fileStore, log_file_name)
@@ -154,7 +154,7 @@ if __name__ == "__main__":
 
         else:
 
-            # Restart the skesa job
+            # Restart the SKESA job
             skesa_rv = toil.restart(skesa_job)
 
         # Export the SKESA log and contigs FASTA file from the file
