@@ -16,6 +16,7 @@ class MasurcaJob(Job):
                  parent_rv={},
                  read_one_file_name="R1.fastq.gz",
                  read_two_file_name="R2.fastq.gz",
+                 config_file_name="assemble.cfg",
                  threads="1",
                  *args, **kwargs):
         """
@@ -35,6 +36,7 @@ class MasurcaJob(Job):
         self.read_one_file_name = read_one_file_name
         self.read_two_file_id = read_two_file_id
         self.read_two_file_name = read_two_file_name
+        self.config_file_name = config_file_name
         self.threads = threads
         self.parent_rv = parent_rv
 
@@ -51,8 +53,7 @@ class MasurcaJob(Job):
         ca1_file_name = "runCA1.out"  # CABOG stdout for unitig consensus
         ca2_file_name = "runCA2.out"  # CABOG stdout for scaffolder
         sr1_file_name = "super1.err"  # STDERR for super reads code that generates super reads from PE reads
-        ecl_file_name = "error_correct.log"  # Log file for error correction
-        scaffolds_file_name = "final.genome.scf.fasta"
+        scf_file_name = "final.genome.scf.fasta"  # Final assembly scaffolds file
 
         try:
             # Read the read files from the file store into the local
@@ -62,40 +63,131 @@ class MasurcaJob(Job):
             read_two_file_path = utilities.readGlobalFile(
                 fileStore, self.read_two_file_id, self.read_two_file_name)
 
+            # Write the MaSuRCA config file into the local temporary
+            # directory
+            working_dir = fileStore.localTempDir
+            with open(os.path.join(working_dir,
+                                   self.config_file_name), 'w+') as f:
+                config = """
+# Input file for 'masurca' command to create 'assemble.sh'.
+# --------------------------------------------------------------------------------
+# DATA is specified as type (PE, JUMP, OTHER, PACBIO) and 5 fields:
+#   1) two_letter_prefix
+#   2) mean
+#   3) stdev
+#   4) fastq(.gz)_fwd_reads
+#   5) fastq(.gz)_rev_reads
+# The PE reads are always assumed to be innies, i.e. --->.<---, and
+# JUMP are assumed to be outties <---.--->. If there are any jump
+# libraries that are innies, such as longjump, specify them as JUMP
+# and specify NEGATIVE mean. Reverse reads are optional for PE
+# libraries and mandatory for JUMP libraries. Any OTHER sequence data
+# (454, Sanger, Ion torrent, etc) must be first converted into Celera
+# Assembler compatible .frg files (see
+# http://wgs-assembler.sourceforge.com)
+DATA
+# Illumina paired end reads supplied as:
+#   <two-character prefix> <fragment mean> <fragment stdev> <forward_reads> <reverse_reads>
+# If single-end, do not specify <reverse_reads>
+# MUST HAVE Illumina paired end reads to use MaSuRCA
+PE = pe 500 50 {read_one_file_path} {read_two_file_path}
+#
+# Illumina mate pair reads supplied as:
+#   <two-character prefix> <fragment mean> <fragment stdev> <forward_reads> <reverse_reads>
+#JUMP = sh 3600 200  /FULL_PATH/short_1.fastq  /FULL_PATH/short_2.fastq
+#
+# Pacbio OR Nanopore reads must be in a single fasta or fastq file
+# with absolute path, can be gzipped. If you have both types of reads
+# supply them both as NANOPORE type.
+#PACBIO = /FULL_PATH/pacbio.fa
+#NANOPORE = /FULL_PATH/nanopore.fa
+#
+# Other reads (Sanger, 454, etc) one frg file, concatenate your frg
+# files into one if you have many
+#OTHER = /FULL_PATH/file.frg
+END
+# --------------------------------------------------------------------------------
+PARAMETERS
+# Set this to 1 if your Illumina jumping library reads are shorter
+# than 100bp
+EXTEND_JUMP_READS = 0
+# This is k-mer size for deBruijn graph values between 25 and 127 are
+# supported, auto will compute the optimal size based on the read data
+# and GC content
+GRAPH_KMER_SIZE = auto
+# Set this to 1 for all Illumina-only assemblies, or set this to 0 if
+# you have more than 15x coverage by long reads (Pacbio or Nanopore)
+# or any other long reads/mate pairs (Illumina MP, Sanger, 454, etc).
+USE_LINKING_MATES = 0
+# Specifies whether to run mega-reads correction on the grid
+USE_GRID = 0
+# Specifies grid engine to use SGE or SLURM
+GRID_ENGINE = SGE
+# Specifies queue (for SGE) or partition (for SLURM) to use when
+# running on the grid MANDATORY
+GRID_QUEUE = all.q
+# Batch size in the amount of long read sequence for each batch on the
+# grid
+GRID_BATCH_SIZE = 300000000
+# Use at most this much coverage by the longest Pacbio or Nanopore
+# reads, discard the rest of the reads
+LHE_COVERAGE = 25
+# Set to 1 to only do one pass of mega-reads, for faster but worse
+# quality assembly
+MEGA_READS_ONE_PASS = 0
+# This parameter is useful if you have too many Illumina jumping
+# library mates. Typically set it to 60 for bacteria and 300 for the
+# other organisms
+LIMIT_JUMP_COVERAGE = 300
+# These are the additional parameters to Celera Assembler. Do not
+# worry about performance, number or processors or batch sizes --
+# these are computed automatically. Set cgwErrorRate=0.25 for bacteria
+# and 0.1<=cgwErrorRate<=0.15 for other organisms.
+CA_PARAMETERS = cgwErrorRate=0.15
+# Minimum count k-mers used in error correction 1 means all k-mers are
+# used. One can increase to 2 if Illumina coverage > 100
+KMER_COUNT_THRESHOLD = 1
+# Whether to attempt to close gaps in scaffolds with Illumina data
+CLOSE_GAPS = 1
+# Auto-detected number of cpus to use
+NUM_THREADS = {threads}
+# This is mandatory jellyfish hash size -- a safe value is
+# estimated_genome_size*estimated_coverage
+JF_SIZE = 200000000
+# Set this to 1 to use SOAPdenovo contigging/scaffolding
+# module. Assembly will be worse but will run faster. Useful for very
+# large (> 5Gbp) genomes from Illumina-only data.
+SOAP_ASSEMBLY = 0
+END
+# --------------------------------------------------------------------------------
+                 """.format(
+                     read_one_file_path=read_one_file_path,
+                     read_two_file_path=read_two_file_path,
+                     threads=self.threads,
+                )
+                f.write(config)
+
             # Mount the Toil local temporary directory to the same path in
             # the container, and use the path as the working directory in
             # the container, then call MaSuRCA
             # TODO: Specify the container on construction
-            working_dir = fileStore.localTempDir
             apiDockerCall(
                 self,
-                image='ralatsdio/masurca:v1.0.9',
+                image='ralatsdio/masurca:v3.3.1',
                 volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
                 working_dir=working_dir,
-                parameters=["assemble.sh",
-                            "--short1",
-                            read_one_file_path,
-                            "--short2",
-                            read_two_file_path,
-                            "--threads",
-                            self.threads,
+                parameters=["masurca.sh",
+                            self.config_file_name,
                             ])
 
-            # Write the MaSuRCA log and corrections files, and contigs
-            # FASTA file from the local temporary directory into the file
-            # store
-            ca0_file_id = utilities.writeGlobalFile(
-                fileStore, self.output_directory, ca0_file_name)
-            ca1_file_id = utilities.writeGlobalFile(
-                fileStore, self.output_directory, ca1_file_name)
-            ca2_file_id = utilities.writeGlobalFile(
-                fileStore, self.output_directory, ca2_file_name)
-            sr1_file_id = utilities.writeGlobalFile(
-                fileStore, self.output_directory, sr1_file_name)
-            ecl_file_id = utilities.writeGlobalFile(
-                fileStore, self.output_directory, ecl_file_name)
-            scaffolds_file_id = utilities.writeGlobalFile(
-                fileStore, self.output_directory, scaffolds_file_name)
+            # Write the CABOG stdout, super read code stderr, and
+            # final assembly scaffolds FASTA files from the local
+            # temporary directory into the file store
+            ca0_file_id = utilities.writeGlobalFile(fileStore, ca0_file_name)
+            ca1_file_id = utilities.writeGlobalFile(fileStore, ca1_file_name)
+            ca2_file_id = utilities.writeGlobalFile(fileStore, ca2_file_name)
+            sr1_file_id = utilities.writeGlobalFile(fileStore, sr1_file_name)
+            scf_file_id = utilities.writeGlobalFile(fileStore, "CA", scf_file_name)
 
         except Exception as exc:
             # Ensure expectred return values on exceptions
@@ -103,8 +195,7 @@ class MasurcaJob(Job):
             ca1_file_id = None
             ca2_file_id = None
             sr1_file_id = None
-            ecl_file_id = None
-            scaffolds_file_id = None
+            scf_file_id = None
 
         # Return file ids and names for export
         masurca_rv = {
@@ -125,13 +216,9 @@ class MasurcaJob(Job):
                     'id': sr1_file_id,
                     'name': sr1_file_name,
                 },
-                'ecl_file': {
-                    'id': ecl_file_id,
-                    'name': ecl_file_name,
-                },
-                'scaffolds_file': {
-                    'id': scaffolds_file_id,
-                    'name': scaffolds_file_name,
+                'scf_file': {
+                    'id': scf_file_id,
+                    'name': scf_file_name,
                 },
             }
         }
@@ -171,8 +258,6 @@ if __name__ == "__main__":
     with Toil(options) as toil:
         if not toil.options.restart:
 
-            # STARTHERE: Sort how to handle assemble.cfg or assemble.sh
-
             # Import the local read files into the file store
             read_one_file_ids, read_two_file_ids = utilities.importReadFiles(
                 toil, options.data_path, options.plate_spec,
@@ -182,7 +267,6 @@ if __name__ == "__main__":
             masurca_job = MasurcaJob(
                 read_one_file_ids[0],
                 read_two_file_ids[0],
-                options.output_directory,
                 )
             masurca_rv = toil.start(masurca_job)
 
