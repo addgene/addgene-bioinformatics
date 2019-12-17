@@ -40,7 +40,10 @@ RUN cd $INSTALL_PFX && \
     cd MaSuRCA-$MASURCA_VER && \
     chmod +x install.sh && \
     ./install.sh && \
-    chmod +x bin/masurca
+    chmod +x bin/masurca && \
+    echo '#!/bin/bash' > $INSTALL_PFX/bin/masurca.sh && \
+    echo 'masurca $1 && ./assemble.sh' >> $INSTALL_PFX/bin/masurca.sh && \
+    chmod +x $INSTALL_PFX/bin/masurca.sh
 
 ##### Configuration ############################################################
 
