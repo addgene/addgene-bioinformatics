@@ -12,6 +12,10 @@ from WellAssemblyJob import WellAssemblyJob
 import utilities
 
 
+ASSEMBLERS = ['masurca', 'novoplasty', 'shovill', 'skesa', 'spades',
+              'unicycler']
+
+
 class PlateAssemblyJob(Job):
     """
     Runs a WellAssemblyJob for each well of a plate for which both
@@ -24,7 +28,7 @@ class PlateAssemblyJob(Job):
         Parameters
         ----------
         well_specs : list of str
-            Specification for each well for which both FASTQ read
+            specification for each well for which both FASTQ read
             files were found
         read_one_file_ids : list of toil.fileStore.FileID
             ids of files in file store containing FASTQ Illumina short
@@ -33,9 +37,9 @@ class PlateAssemblyJob(Job):
             ids of files in file store containing FASTQ Illumina short
             right paired reads
         plate_spec : str
-            Specification for plate containing the specified wells
+            specification for plate containing the specified wells
         assembler : str
-            name of assembler to run, from ['spades', 'shovill', 'novoplasty']
+            name of assembler to run, from ASSEMBLERS
         coverage_cutoff : str
             read coverage cutoff value
         """
@@ -44,7 +48,7 @@ class PlateAssemblyJob(Job):
         self.read_one_file_ids = read_one_file_ids
         self.read_two_file_ids = read_two_file_ids
         self.plate_spec = plate_spec
-        if assembler not in ['spades', 'shovill', 'novoplasty']:
+        if assembler not in ASSEMBLERS:
             raise Exception("Unexpected assembler")
         self.assembler = assembler
         self.coverage_cutoff = coverage_cutoff
@@ -91,7 +95,7 @@ if __name__ == "__main__":
     parser.add_argument('-p', '--plate-spec', default="A11967B_sW0154",
                         help="the plate specification")
     parser.add_argument('-a', '--assembler', default="spades",
-                        choices=['spades', 'shovill', 'novoplasty'],
+                        choices=ASSEMBLERS,
                         help="name of the assembler to run")
     parser.add_argument('-c', '--coverage-cutoff', default="100",
                         help="the coverage cutoff")
