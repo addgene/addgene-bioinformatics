@@ -29,7 +29,7 @@ class ApcJob(Job):
         """
         super(ApcJob, self).__init__(*args, **kwargs)
         self.contigs_file_id = contigs_file_id
-        self.contigs_file_name = "contigs.fasta"
+        self.contigs_file_name = contigs_file_name
         self.base_file_name = "apc"
         self.parent_rv = parent_rv
 
