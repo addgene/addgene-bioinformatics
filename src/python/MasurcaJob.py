@@ -53,7 +53,7 @@ class MasurcaJob(Job):
         ca1_file_name = "runCA1.out"  # CABOG stdout for unitig consensus
         ca2_file_name = "runCA2.out"  # CABOG stdout for scaffolder
         sr1_file_name = "super1.err"  # STDERR for super reads code that generates super reads from PE reads
-        scf_file_name = "final.genome.scf.fasta"  # Final assembly scaffolds file
+        contigs_file_name = "final.genome.scf.fasta"  # Final assembly scaffolds file
 
         try:
             # Read the read files from the file store into the local
@@ -187,7 +187,8 @@ END
             ca1_file_id = utilities.writeGlobalFile(fileStore, ca1_file_name)
             ca2_file_id = utilities.writeGlobalFile(fileStore, ca2_file_name)
             sr1_file_id = utilities.writeGlobalFile(fileStore, sr1_file_name)
-            scf_file_id = utilities.writeGlobalFile(fileStore, "CA", scf_file_name)
+            contigs_file_id = utilities.writeGlobalFile(
+                fileStore, "CA", contigs_file_name)
 
         except Exception as exc:
             # Ensure expectred return values on exceptions
@@ -195,7 +196,7 @@ END
             ca1_file_id = None
             ca2_file_id = None
             sr1_file_id = None
-            scf_file_id = None
+            contigs_file_id = None
 
         # Return file ids and names for export
         masurca_rv = {
@@ -216,13 +217,14 @@ END
                     'id': sr1_file_id,
                     'name': sr1_file_name,
                 },
-                'scf_file': {
-                    'id': scf_file_id,
-                    'name': scf_file_name,
+                'contigs_file': {
+                    'id': contigs_file_id,
+                    'name': contigs_file_name,
                 },
             }
         }
         masurca_rv.update(self.parent_rv)
+
         return masurca_rv
 
 
