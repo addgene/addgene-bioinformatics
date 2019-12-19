@@ -60,6 +60,8 @@ def create_aligner(aligner_config):
 
     Parameters
     ----------
+    aligner_config : dct
+        pairwise aligner configuration
 
     Returns
     -------
