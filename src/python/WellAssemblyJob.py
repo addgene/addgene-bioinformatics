@@ -98,8 +98,6 @@ class WellAssemblyJob(Job):
             skesa_job = SkesaJob(
                 self.read_one_file_id,
                 self.read_two_file_id,
-                self.coverage_cutoff,
-                self.output_directory,
             )
             apc_job = ApcJob(
                 skesa_job.rv('skesa_rv', 'contigs_file', 'id'),
