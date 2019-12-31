@@ -250,8 +250,8 @@ class JobsTestCase(ToilTestCase):
                 toil, self.test_directory_ab, apc_rv['apc_rv'])
 
         self._assert_true_cmp_fasta(
-            self.test_directory_ab, self.actual_directory_ab,
-            self.apc_fasta)
+            self.test_directory_ab, self.apc_fasta,
+            self.actual_directory_ab, self.apc_fasta)
 
 
 class WellAssemblyJobTestCase(ToilTestCase):
@@ -280,11 +280,11 @@ class WellAssemblyJobTestCase(ToilTestCase):
                 toil, self.test_directory_ab, well_assembly_rv['apc_rv'])
 
         self._assert_true_cmp_fasta(
-            self.test_directory_ab, self.actual_directory_ab,
-            self.spades_fasta)
+            self.test_directory_ab, self.test_spades_fasta,
+            self.actual_directory_ab, self.actual_spades_fasta)
         self._assert_true_cmp_fasta(
-            self.test_directory_ab, self.actual_directory_ab,
-            self.apc_fasta)
+            self.test_directory_ab, self.apc_fasta,
+            self.actual_directory_ab, self.apc_fasta)
 
 
 class PlateAssemblyJobTestCase(ToilTestCase):
@@ -318,10 +318,12 @@ class PlateAssemblyJobTestCase(ToilTestCase):
         for well_spec in self.well_specs:
             self._assert_true_cmp_fasta(
                 os.path.join(self.test_directory_bg, well_spec),
+                self.test_spades_fasta,
                 os.path.join(self.actual_directory_bg, well_spec),
-                self.spades_fasta)
+                self.test_spades_fasta)
             self._assert_true_cmp_fasta(
                 os.path.join(self.test_directory_bg, well_spec),
+                self.apc_fasta,
                 os.path.join(self.actual_directory_bg, well_spec),
                 self.apc_fasta)
 
