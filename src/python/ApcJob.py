@@ -149,7 +149,7 @@ if __name__ == "__main__":
             # Restart the APC job
             apc_rv = toil.restart(apc_job)
 
-        # Export the apc output file, and sequence FASTA file from the
-        # file store
+        # Export all apc output files from the file store
         utilities.exportFiles(
-            toil, options.output_directory, apc_rv['apc_rv'])
+            toil, options.output_directory, apc_rv['apc_rv']
+        )

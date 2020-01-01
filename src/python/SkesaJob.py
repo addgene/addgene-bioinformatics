@@ -164,7 +164,7 @@ if __name__ == "__main__":
             # Restart the SKESA job
             skesa_rv = toil.restart(skesa_job)
 
-        # Export the SKESA log and contigs FASTA file from the file
-        # store
+        # Export all SKESA output files from the file store
         utilities.exportFiles(
-            toil, options.output_directory, skesa_rv['skesa_rv'])
+            toil, options.output_directory, skesa_rv['skesa_rv']
+        )

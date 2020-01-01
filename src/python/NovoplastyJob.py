@@ -241,8 +241,7 @@ if __name__ == "__main__":
             # Restart the NOVOPlasty job
             novoplasty_rv = toil.restart(novoplasty_job)
 
-        # Export the NOVOPlasty log, and circularized contig FASTA
-        # file from the file store
+        # Export all NOVOPlasty output files from the file store
         utilities.exportFiles(
             toil, options.output_directory, novoplasty_rv['novoplasty_rv']
         )

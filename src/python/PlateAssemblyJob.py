@@ -14,9 +14,6 @@ import utilities
 
 logger = logging.getLogger(__name__)
 
-ASSEMBLERS = ['masurca', 'novoplasty', 'shovill', 'skesa', 'spades',
-              'unicycler']
-
 
 class PlateAssemblyJob(Job):
     """
@@ -41,7 +38,7 @@ class PlateAssemblyJob(Job):
         plate_spec : str
             specification for plate containing the specified wells
         assembler : str
-            name of assembler to run, from ASSEMBLERS
+            name of assembler to run, from utilities.ASSEMBLERS_TO_RUN
         coverage_cutoff : str
             read coverage cutoff value
         """
@@ -50,7 +47,7 @@ class PlateAssemblyJob(Job):
         self.read_one_file_ids = read_one_file_ids
         self.read_two_file_ids = read_two_file_ids
         self.plate_spec = plate_spec
-        if assembler not in ASSEMBLERS:
+        if assembler not in utilities.ASSEMBLERS_TO_RUN:
             raise Exception("Unexpected assembler")
         self.assembler = assembler
         self.coverage_cutoff = coverage_cutoff
@@ -99,7 +96,7 @@ if __name__ == "__main__":
     parser.add_argument('-p', '--plate-spec', default="A11967B_sW0154",
                         help="the plate specification")
     parser.add_argument('-a', '--assembler', default="spades",
-                        choices=ASSEMBLERS,
+                        choices=utilities.ASSEMBLERS_TO_RUN,
                         help="name of the assembler to run")
     parser.add_argument('-c', '--coverage-cutoff', default="100",
                         help="the coverage cutoff")
@@ -177,7 +174,9 @@ if __name__ == "__main__":
             # Restart the well assembly job
             well_assembly_rvs = toil.restart(plate_assembly_job)
 
-        # Export needed files created by each well assembly job
+        # Export all assembler output files, and apc output files, if
+        # apc is required by the asembler, from the file store
         utilities.exportWellAssemblyFiles(
             toil, options.assembler, options.plate_spec, well_specs,
-            well_assembly_rvs)
+            well_assembly_rvs
+        )

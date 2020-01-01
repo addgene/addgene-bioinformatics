@@ -17,9 +17,6 @@ import utilities
 
 logger = logging.getLogger(__name__)
 
-ASSEMBLERS = ['masurca', 'novoplasty', 'shovill', 'skesa', 'spades',
-              'unicycler']
-
 
 class WellAssemblyJob(Job):
     """
@@ -39,7 +36,7 @@ class WellAssemblyJob(Job):
             id of file in file store containing FASTQ Illumina short
             right paired reads
         assembler : str
-            name of assembler to run, from ASSEMBLERS
+            name of assembler to run, from utilities.ASSEMBLERS_TO_RUN
         coverage_cutoff : str
             read coverage cutoff value
         output_directory : str
@@ -48,7 +45,7 @@ class WellAssemblyJob(Job):
         super(WellAssemblyJob, self).__init__(*args, **kwargs)
         self.read_one_file_id = read_one_file_id
         self.read_two_file_id = read_two_file_id
-        if assembler not in ASSEMBLERS:
+        if assembler not in utilities.ASSEMBLERS_TO_RUN:
             raise Exception("Unexpected assembler")
         self.assembler = assembler
         self.coverage_cutoff = coverage_cutoff
@@ -165,7 +162,7 @@ if __name__ == "__main__":
     parser.add_argument('-w', '--well-spec', default="B01",
                         help="the well specification")
     parser.add_argument('-a', '--assembler', default="spades",
-                        choices=ASSEMBLERS,
+                        choices=utilities.ASSEMBLERS_TO_RUN,
                         help="name of assembler to run")
     parser.add_argument('-c', '--coverage-cutoff', default="100",
                         help="the coverage cutoff")
@@ -203,12 +200,9 @@ if __name__ == "__main__":
             # Restart the well assembly job
             well_assembly_rv = toil.restart(well_assembly_job)
 
-        # Export the assembler output files from the file store
-        utilities.exportFiles(toil, options.output_directory,
-                              well_assembly_rv[options.assembler + "_rv"])
-
-        if options.assembler not in ['novoplasty']:
-            # Export the apc output file, and sequence FASTA file from
-            # the file store
-            utilities.exportFiles(
-                toil, options.output_directory, well_assembly_rv['apc_rv'])
+        # Export all assembler output files, and apc output files, if
+        # apc is required by the asembler, from the file store
+        utilities.exportWellAssemblyFiles(
+            toil, options.assembler, options.plate_spec, [options.well_spec],
+            [well_assembly_rv]
+        )

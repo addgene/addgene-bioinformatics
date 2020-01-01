@@ -8,7 +8,7 @@ NAME
      run-plate-assembly-job -- Assembles each well of selected plates
 
 SYNOPSIS
-     run-plate-assembly-job [-d output-directory] assembler
+     run-plate-assembly-job [-d output-directory] [-st] assembler
 
 DESCRIPTION
      Assembles each well of selected plates using the specified

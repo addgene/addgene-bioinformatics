@@ -178,7 +178,7 @@ if __name__ == "__main__":
             # Restart the shovill job
             shovill_rv = toil.restart(shovill_job)
 
-        # Export the shovill log and corrections files, and contigs
-        # FASTA file from the file store
+        # Export all shovill output files from the file store
         utilities.exportFiles(
-            toil, options.output_directory, shovill_rv['shovill_rv'])
+            toil, options.output_directory, shovill_rv['shovill_rv']
+        )

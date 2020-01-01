@@ -173,7 +173,7 @@ if __name__ == "__main__":
             unicycler_rv = toil.restart(unicycler_job)
             unicycler_rv = toil.restart(unicycler_job)
 
-        # Export the Unicycler log and corrections files, and contigs
-        # FASTA file from the file store
+        # Export all Unicycler output files from the file store
         utilities.exportFiles(
-            toil, options.output_directory, unicycler_rv['unicycler_rv'])
+            toil, options.output_directory, unicycler_rv['unicycler_rv']
+        )

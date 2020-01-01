@@ -7,6 +7,22 @@ from Bio.Seq import Seq
 
 logger = logging.getLogger(__name__)
 
+ASSEMBLERS_TO_RUN = [
+    'masurca',
+    'novoplasty',
+    'shovill',
+    'skesa',
+    'spades',
+    'unicycler'
+]
+ASSEMBLERS_REQUIRING_APC = [
+    'masurca',
+    'shovill',
+    'skesa',
+    'spades',
+    'unicycler'
+]
+
 
 def importFile(toil, source_path, scheme="file"):
     """
@@ -182,8 +198,8 @@ def exportFiles(toil, output_directory, job_rv):
 def exportWellAssemblyFiles(toil, assembler, output_directory, well_specs,
                             well_assembly_rvs):
     """
-    Export the assembler output files, and the apc output file, and
-    sequence FASTA file from the file store.
+    Export the assembler output files, and the apc output files, if
+    apc required by the assembler.
 
     Parameters
     ----------
@@ -203,9 +219,13 @@ def exportWellAssemblyFiles(toil, assembler, output_directory, well_specs,
         well_output_directory = os.path.join(output_directory, well_specs[iW])
         if not os.path.exists(well_output_directory):
             os.mkdir(well_output_directory)
+
+        # Export all assembler output files from the file store
         exportFiles(toil, well_output_directory,
                     well_assembly_rvs[iW][assembler + "_rv"])
-        if assembler in ['spades', 'shovill']:
+
+        if assembler in ASSEMBLERS_REQUIRING_APC:
+            # Export all apc output files from the file store
             exportFiles(toil, well_output_directory,
                         well_assembly_rvs[iW]['apc_rv'])
 

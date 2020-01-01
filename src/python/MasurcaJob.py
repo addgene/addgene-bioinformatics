@@ -285,7 +285,7 @@ if __name__ == "__main__":
             # Restart the MaSuRCA job
             masurca_rv = toil.restart(masurca_job)
 
-        # Export the MaSuRCA log and corrections files, and contigs
-        # FASTA file from the file store
+        # Export all MaSuRCA output files from the file store
         utilities.exportFiles(
-            toil, options.output_directory, masurca_rv['masurca_rv'])
+            toil, options.output_directory, masurca_rv['masurca_rv']
+        )

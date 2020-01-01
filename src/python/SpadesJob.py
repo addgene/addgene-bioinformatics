@@ -182,7 +182,7 @@ if __name__ == "__main__":
             # Restart the SPAdes job
             spades_rv = toil.restart(spades_job)
 
-        # Export the SPAdes warnings and log files, and contigs FASTA
-        # file from the file store
+        # Export all SPAdes output files from the file store
         utilities.exportFiles(
-            toil, options.output_directory, spades_rv['spades_rv'])
+            toil, options.output_directory, spades_rv['spades_rv']
+        )
