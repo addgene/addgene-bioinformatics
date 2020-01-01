@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 from glob import glob
+import logging
 import os
 import re
 
@@ -11,6 +12,7 @@ from WellAssemblyJob import WellAssemblyJob
 
 import utilities
 
+logger = logging.getLogger(__name__)
 
 ASSEMBLERS = ['masurca', 'novoplasty', 'shovill', 'skesa', 'spades',
               'unicycler']
@@ -65,6 +67,8 @@ class PlateAssemblyJob(Job):
         for iW in range(nW):
             well_assembly_rvs.append(
                 self.addChild(
+                    logger.info("Creating well assembly job {0}".format(
+                        self.plate_spec + "_" + self.well_specs[iW])
                     WellAssemblyJob(
                         self.read_one_file_ids[iW],
                         self.read_two_file_ids[iW],

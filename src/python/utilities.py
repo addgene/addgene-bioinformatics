@@ -1,8 +1,11 @@
+import logging
 import os
 from random import choice
 
 from Bio.Alphabet import IUPAC
 from Bio.Seq import Seq
+
+logger = logging.getLogger(__name__)
 
 
 def importFile(toil, source_path, scheme="file"):
@@ -24,7 +27,9 @@ def importFile(toil, source_path, scheme="file"):
     str
         id of the imported source in the file store
     """
-    file_id = toil.importFile(scheme + "://" + source_path)
+    file_path = scheme + "://" + source_path
+    logger.info("Importing file {0}".format(file_path))
+    file_id = toil.importFile(file_path)
 
     return file_id
 
@@ -117,6 +122,7 @@ def readGlobalFile(fileStore, file_id, *cmps):
         absolute path to the file in the local temporary directory
     """
     file_path = os.path.join(fileStore.localTempDir, *cmps)
+    logger.info("Reading global file {0}".format(file_path))
     fileStore.readGlobalFile(file_id, userPath=file_path)
 
     return file_path
@@ -141,9 +147,12 @@ def writeGlobalFile(fileStore, *cmps):
     """
     try:
         file_path = os.path.join(fileStore.localTempDir, *cmps)
+        logger.info("Writing global file {0}".format(file_path))
         file_id = fileStore.writeGlobalFile(file_path)
 
     except Exception as exc:
+        logger.info("Writing global file {0} failed {1}".format(
+            file_path, exc))
         file_id = None
 
     return file_id
@@ -165,6 +174,7 @@ def exportFiles(toil, output_directory, job_rv):
     """
     for name, spec in job_rv.items():
         if spec['id'] is not None:
+            logger.info("Exporting file {0}".format(spec['name']))
             toil.exportFile(spec['id'], "file://" + os.path.abspath(
                 os.path.join(output_directory, spec['name'])))
 

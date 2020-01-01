@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+import logging
 import os
 
 from toil.job import Job
@@ -6,6 +7,8 @@ from toil.common import Toil
 from toil.lib.docker import apiDockerCall
 
 import utilities
+
+logger = logging.getLogger(__name__)
 
 
 class SkesaJob(Job):
@@ -63,10 +66,12 @@ class SkesaJob(Job):
             # the container, and use the path as the working directory in
             # the container, then call SKESA
             # TODO: Specify the container on construction
+            image = "ralatsdio/skesa:v2.3.0"
             working_dir = fileStore.localTempDir
+            logger.info("Calling image {0}".format(image))
             apiDockerCall(
                 self,
-                image='ralatsdio/skesa:v2.3.0',
+                image=image,
                 volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
                 working_dir=working_dir,
                 parameters=["skesa",
@@ -89,6 +94,7 @@ class SkesaJob(Job):
         except Exception as exc:
             # Ensure expectred return values on exceptions
             # log_file_id = None
+            logger.info("Calling image {0} failed: {1}".format(image, exc))
             contigs_file_id = None
 
         # Return file ids and names for export
@@ -105,6 +111,7 @@ class SkesaJob(Job):
             }
         }
         skesa_rv.update(self.parent_rv)
+        logger.info("Return value {0}".format(skesa_rv))
         return skesa_rv
 
 

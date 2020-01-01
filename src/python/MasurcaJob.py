@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+import logging
 import os
 
 from toil.job import Job
@@ -6,6 +7,8 @@ from toil.common import Toil
 from toil.lib.docker import apiDockerCall
 
 import utilities
+
+logger = logging.getLogger(__name__)
 
 
 class MasurcaJob(Job):
@@ -66,6 +69,8 @@ class MasurcaJob(Job):
             # Write the MaSuRCA config file into the local temporary
             # directory
             working_dir = fileStore.localTempDir
+            logger.info("Handling configuration file {0}".format(
+                self.config_file_name))
             with open(os.path.join(working_dir,
                                    self.config_file_name), 'w+') as f:
                 config = """
@@ -171,9 +176,11 @@ END
             # the container, and use the path as the working directory in
             # the container, then call MaSuRCA
             # TODO: Specify the container on construction
+            image = "ralatsdio/masurca:v3.3.1"
+            logger.info("Calling image {0}".format(image))
             apiDockerCall(
                 self,
-                image='ralatsdio/masurca:v3.3.1',
+                image=image,
                 volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
                 working_dir=working_dir,
                 parameters=["masurca.sh",
@@ -192,6 +199,7 @@ END
 
         except Exception as exc:
             # Ensure expectred return values on exceptions
+            logger.info("Calling image {0} failed: {1}".format(image, exc))
             ca0_file_id = None
             ca1_file_id = None
             ca2_file_id = None
@@ -224,7 +232,7 @@ END
             }
         }
         masurca_rv.update(self.parent_rv)
-
+        logger.info("Return value {0}".format(masurca_rv))
         return masurca_rv
 
 

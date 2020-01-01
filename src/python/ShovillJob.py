@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+import logging
 import os
 
 from toil.job import Job
@@ -6,6 +7,8 @@ from toil.common import Toil
 from toil.lib.docker import apiDockerCall
 
 import utilities
+
+logger = logging.getLogger(__name__)
 
 
 class ShovillJob(Job):
@@ -67,10 +70,12 @@ class ShovillJob(Job):
             # the container, and use the path as the working directory in
             # the container, then call shovill
             # TODO: Specify the container on construction
+            image = "ralatsdio/shovill:v1.0.9"
             working_dir = fileStore.localTempDir
+            logger.info("Calling image {0}".format(image))
             apiDockerCall(
                 self,
-                image='ralatsdio/shovill:v1.0.9',
+                image=image,
                 volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
                 working_dir=working_dir,
                 parameters=["shovill",
@@ -96,6 +101,7 @@ class ShovillJob(Job):
 
         except Exception as exc:
             # Ensure expectred return values on exceptions
+            logger.info("Calling image {0} failed: {1}".format(image, exc))
             log_file_id = None
             corrections_file_id = None
             contigs_file_id = None
@@ -118,6 +124,7 @@ class ShovillJob(Job):
             }
         }
         shovill_rv.update(self.parent_rv)
+        logger.info("Return value {0}".format(shovill_rv))
         return shovill_rv
 
 

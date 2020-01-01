@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+import logging
 import os
 
 from toil.job import Job
@@ -14,6 +15,7 @@ from UnicyclerJob import UnicyclerJob
 
 import utilities
 
+logger = logging.getLogger(__name__)
 
 ASSEMBLERS = ['masurca', 'novoplasty', 'shovill', 'skesa', 'spades',
               'unicycler']
@@ -205,7 +207,7 @@ if __name__ == "__main__":
         utilities.exportFiles(toil, options.output_directory,
                               well_assembly_rv[options.assembler + "_rv"])
 
-        if options.assembler in ['spades', 'shovill']:
+        if options.assembler not in ['novoplasty']:
             # Export the apc output file, and sequence FASTA file from
             # the file store
             utilities.exportFiles(

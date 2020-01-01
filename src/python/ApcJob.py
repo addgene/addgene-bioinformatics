@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+import logging
 import os
 
 from toil.job import Job
@@ -6,6 +7,8 @@ from toil.common import Toil
 from toil.lib.docker import apiDockerCall
 
 import utilities
+
+logger = logging.getLogger(__name__)
 
 
 class ApcJob(Job):
@@ -55,10 +58,12 @@ class ApcJob(Job):
             # the container, and use the path as the working directory in
             # the container, then call apc.pl
             # TODO: Specify the container on construction
+            image = "ralatsdio/apc:v0.1.0"
             working_dir = fileStore.localTempDir
+            logger.info("Calling image {0}".format(image))
             apiDockerCall(
                 self,
-                image='ralatsdio/apc:v0.1.0',
+                image=image,
                 volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
                 working_dir=working_dir,
                 parameters=["apc.pl",
@@ -76,6 +81,7 @@ class ApcJob(Job):
 
         except Exception as exc:
             # Ensure expectred return values on exceptions
+            logger.info("Calling image {0} failed: {1}".format(image, exc))
             log_file_id = None
             sequence_file_id = None
 
@@ -93,6 +99,7 @@ class ApcJob(Job):
             }
         }
         apc_rv.update(self.parent_rv)
+        logger.info("Return value {0}".format(apc_rv))
         return apc_rv
 
 

@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+import logging
 import os
 import gzip
 
@@ -7,6 +8,8 @@ from toil.common import Toil
 from toil.lib.docker import apiDockerCall
 
 import utilities
+
+logger = logging.getLogger(__name__)
 
 
 class NovoplastyJob(Job):
@@ -83,7 +86,10 @@ class NovoplastyJob(Job):
 
             # Write the NOVOPlasty config file into the local temporary
             # directory
-            with open(os.path.join(working_dir, "config.txt"), 'w+') as f:
+            config_file_name = "config.txt"
+            logger.info("Handling configuration file {0}".format(
+                config_file_name))
+            with open(os.path.join(working_dir, config_file_name), 'w+') as f:
                 config = """Project:
 -----------------------
 Project name          = {project_name}
@@ -132,9 +138,11 @@ Use Quality Scores    = no
             # the container, and use the path as the working directory in
             # the container, then call NOVOPlasty
             # TODO: Specify the container on construction
+            image = "ralatsdio/novoplasty:v3.7.0"
+            logger.info("Calling image {0}".format(image))
             apiDockerCall(
                 self,
-                image="ralatsdio/novoplasty:v3.7.0",
+                image=image,
                 volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
                 working_dir=working_dir,
                 parameters=[
@@ -154,6 +162,7 @@ Use Quality Scores    = no
 
         except Exception as exc:
             # Ensure expectred return values on exceptions
+            logger.info("Calling image {0} failed: {1}".format(image, exc))
             contigs_file_id = None
             log_file_id = None
 
@@ -171,6 +180,7 @@ Use Quality Scores    = no
             }
         }
         novoplasty_rv.update(self.parent_rv)
+        logger.info("Return value {0}".format(novoplasty_rv))
         return novoplasty_rv
 
 

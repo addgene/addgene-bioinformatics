@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+import logging
 import os
 
 from toil.job import Job
@@ -6,6 +7,8 @@ from toil.common import Toil
 from toil.lib.docker import apiDockerCall
 
 import utilities
+
+logger = logging.getLogger(__name__)
 
 
 class UnicyclerJob(Job):
@@ -63,10 +66,12 @@ class UnicyclerJob(Job):
             # the container, and use the path as the working directory in
             # the container, then call Unicycler
             # TODO: Specify the container on construction
+            image = "ralatsdio/unicycler:v0.4.7"
             working_dir = fileStore.localTempDir
+            logger.info("Calling image {0}".format(image))
             apiDockerCall(
                 self,
-                image='ralatsdio/unicycler:v0.4.7',
+                image=image,
                 volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
                 working_dir=working_dir,
                 parameters=["unicycler",
@@ -90,6 +95,7 @@ class UnicyclerJob(Job):
 
         except Exception as exc:
             # Ensure expectred return values on exceptions
+            logger.info("Calling image {0} failed: {1}".format(image, exc))
             log_file_id = None
             contigs_file_id = None
             graph_file_id = None
@@ -112,6 +118,7 @@ class UnicyclerJob(Job):
             }
         }
         unicycler_rv.update(self.parent_rv)
+        logger.info("Return value {0}".format(unicycler_rv))
         return unicycler_rv
 
 
