@@ -60,6 +60,8 @@ def create_aligner(aligner_config):
 
     Parameters
     ----------
+    aligner_config : dct
+        pairwise aligner configuration
 
     Returns
     -------
@@ -388,7 +390,6 @@ if __name__ == "__main__":
     """Create some simple plots to understand operation of the
     Biopython PairwiseAligner.
     """
-
     # Add and parse arguments
     parser = ArgumentParser()
     parser.add_argument('-c', '--config-file',

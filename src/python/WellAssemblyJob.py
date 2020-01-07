@@ -1,15 +1,21 @@
 from argparse import ArgumentParser
+import logging
 import os
 
 from toil.job import Job
 from toil.common import Toil
 
 from ApcJob import ApcJob
+from MasurcaJob import MasurcaJob
 from NovoplastyJob import NovoplastyJob
 from SpadesJob import SpadesJob
 from ShovillJob import ShovillJob
+from SkesaJob import SkesaJob
+from UnicyclerJob import UnicyclerJob
 
 import utilities
+
+logger = logging.getLogger(__name__)
 
 
 class WellAssemblyJob(Job):
@@ -30,7 +36,7 @@ class WellAssemblyJob(Job):
             id of file in file store containing FASTQ Illumina short
             right paired reads
         assembler : str
-            name of assembler to run, from ['spades', 'shovill', 'novoplasty']
+            name of assembler to run, from utilities.ASSEMBLERS_TO_RUN
         coverage_cutoff : str
             read coverage cutoff value
         output_directory : str
@@ -39,7 +45,7 @@ class WellAssemblyJob(Job):
         super(WellAssemblyJob, self).__init__(*args, **kwargs)
         self.read_one_file_id = read_one_file_id
         self.read_two_file_id = read_two_file_id
-        if assembler not in ['spades', 'shovill', 'novoplasty']:
+        if assembler not in utilities.ASSEMBLERS_TO_RUN:
             raise Exception("Unexpected assembler")
         self.assembler = assembler
         self.coverage_cutoff = coverage_cutoff
@@ -52,20 +58,26 @@ class WellAssemblyJob(Job):
         dict
             the return values of the SpadesJob and ApcJob
         """
-        if self.assembler == 'spades':
-            spades_job = SpadesJob(
+        if self.assembler == 'masurca':
+            masurca_job = MasurcaJob(
                 self.read_one_file_id,
                 self.read_two_file_id,
-                self.coverage_cutoff,
-                self.output_directory,
             )
             apc_job = ApcJob(
-                spades_job.rv('spades_rv', 'contigs_file', 'id'),
-                parent_rv=spades_job.rv()
+                masurca_job.rv('masurca_rv', 'contigs_file', 'id'),
+                parent_rv=masurca_job.rv()
             )
             final_job = self.addChild(
-                spades_job).addChild(
+                masurca_job).addChild(
                     apc_job)
+
+        elif self.assembler == 'novoplasty':
+            novoplasty_job = NovoplastyJob(
+                self.read_one_file_id,
+                self.read_two_file_id,
+            )
+            final_job = self.addChild(
+                novoplasty_job)
 
         elif self.assembler == 'shovill':
             shovill_job = ShovillJob(
@@ -81,13 +93,47 @@ class WellAssemblyJob(Job):
                 shovill_job).addChild(
                     apc_job)
 
-        else:  # self.assembler == 'novoplasty'
-            novoplasty_job = NovoplastyJob(
+        elif self.assembler == 'skesa':
+            skesa_job = SkesaJob(
                 self.read_one_file_id,
                 self.read_two_file_id,
             )
+            apc_job = ApcJob(
+                skesa_job.rv('skesa_rv', 'contigs_file', 'id'),
+                parent_rv=skesa_job.rv()
+            )
             final_job = self.addChild(
-                novoplasty_job)
+                skesa_job).addChild(
+                    apc_job)
+
+        elif self.assembler == 'spades':
+            spades_job = SpadesJob(
+                self.read_one_file_id,
+                self.read_two_file_id,
+                self.coverage_cutoff,
+                self.output_directory,
+            )
+            apc_job = ApcJob(
+                spades_job.rv('spades_rv', 'contigs_file', 'id'),
+                parent_rv=spades_job.rv()
+            )
+            final_job = self.addChild(
+                spades_job).addChild(
+                    apc_job)
+
+        elif self.assembler == 'unicycler':
+            unicycler_job = UnicyclerJob(
+                self.read_one_file_id,
+                self.read_two_file_id,
+                self.output_directory,
+            )
+            apc_job = ApcJob(
+                unicycler_job.rv('unicycler_rv', 'contigs_file', 'id'),
+                parent_rv=unicycler_job.rv()
+            )
+            final_job = self.addChild(
+                unicycler_job).addChild(
+                    apc_job)
 
         # Return file ids, and names for export
         return final_job.rv()
@@ -97,7 +143,6 @@ if __name__ == "__main__":
     """
     Assemble reads and circularize contigs corresponding to a single
     well.
-
     """
     # Parse FASTQ data path, plate and well specification, coverage
     # cutoff, and output directory, making the output directory if
@@ -117,7 +162,7 @@ if __name__ == "__main__":
     parser.add_argument('-w', '--well-spec', default="B01",
                         help="the well specification")
     parser.add_argument('-a', '--assembler', default="spades",
-                        choices=['spades', 'shovill', 'novoplaty'],
+                        choices=utilities.ASSEMBLERS_TO_RUN,
                         help="name of assembler to run")
     parser.add_argument('-c', '--coverage-cutoff', default="100",
                         help="the coverage cutoff")
@@ -155,12 +200,9 @@ if __name__ == "__main__":
             # Restart the well assembly job
             well_assembly_rv = toil.restart(well_assembly_job)
 
-        # Export the assembler output files from the file store
-        utilities.exportFiles(toil, options.output_directory,
-                              well_assembly_rv[options.assembler + "_rv"])
-
-        if options.assembler in ['spades', 'shovill']:
-            # Export the apc output file, and sequence FASTA file from
-            # the file store
-            utilities.exportFiles(
-                toil, options.output_directory, well_assembly_rv['apc_rv'])
+        # Export all assembler output files, and apc output files, if
+        # apc is required by the asembler, from the file store
+        utilities.exportWellAssemblyFiles(
+            toil, options.assembler, options.plate_spec, [options.well_spec],
+            [well_assembly_rv]
+        )

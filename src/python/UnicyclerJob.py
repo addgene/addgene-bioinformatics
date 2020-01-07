@@ -11,13 +11,12 @@ import utilities
 logger = logging.getLogger(__name__)
 
 
-class SpadesJob(Job):
+class UnicyclerJob(Job):
     """
-    Accepts paired-end Illumina reads for assembly with a coverage
-    cutoff specification.
+    Accepts paired-end Illumina reads for assembly using Unicycler.
     """
     def __init__(self, read_one_file_id, read_two_file_id,
-                 coverage_cutoff, output_directory, parent_rv={},
+                 output_directory, parent_rv={},
                  read_one_file_name="R1.fastq.gz",
                  read_two_file_name="R2.fastq.gz",
                  *args, **kwargs):
@@ -30,19 +29,16 @@ class SpadesJob(Job):
         read_two_file_id : toil.fileStore.FileID
             id of the file in the file store containing FASTQ Illumina
             short right paired reads
-        coverage_cutoff : str
-            read coverage cutoff value
         output_directory : str
             name of directory for output
         parent_rv : dict
             dictionary of return values from the parent job
         """
-        super(SpadesJob, self).__init__(*args, **kwargs)
+        super(UnicyclerJob, self).__init__(*args, **kwargs)
         self.read_one_file_id = read_one_file_id
         self.read_one_file_name = read_one_file_name
         self.read_two_file_id = read_two_file_id
         self.read_two_file_name = read_two_file_name
-        self.coverage_cutoff = coverage_cutoff
         self.output_directory = output_directory
         self.parent_rv = parent_rv
 
@@ -51,13 +47,12 @@ class SpadesJob(Job):
         Returns
         -------
         dict of toil.fileStore.FileID and str
-            file ids and names of warnings and spades log files, and
-            contigs FASTA file
+            file ids and names of log, and contigs FASTA file
         """
         # Expected output file names
-        warnings_file_name = "warnings.log"
-        spades_file_name = "spades.log"
-        contigs_file_name = "contigs.fasta"
+        log_file_name = "unicycler.log"
+        contigs_file_name = "assembly.fasta"
+        graph_file_name = "assembly.gfa"
 
         try:
             # Read the read files from the file store into the local
@@ -69,9 +64,9 @@ class SpadesJob(Job):
 
             # Mount the Toil local temporary directory to the same path in
             # the container, and use the path as the working directory in
-            # the container, then call spades.py
+            # the container, then call Unicycler
             # TODO: Specify the container on construction
-            image = "ralatsdio/spades:v3.13.1"
+            image = "ralatsdio/unicycler:v0.4.7"
             working_dir = fileStore.localTempDir
             logger.info("Calling image {0}".format(image))
             apiDockerCall(
@@ -79,62 +74,60 @@ class SpadesJob(Job):
                 image=image,
                 volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
                 working_dir=working_dir,
-                parameters=["spades.py",
-                            "-1",
+                parameters=["unicycler",
+                            "--short1",
                             read_one_file_path,
-                            "-2",
+                            "--short2",
                             read_two_file_path,
-                            "-o",
+                            "--out",
                             os.path.join(working_dir, self.output_directory),
-                            "--cov-cutoff",
-                            self.coverage_cutoff,
                             ])
 
-            # Write the warnings and spades log files, and contigs FASTA
-            # file from the local temporary directory into the file store
-            warnings_file_id = utilities.writeGlobalFile(
-                fileStore, self.output_directory, warnings_file_name)
-            spades_file_id = utilities.writeGlobalFile(
-                fileStore, self.output_directory, spades_file_name)
+            # Write the Unicycler log, and final assembly contigs
+            # FASTA and graph GFA v1 files from the local temporary
+            # directory into the file store
+            log_file_id = utilities.writeGlobalFile(
+                fileStore, self.output_directory, log_file_name)
             contigs_file_id = utilities.writeGlobalFile(
                 fileStore, self.output_directory, contigs_file_name)
+            graph_file_id = utilities.writeGlobalFile(
+                fileStore, self.output_directory, graph_file_name)
 
         except Exception as exc:
             # Ensure expectred return values on exceptions
             logger.info("Calling image {0} failed: {1}".format(image, exc))
-            warnings_file_id = None
-            spades_file_id = None
+            log_file_id = None
             contigs_file_id = None
+            graph_file_id = None
 
         # Return file ids and names for export
-        spades_rv = {
-            'spades_rv': {
-                'warnings_file': {
-                    'id': warnings_file_id,
-                    'name': warnings_file_name,
-                },
-                'spades_file': {
-                    'id': spades_file_id,
-                    'name': spades_file_name,
+        unicycler_rv = {
+            'unicycler_rv': {
+                'log_file': {
+                    'id': log_file_id,
+                    'name': log_file_name,
                 },
                 'contigs_file': {
                     'id': contigs_file_id,
                     'name': contigs_file_name,
                 },
+                'graph_file': {
+                    'id': graph_file_id,
+                    'name': graph_file_name,
+                },
             }
         }
-        spades_rv.update(self.parent_rv)
-        logger.info("Return value {0}".format(spades_rv))
-        return spades_rv
+        unicycler_rv.update(self.parent_rv)
+        logger.info("Return value {0}".format(unicycler_rv))
+        return unicycler_rv
 
 
 if __name__ == "__main__":
     """
     Assemble reads corresponding to a single well.
     """
-    # Parse FASTQ data path, plate and well specification, coverage
-    # cutoff, and output directory, making the output directory if
-    # needed
+    # Parse FASTQ data path, plate and well specification, and output
+    # directory, making the output directory if needed
     parser = ArgumentParser()
     Job.Runner.addToilOptions(parser)
     cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-3]
@@ -149,8 +142,6 @@ if __name__ == "__main__":
                         help="the plate specification")
     parser.add_argument('-w', '--well-spec', default="B01",
                         help="the well specification")
-    parser.add_argument('-c', '--coverage-cutoff', default="100",
-                        help="the coverage cutoff")
     parser.add_argument('-o', '--output-directory', default=None,
                         help="the directory containing all output files")
     options = parser.parse_args()
@@ -168,21 +159,21 @@ if __name__ == "__main__":
                 toil, options.data_path, options.plate_spec,
                 [options.well_spec], options.source_scheme)
 
-            # Construct and start the SPAdes job
-            spades_job = SpadesJob(
+            # Construct and start the Unicycker job
+            unicycler_job = UnicyclerJob(
                 read_one_file_ids[0],
                 read_two_file_ids[0],
-                options.coverage_cutoff,
                 options.output_directory,
                 )
-            spades_rv = toil.start(spades_job)
+            unicycler_rv = toil.start(unicycler_job)
 
         else:
 
-            # Restart the SPAdes job
-            spades_rv = toil.restart(spades_job)
+            # Restart the Unicycler job
+            unicycler_rv = toil.restart(unicycler_job)
+            unicycler_rv = toil.restart(unicycler_job)
 
-        # Export all SPAdes output files from the file store
+        # Export all Unicycler output files from the file store
         utilities.exportFiles(
-            toil, options.output_directory, spades_rv['spades_rv']
+            toil, options.output_directory, unicycler_rv['unicycler_rv']
         )

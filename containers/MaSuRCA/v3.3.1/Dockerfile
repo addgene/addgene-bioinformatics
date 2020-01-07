@@ -35,20 +35,24 @@ RUN apt-get update && \
 ENV MASURCA_VER=3.3.1
 RUN cd $INSTALL_PFX && \
     wget https://github.com/alekseyzimin/masurca/releases/download/v$MASURCA_VER/MaSuRCA-$MASURCA_VER.tar.gz && \
-    mkdir masurca && \
-    tar -zxvf MaSuRCA-$MASURCA_VER.tar.gz -C masurca --strip-components 1 && \
-    rm MaSuRCA-$MASURCA_VER.tar.gz && \ 
-    cd masurca && \
+    tar -zxvf MaSuRCA-$MASURCA_VER.tar.gz && \
+    # rm MaSuRCA-$MASURCA_VER.tar.gz && \ 
+    cd MaSuRCA-$MASURCA_VER && \
     chmod +x install.sh && \
     ./install.sh && \
-    cp bin/masurca $INSTALL_PFX/bin && \
-    chmod +x $INSTALL_PFX/bin/masurca
+    chmod +x bin/masurca && \
+    echo '#!/bin/bash' > $INSTALL_PFX/bin/masurca.sh && \
+    echo 'masurca $1 && ./assemble.sh' >> $INSTALL_PFX/bin/masurca.sh && \
+    chmod +x $INSTALL_PFX/bin/masurca.sh
 
 ##### Configuration ############################################################
 
 USER biodocker
 WORKDIR /data
 # CMD ['masurca']
+
+# Set path to executables
+ENV PATH="$INSTALL_PFX/MaSuRCA-$MASURCA_VER/bin:${PATH}"
 
 ##### Maintainer ###############################################################
 

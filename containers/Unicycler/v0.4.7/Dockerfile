@@ -45,7 +45,9 @@ RUN apt-get update && \
 
 # Install Pilon
 RUN cd $INSTALL_PFX && \
-    wget https://github.com/broadinstitute/pilon/releases/download/v1.22/pilon-1.22.jar -P /pilon
+    wget https://github.com/broadinstitute/pilon/releases/download/v1.22/pilon-1.22.jar -P pilon && \
+    echo '#!/bin/bash\njava -jar $INSTALL_PFX/pilon/pilon-1.22.jar $@' > pilon/pilon && \
+    chmod +x pilon/pilon
 
 # Install SPAdes
 ENV SPADES_VER=3.13.0
@@ -115,9 +117,9 @@ WORKDIR /data
 # CMD ['shovill.pl']
 
 # Set path to executables
-ENV PATH="/pilon:${PATH}"
-ENV PATH="/spades/bin:${PATH}"
-ENV PATH="/miniasm:${PATH}"
+ENV PATH="$INSTALL_PFX/pilon:${PATH}"
+ENV PATH="$INSTALL_PFX/spades/bin:${PATH}"
+ENV PATH="$INSTALL_PFX/miniasm:${PATH}"
 
 ##### Maintainer ###############################################################
 

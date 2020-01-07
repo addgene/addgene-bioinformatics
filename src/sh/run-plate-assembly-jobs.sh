@@ -8,13 +8,13 @@ NAME
      run-plate-assembly-job -- Assembles each well of selected plates
 
 SYNOPSIS
-     run-plate-assembly-job [-d output-directory] assembler
+     run-plate-assembly-job [-d output-directory] [-st] assembler
 
 DESCRIPTION
      Assembles each well of selected plates using the specified
-     assembler, one of 'spades', 'shovill', or 'novoplasty'. Output
-     files are places in the current working directory, or in the
-     directory specified as an option.
+     assembler, one of 'masurca', 'novoplasty', 'shovill', 'skesa',
+     'spades', or 'unicycler'. Output files are placed in the current
+     working directory, or in the directory specified as an option.
 
 OPTIONS
 -d   Directory in which to place assembler output files. Default is

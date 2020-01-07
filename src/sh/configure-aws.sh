@@ -25,7 +25,9 @@ apt-cache policy docker-ce
 sudo apt-get install -y docker-ce
 sudo usermod -a -G docker $USER
 
-# Install APT's pip and virtualenv
+# Install APT's pip, virtualenv, and header files and static libraries for python development
 sudo apt-get install python-pip
 sudo apt-get install python-virtualenv
 sudo apt-get install virtualenvwrapper
+sudo apt-get install python-dev
+sudo apt-get install python3-dev

@@ -1,8 +1,27 @@
+import logging
 import os
 from random import choice
 
 from Bio.Alphabet import IUPAC
 from Bio.Seq import Seq
+
+logger = logging.getLogger(__name__)
+
+ASSEMBLERS_TO_RUN = [
+    'masurca',
+    'novoplasty',
+    'shovill',
+    'skesa',
+    'spades',
+    'unicycler'
+]
+ASSEMBLERS_REQUIRING_APC = [
+    'masurca',
+    'shovill',
+    'skesa',
+    'spades',
+    'unicycler'
+]
 
 
 def importFile(toil, source_path, scheme="file"):
@@ -24,7 +43,9 @@ def importFile(toil, source_path, scheme="file"):
     str
         id of the imported source in the file store
     """
-    file_id = toil.importFile(scheme + "://" + source_path)
+    file_path = scheme + "://" + source_path
+    logger.info("Importing file {0}".format(file_path))
+    file_id = toil.importFile(file_path)
 
     return file_id
 
@@ -117,6 +138,7 @@ def readGlobalFile(fileStore, file_id, *cmps):
         absolute path to the file in the local temporary directory
     """
     file_path = os.path.join(fileStore.localTempDir, *cmps)
+    logger.info("Reading global file {0}".format(file_path))
     fileStore.readGlobalFile(file_id, userPath=file_path)
 
     return file_path
@@ -141,9 +163,12 @@ def writeGlobalFile(fileStore, *cmps):
     """
     try:
         file_path = os.path.join(fileStore.localTempDir, *cmps)
+        logger.info("Writing global file {0}".format(file_path))
         file_id = fileStore.writeGlobalFile(file_path)
 
     except Exception as exc:
+        logger.info("Writing global file {0} failed {1}".format(
+            file_path, exc))
         file_id = None
 
     return file_id
@@ -165,6 +190,7 @@ def exportFiles(toil, output_directory, job_rv):
     """
     for name, spec in job_rv.items():
         if spec['id'] is not None:
+            logger.info("Exporting file {0}".format(spec['name']))
             toil.exportFile(spec['id'], "file://" + os.path.abspath(
                 os.path.join(output_directory, spec['name'])))
 
@@ -172,8 +198,8 @@ def exportFiles(toil, output_directory, job_rv):
 def exportWellAssemblyFiles(toil, assembler, output_directory, well_specs,
                             well_assembly_rvs):
     """
-    Export the assembler output files, and the apc output file, and
-    sequence FASTA file from the file store.
+    Export the assembler output files, and the apc output files, if
+    apc required by the assembler.
 
     Parameters
     ----------
@@ -193,9 +219,13 @@ def exportWellAssemblyFiles(toil, assembler, output_directory, well_specs,
         well_output_directory = os.path.join(output_directory, well_specs[iW])
         if not os.path.exists(well_output_directory):
             os.mkdir(well_output_directory)
+
+        # Export all assembler output files from the file store
         exportFiles(toil, well_output_directory,
                     well_assembly_rvs[iW][assembler + "_rv"])
-        if assembler in ['spades', 'shovill']:
+
+        if assembler in ASSEMBLERS_REQUIRING_APC:
+            # Export all apc output files from the file store
             exportFiles(toil, well_output_directory,
                         well_assembly_rvs[iW]['apc_rv'])
 

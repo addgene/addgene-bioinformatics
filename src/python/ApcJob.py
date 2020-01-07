@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+import logging
 import os
 
 from toil.job import Job
@@ -6,6 +7,8 @@ from toil.common import Toil
 from toil.lib.docker import apiDockerCall
 
 import utilities
+
+logger = logging.getLogger(__name__)
 
 
 class ApcJob(Job):
@@ -16,7 +19,6 @@ class ApcJob(Job):
     output sequence. The join location is appended to the sequence
     header, to allow confirmation.
     """
-
     def __init__(self, contigs_file_id, parent_rv={},
                  contigs_file_name="contigs.fasta", base_file_name="apc",
                  *args, **kwargs):
@@ -30,7 +32,7 @@ class ApcJob(Job):
         """
         super(ApcJob, self).__init__(*args, **kwargs)
         self.contigs_file_id = contigs_file_id
-        self.contigs_file_name = "contigs.fasta"
+        self.contigs_file_name = contigs_file_name
         self.base_file_name = "apc"
         self.parent_rv = parent_rv
 
@@ -56,10 +58,12 @@ class ApcJob(Job):
             # the container, and use the path as the working directory in
             # the container, then call apc.pl
             # TODO: Specify the container on construction
+            image = "ralatsdio/apc:v0.1.0"
             working_dir = fileStore.localTempDir
+            logger.info("Calling image {0}".format(image))
             apiDockerCall(
                 self,
-                image='ralatsdio/apc:v0.1.0',
+                image=image,
                 volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
                 working_dir=working_dir,
                 parameters=["apc.pl",
@@ -77,6 +81,7 @@ class ApcJob(Job):
 
         except Exception as exc:
             # Ensure expectred return values on exceptions
+            logger.info("Calling image {0} failed: {1}".format(image, exc))
             log_file_id = None
             sequence_file_id = None
 
@@ -94,13 +99,13 @@ class ApcJob(Job):
             }
         }
         apc_rv.update(self.parent_rv)
+        logger.info("Return value {0}".format(apc_rv))
         return apc_rv
 
 
 if __name__ == "__main__":
     """
     Circularize contigs corresponding to a single well.
-
     """
     # Parse FASTA data path and file name, and output directory,
     # making the output directory if needed
@@ -144,7 +149,7 @@ if __name__ == "__main__":
             # Restart the APC job
             apc_rv = toil.restart(apc_job)
 
-        # Export the apc output file, and sequence FASTA file from the
-        # file store
+        # Export all apc output files from the file store
         utilities.exportFiles(
-            toil, options.output_directory, apc_rv['apc_rv'])
+            toil, options.output_directory, apc_rv['apc_rv']
+        )

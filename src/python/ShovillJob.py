@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+import logging
 import os
 
 from toil.job import Job
@@ -7,13 +8,14 @@ from toil.lib.docker import apiDockerCall
 
 import utilities
 
+logger = logging.getLogger(__name__)
+
 
 class ShovillJob(Job):
     """
     Accepts paired-end Illumina reads for assembly using SPAdes,
     SKESA, MEGAHIT, or Velvet.
     """
-
     def __init__(self, read_one_file_id, read_two_file_id,
                  output_directory, parent_rv={},
                  read_one_file_name="R1.fastq.gz",
@@ -68,10 +70,12 @@ class ShovillJob(Job):
             # the container, and use the path as the working directory in
             # the container, then call shovill
             # TODO: Specify the container on construction
+            image = "ralatsdio/shovill:v1.0.9"
             working_dir = fileStore.localTempDir
+            logger.info("Calling image {0}".format(image))
             apiDockerCall(
                 self,
-                image='ralatsdio/shovill:v1.0.9',
+                image=image,
                 volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
                 working_dir=working_dir,
                 parameters=["shovill",
@@ -97,6 +101,7 @@ class ShovillJob(Job):
 
         except Exception as exc:
             # Ensure expectred return values on exceptions
+            logger.info("Calling image {0} failed: {1}".format(image, exc))
             log_file_id = None
             corrections_file_id = None
             contigs_file_id = None
@@ -119,13 +124,13 @@ class ShovillJob(Job):
             }
         }
         shovill_rv.update(self.parent_rv)
+        logger.info("Return value {0}".format(shovill_rv))
         return shovill_rv
 
 
 if __name__ == "__main__":
     """
     Assemble reads corresponding to a single well.
-
     """
     # Parse FASTQ data path, plate and well specification, and output
     # directory, making the output directory if needed
@@ -173,7 +178,7 @@ if __name__ == "__main__":
             # Restart the shovill job
             shovill_rv = toil.restart(shovill_job)
 
-        # Export the shovill log and corrections files, and contigs
-        # FASTA file from the file store
+        # Export all shovill output files from the file store
         utilities.exportFiles(
-            toil, options.output_directory, shovill_rv['shovill_rv'])
+            toil, options.output_directory, shovill_rv['shovill_rv']
+        )
