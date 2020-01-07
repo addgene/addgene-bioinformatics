@@ -22,6 +22,8 @@ docker build --tag ralatsdio/apc:v0.1.0 apc/v0.1.0 \
        | tee apc/v0.1.0/build.log 2>&1
 docker build --tag ralatsdio/bbtools:v38.73 BBTools/v38.73 \
        | tee BBTools/v38.73/build.log 2>&1
+docker build --tag ralatsdio/csc:v0.1.0 csc/v0.1.0 \
+       | tee csc/v0.1.0/build.log 2>&1
 
 # Summarize build logs
 find . -name 'build.log' -exec echo ">{}" \; -exec tail -2 {} \;
