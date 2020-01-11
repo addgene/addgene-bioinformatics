@@ -7,9 +7,11 @@ from random import choice, choices
 from utilities import create_r_seq
 
 from Bio import Align
+from Bio import SeqIO
 from Bio.Alphabet import IUPAC
 from Bio.Seq import Seq
-
+from Bio.SeqRecord import SeqRecord
+import docker
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -386,6 +388,75 @@ def plot_alignment_with_errors(aligner_config, reprocess=False):
     return alignments
 
 
+def rotate_seqs(a_seq, o_seq):
+
+    image = "ralatsdio/csc:v0.1.0"
+
+    # [-m] `hCSC' for heuristic, `nCSC' for naive and `saCSC' for
+    # suffix-array algorithm
+    method = "saCSC"
+    # [-a] `DNA' or `RNA' for nucleotide sequences or `PROT' for
+    # protein sequences
+    alphabet = "DNA"
+    # (Multi)FASTA input filename.
+    input_file = "csc_input.fasta"
+    # Output filename for the rotated sequences.
+    output_file = "csc_output.fasta"
+    # [-q] The q-gram length
+    q_length = "5"
+    # [-l] The length of each block
+    block_length = "50"
+    # [-P] The number of blocks of length l to use to refine the
+    # results of saCSC by (e.g. 1.0)
+    blocks_refine = "1.0"
+    # [-O] The gap open penalty is the score taken away when a gap is
+    # created. The best value depends on the choice of comparison
+    # matrix.  The default value assumes you are using the EBLOSUM62
+    # matrix for protein sequences, and the EDNAFULL matrix for
+    # nucleotide sequences. Floating point number from 1.0 to
+    # 100.0. (default: 10.0)
+    gap_open_penalty = "10.0"
+    # [-E] The gap extension penalty is added to the standard gap
+    # penalty for each base or residue in the gap. This is how long
+    # gaps are penalized. Floating point number from 0.0 to 10.0.
+    # (default: 0.5)
+    gap_extend_penalty = "0.5"
+    command = " ".join(
+        ["csc",
+         "-m", method,
+         "-a", alphabet,
+         "-i", input_file,
+         "-o", output_file,
+         "-q", q_length,
+         "-l", block_length,
+         "-P", blocks_refine,
+         "-O", gap_open_penalty,
+         "-E", gap_extend_penalty
+        ]
+    )
+
+    hosting_dir = os.path.dirname(os.path.abspath(__file__))
+    working_dir = "/data"
+    volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
+
+    SeqIO.write(
+        [SeqRecord(a_seq, id="id_a", name="name_a", description="reference"),
+         SeqRecord(o_seq, id="id_o", name="name_o", description="offset")],
+        os.path.join(hosting_dir, input_file),
+        "fasta")
+
+    client = docker.from_env()
+    client.containers.run(
+        image,
+        command=command,
+        volumes=volumes,
+        working_dir=working_dir,
+    )
+
+    return [seq_record for seq_record in SeqIO.parse(
+        os.path.join(hosting_dir, output_file), "fasta")]
+
+
 if __name__ == "__main__":
     """Create some simple plots to understand operation of the
     Biopython PairwiseAligner.
@@ -408,6 +479,9 @@ if __name__ == "__main__":
     parser.add_argument('-r', '--reprocess',
                         action='store_true',
                         help="reprocess alignments")
+    parser.add_argument('-t', '--test-rotation',
+                        action='store_true',
+                        help="test cyclic rotation of sequence")
     options = parser.parse_args()
 
     # Read and parse configuration file
@@ -429,3 +503,16 @@ if __name__ == "__main__":
     if options.plot_errors:
         alignments_with_errors = plot_alignment_with_errors(
             config['aligner'], options.reprocess)
+
+    # Test cyclic rotation of sequence
+    if options.test_rotation:
+
+        # Create random reference sequence
+        seq_len = 10000
+        a_seq = create_r_seq(seq_len)
+
+        # Offset random reference sequence
+        n_off = int(seq_len / 2)
+        o_seq = create_o_seq(a_seq, n_off)
+
+        print(rotate_seqs(a_seq, o_seq))
