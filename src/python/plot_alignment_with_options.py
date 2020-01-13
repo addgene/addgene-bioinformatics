@@ -163,9 +163,9 @@ def test_aligners():
 
 
 def plot_alignment_with_random(aligner_config, reprocess=False):
-    """Plot alignment of random candidate sequences of length 1000 to
-    30,000 nt with a random reference sequence of length 10,000
-    nt. The reference sequeence is doubled for alignment.
+    """Plot alignment of random candidate sequences of length 9000 to
+    11,000 nt with a random reference sequence of length 10,000
+    nt.
 
     Parameters
     ----------
@@ -189,11 +189,10 @@ def plot_alignment_with_random(aligner_config, reprocess=False):
 
         # Create random reference sequence
         seq_len = 10000
-        c_seq = create_r_seq(seq_len)
-        a_seq = c_seq + c_seq
+        a_seq = create_r_seq(seq_len)
 
         # Create and align random candidate sequences
-        seq_lens = range(1000, 30000, 500)
+        seq_lens = range(9000, 11000, 100)
         r_seq_score = []
         for seq_len in seq_lens:
             print("Aligning with length {:d}".format(seq_len))
@@ -246,8 +245,8 @@ def plot_alignment_with_random(aligner_config, reprocess=False):
 def plot_alignment_with_offsets(aligner_config, reprocess=False):
     """Plot alignment of random candidate and offset to reference
     sequences of length 10,000 nt. Offsets vary from 0 to 5,000 nt.
-    The reference sequeence is doubled for alignment, and global and
-    local alignment modes are used.
+    The reference sequence is used as is, and doubled for alignment,
+    and global and local alignment modes are used.
 
     Parameters
     ----------
@@ -534,9 +533,7 @@ if __name__ == "__main__":
     """
     # Add and parse arguments
     parser = ArgumentParser()
-    parser.add_argument('-c', '--config-file',
-                        default=os.path.abspath(
-                            __file__).replace(".py", ".cfg"),
+    parser.add_argument('-c', '--config-file', required=True,
                         help="configuration file")
     parser.add_argument('-n', '--plot-random',
                         action='store_true',
