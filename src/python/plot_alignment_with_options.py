@@ -91,6 +91,76 @@ def create_aligner(aligner_config):
     return aligner
 
 
+def test_aligners():
+    """Compare the scores produced by aligners corresponding to the
+    default, and two recommended sets of parameters.
+
+    """
+    # Read and parse default configuration files
+    config_deflt = ConfigParser()
+    config_deflt.read('../../resources/pairwise-default.cfg')
+    config_jn_01 = ConfigParser()
+    config_jn_01.read('../../resources/pairwise-jn-01.cfg')
+    config_rl_01 = ConfigParser()
+    config_rl_01.read('../../resources/pairwise-rl-01.cfg')
+
+    # Create aligners using the specified parameters
+    aligner_deflt = create_aligner(config_deflt['aligner'])
+    aligner_jn_01 = create_aligner(config_jn_01['aligner'])
+    aligner_rl_01 = create_aligner(config_rl_01['aligner'])
+
+    # Create random reference sequence, and it's doubled version
+    seq_len = 10000
+    a_seq = create_r_seq(seq_len)
+    d_seq = a_seq + a_seq
+
+    # Create random candidate sequence
+    r_seq = create_r_seq(seq_len)
+
+    # Align random reference sequence to itself using all aligners
+    a_seq_score_deflt_a = aligner_deflt.score(a_seq, a_seq)
+    a_seq_score_jn_01_a = aligner_jn_01.score(a_seq, a_seq)
+    a_seq_score_rl_01_a = aligner_rl_01.score(a_seq, a_seq)
+
+    # Align random reference sequence to it's doubled version using
+    # all aligners
+    a_seq_score_deflt_d = aligner_deflt.score(a_seq, d_seq)
+    a_seq_score_jn_01_d = aligner_jn_01.score(a_seq, d_seq)
+    a_seq_score_rl_01_d = aligner_rl_01.score(a_seq, d_seq)
+
+    # Align random candidate sequence to itself using all aligners
+    r_seq_score_deflt_a = aligner_deflt.score(r_seq, a_seq)
+    r_seq_score_jn_01_a = aligner_jn_01.score(r_seq, a_seq)
+    r_seq_score_rl_01_a = aligner_rl_01.score(r_seq, a_seq)
+
+    # Align random candidate sequence to it's doubled version using
+    # all aligners
+    r_seq_score_deflt_d = aligner_deflt.score(r_seq, d_seq)
+    r_seq_score_jn_01_d = aligner_jn_01.score(r_seq, d_seq)
+    r_seq_score_rl_01_d = aligner_rl_01.score(r_seq, d_seq)
+
+    # Print summary results
+    print("{0:8s} {1:8s} {2:8s} {3:8s} {4:8s}".format(
+        "", "actual", "", "random", ""))
+    print("{0:8s} {1:8s} {2:8s} {3:8s} {4:8s}".format(
+        "aligner", "single", "double", "single", "double"))
+    print("{0:8s} {1:8.1f} {2:8.1f} {3:8.1f} {4:8.1f}".format(
+        "default",
+        a_seq_score_deflt_a, a_seq_score_deflt_d,
+        r_seq_score_deflt_a, r_seq_score_deflt_d)
+    )
+    print("{0:8s} {1:8.1f} {2:8.1f} {3:8.1f} {4:8.1f}".format(
+        "jn_01",
+        a_seq_score_jn_01_a, a_seq_score_jn_01_d,
+        r_seq_score_jn_01_a, r_seq_score_jn_01_d)
+    )
+    print("{0:8s} {1:8.1f} {2:8.1f} {3:8.1f} {4:8.1f}".format(
+        "rl_01",
+        a_seq_score_rl_01_a, a_seq_score_rl_01_d,
+        r_seq_score_rl_01_a, r_seq_score_rl_01_d)
+    )
+
+
 def plot_alignment_with_random(aligner_config, reprocess=False):
     """Plot alignment of random candidate sequences of length 1000 to
     30,000 nt with a random reference sequence of length 10,000
@@ -479,9 +549,13 @@ if __name__ == "__main__":
     parser.add_argument('-r', '--reprocess',
                         action='store_true',
                         help="reprocess alignments")
+    parser.add_argument('-a', '--test-aligners',
+                        action='store_true',
+                        help="test various aligner configurations")
     parser.add_argument('-t', '--test-rotation',
                         action='store_true',
                         help="test cyclic rotation of sequence")
+
     options = parser.parse_args()
 
     # Read and parse configuration file
@@ -503,6 +577,10 @@ if __name__ == "__main__":
     if options.plot_errors:
         alignments_with_errors = plot_alignment_with_errors(
             config['aligner'], options.reprocess)
+
+    # Test various aligner configurations
+    if options.test_aligners:
+        test_aligners()
 
     # Test cyclic rotation of sequence
     if options.test_rotation:
