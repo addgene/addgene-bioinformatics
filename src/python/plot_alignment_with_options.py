@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 from configparser import ConfigParser
+import math
 import os
 import pickle
 from random import choice, choices
@@ -462,20 +463,20 @@ def rotate_seqs(a_seq, o_seq):
 
     image = "ralatsdio/csc:v0.1.0"
 
-    # [-m] `hCSC' for heuristic, `nCSC' for naive and `saCSC' for
-    # suffix-array algorithm
-    method = "saCSC"
     # [-a] `DNA' or `RNA' for nucleotide sequences or `PROT' for
     # protein sequences
     alphabet = "DNA"
+    # [-m] `hCSC' for heuristic, `nCSC' for naive and `saCSC' for
+    # suffix-array algorithm
+    method = "saCSC"
     # (Multi)FASTA input filename.
     input_file = "csc_input.fasta"
     # Output filename for the rotated sequences.
     output_file = "csc_output.fasta"
-    # [-q] The q-gram length
-    q_length = "5"
     # [-l] The length of each block
-    block_length = "50"
+    block_length = str(math.ceil(math.sqrt(len(a_seq))))
+    # [-q] The q-gram length
+    q_length = str(math.ceil(math.log(len(a_seq)) / math.log(4)))
     # [-P] The number of blocks of length l to use to refine the
     # results of saCSC by (e.g. 1.0)
     blocks_refine = "1.0"
