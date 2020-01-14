@@ -270,8 +270,7 @@ def plot_alignment_with_offsets(reprocess=False):
     aligner_rl_01 = create_aligner(config_rl_01['aligner'])
 
     # Process and dump, or load alignments
-    pickle_file_name = config_file.replace(
-        ".cfg", "-offset.pickle")
+    pickle_file_name = config_file.replace(".cfg", "-offsets.pickle")
     if not os.path.exists(pickle_file_name) or reprocess:
 
         # Create random reference sequence, and it's doubled version
@@ -355,8 +354,7 @@ def plot_alignment_with_errors(reprocess=False):
     aligner_rl_01 = create_aligner(config_rl_01['aligner'])
 
     # Process and dump, or load alignments
-    pickle_file_name = config_file.replace(
-        ".cfg", "-errors.pickle")
+    pickle_file_name = config_file.replace(".cfg", "-errors.pickle")
     if not os.path.exists(pickle_file_name) or reprocess:
 
         # Create random reference sequence, and it's doubled version
@@ -439,8 +437,7 @@ def plot_alignment_with_offsets_and_errors(reprocess=False):
     aligner_rl_01 = create_aligner(config_rl_01['aligner'])
 
     # Process and dump, or load alignments
-    pickle_file_name = config_file.replace(
-        ".cfg", "-offsets-and-errors.pickle")
+    pickle_file_name = config_file.replace(".cfg", "-offsets-and-errors.pickle")
     if not os.path.exists(pickle_file_name) or reprocess:
 
         # Create random reference sequence, and it's doubled version
