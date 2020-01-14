@@ -245,16 +245,13 @@ def plot_alignment_with_random(reprocess=False):
     return alignments
 
 
-def plot_alignment_with_offsets(aligner_config, reprocess=False):
+def plot_alignment_with_offsets(reprocess=False):
     """Plot alignment of random candidate and offset to reference
     sequences of length 10,000 nt. Offsets vary from 0 to 5,000 nt.
-    The reference sequence is used as is, and doubled for alignment,
-    and global and local alignment modes are used.
+    The reference sequence is used as is, and doubled for alignment.
 
     Parameters
     ----------
-    aligner_config : dct
-        pairwise aligner configuration
     reprocess : bln
         flag to reprocess alignments, or not
 
@@ -263,68 +260,47 @@ def plot_alignment_with_offsets(aligner_config, reprocess=False):
     dct
         dictionary of alignment values
     """
-    # Create aligners using the specified parameters
-    global_aligner_config = aligner_config
-    global_aligner_config['mode'] = 'global'
-    global_aligner = create_aligner(global_aligner_config)
-    local_aligner_config = aligner_config
-    local_aligner_config['mode'] = 'local'
-    local_aligner = create_aligner(local_aligner_config)
+    # Read and parse configuration files
+    config_dir = "../../resources"
+    config_file = "pairwise-rl-01.cfg"
+    config_rl_01 = ConfigParser()
+    config_rl_01.read(os.path.join(config_dir, config_file))
+
+    # Create aligner using the specified parameters
+    aligner_rl_01 = create_aligner(config_rl_01['aligner'])
 
     # Process and dump, or load alignments
-    pickle_file_name = aligner_config['file'].replace(
-        "_options", "_offsets").replace(".cfg", ".pickle")
+    pickle_file_name = config_file.replace(
+        ".cfg", "-offset.pickle")
     if not os.path.exists(pickle_file_name) or reprocess:
 
         # Create random reference sequence
         seq_len = 10000
-        a_seq_1 = create_r_seq(seq_len)
-        a_seq_2 = a_seq_1 + a_seq_1
-
-        # Create random candidate sequence
-        r_seq = create_r_seq(seq_len)
-
-        # Align candidate to reference sequence, or its double, using
-        # global and local alignment
-        r_seq_score_1_g = np.array(global_aligner.score(r_seq, a_seq_1))
-        r_seq_score_1_l = np.array(local_aligner.score(r_seq, a_seq_1))
-        r_seq_score_2_g = np.array(global_aligner.score(r_seq, a_seq_2))
-        r_seq_score_2_l = np.array(local_aligner.score(r_seq, a_seq_2))
+        a_seq = create_r_seq(seq_len)
+        d_seq = a_seq + a_seq
 
         # Align offset to reference sequence, or its double, using
         # global and local alignment
-        o_seq_score_1_g = []
-        o_seq_score_1_l = []
-        o_seq_score_2_g = []
-        o_seq_score_2_l = []
+        o_seq_score_a = []
+        o_seq_score_d = []
         n_offs = range(0, int(seq_len / 2), int(seq_len / 20))
         for n_off in n_offs:
             print("Aligning with offset {:d}".format(n_off))
-            o_seq = create_o_seq(a_seq_1, n_off)
-            o_seq_score_1_g.append(global_aligner.score(o_seq, a_seq_1))
-            o_seq_score_1_l.append(local_aligner.score(o_seq, a_seq_1))
-            o_seq_score_2_g.append(global_aligner.score(o_seq, a_seq_2))
-            o_seq_score_2_l.append(local_aligner.score(o_seq, a_seq_2))
+            o_seq = create_o_seq(a_seq, n_off)
+            o_seq_score_a.append(aligner_rl_01.score(o_seq, a_seq))
+            o_seq_score_d.append(aligner_rl_01.score(o_seq, d_seq))
 
         n_offs = np.array(n_offs)
-        o_seq_score_1_g = np.array(o_seq_score_1_g)
-        o_seq_score_1_l = np.array(o_seq_score_1_l)
-        o_seq_score_2_g = np.array(o_seq_score_2_g)
-        o_seq_score_2_l = np.array(o_seq_score_2_l)
+        o_seq_score_a = np.array(o_seq_score_a)
+        o_seq_score_d = np.array(o_seq_score_d)
 
         # Dump alignments
         alignments = {}
-        alignments['config'] = dict(aligner_config)
+        alignments['config'] = dict(config_rl_01)
         alignments['seq_len'] = seq_len
-        alignments['r_seq_score_1_g'] = r_seq_score_1_g
-        alignments['r_seq_score_1_l'] = r_seq_score_1_l
-        alignments['r_seq_score_2_g'] = r_seq_score_2_g
-        alignments['r_seq_score_2_l'] = r_seq_score_2_l
         alignments['n_offs'] = n_offs
-        alignments['o_seq_score_1_g'] = o_seq_score_1_g
-        alignments['o_seq_score_1_l'] = o_seq_score_1_l
-        alignments['o_seq_score_2_g'] = o_seq_score_2_g
-        alignments['o_seq_score_2_l'] = o_seq_score_2_l
+        alignments['o_seq_score_a'] = o_seq_score_a
+        alignments['o_seq_score_d'] = o_seq_score_d
         print("Dumping alignments")
         with open(pickle_file_name, 'wb') as pickle_file:
             pickle.dump(alignments, pickle_file)
@@ -336,30 +312,14 @@ def plot_alignment_with_offsets(aligner_config, reprocess=False):
         with open(pickle_file_name, 'rb') as pickle_file:
             alignments = pickle.load(pickle_file)
         seq_len = alignments['seq_len']
-        r_seq_score_1_g = alignments['r_seq_score_1_g']
-        r_seq_score_1_l = alignments['r_seq_score_1_l']
-        r_seq_score_2_g = alignments['r_seq_score_2_g']
-        r_seq_score_2_l = alignments['r_seq_score_2_l']
         n_offs = alignments['n_offs']
-        o_seq_score_1_g = alignments['o_seq_score_1_g']
-        o_seq_score_1_l = alignments['o_seq_score_1_l']
-        o_seq_score_2_g = alignments['o_seq_score_2_g']
-        o_seq_score_2_l = alignments['o_seq_score_2_l']
+        o_seq_score_a = alignments['o_seq_score_a']
+        o_seq_score_d = alignments['o_seq_score_d']
 
     # Plot absolute alignment score as a function of offset length
     fig, ax = plt.subplots()
-    ax.plot([min(n_offs), max(n_offs)],
-            [r_seq_score_1_g, r_seq_score_1_g], 'b-')
-    ax.plot([min(n_offs), max(n_offs)],
-            [r_seq_score_1_l, r_seq_score_1_l], 'bo')
-    ax.plot([min(n_offs), max(n_offs)],
-            [r_seq_score_2_g, r_seq_score_2_g], 'k-')
-    ax.plot([min(n_offs), max(n_offs)],
-            [r_seq_score_2_l, r_seq_score_2_l], 'ko')
-    ax.plot(n_offs, o_seq_score_1_g, 'r-')
-    ax.plot(n_offs, o_seq_score_1_l, 'ro')
-    ax.plot(n_offs, o_seq_score_2_g, 'g-')
-    ax.plot(n_offs, o_seq_score_2_l, 'go')
+    ax.plot(n_offs, o_seq_score_a, 'r')
+    ax.plot(n_offs, o_seq_score_d, 'b')
     ax.set_title("Reference sequence length 10,000")
     ax.set_xlabel("Number of nucleotides offset")
     ax.set_ylabel("Absolute alignment score")
@@ -572,7 +532,7 @@ if __name__ == "__main__":
     # Plot alignment with offsets
     if options.plot_offsets:
         alignments_with_offsets = plot_alignment_with_offsets(
-            config['aligner'], options.reprocess)
+            options.reprocess)
 
     # Plot alignment with errors
     if options.plot_errors:
