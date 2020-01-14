@@ -23,7 +23,7 @@ def create_o_seq(a_seq, n_off):
     Parameters
     ----------
     a_seq : Bio.Seq.Seq
-        the seqeunce to offset
+        the sequence to offset
     n_off : int
         the number of nucleotides offset
 
@@ -178,7 +178,7 @@ def plot_alignment_with_random(reprocess=False):
     dct
         dictionary of alignment values
     """
-    # Read and parse configuration files
+    # Read and parse configuration file
     config_dir = "../../resources"
     config_file = "pairwise-rl-01.cfg"
     config_rl_01 = ConfigParser()
@@ -235,8 +235,8 @@ def plot_alignment_with_random(reprocess=False):
     # Plot absolute alignment score as a function of candidate
     # sequence length
     fig, ax = plt.subplots()
-    ax.plot(seq_lens, r_seq_score_a, 'o')
-    ax.plot(seq_lens, r_seq_score_d, 'x')
+    ax.plot(seq_lens, r_seq_score_a, 'r1')
+    ax.plot(seq_lens, r_seq_score_d, 'g2')
     ax.set_title("Reference sequence length: 10,000")
     ax.set_xlabel("Candidate sequence length")
     ax.set_ylabel("Absolute alignment score")
@@ -260,7 +260,7 @@ def plot_alignment_with_offsets(reprocess=False):
     dct
         dictionary of alignment values
     """
-    # Read and parse configuration files
+    # Read and parse configuration file
     config_dir = "../../resources"
     config_file = "pairwise-rl-01.cfg"
     config_rl_01 = ConfigParser()
@@ -274,13 +274,12 @@ def plot_alignment_with_offsets(reprocess=False):
         ".cfg", "-offset.pickle")
     if not os.path.exists(pickle_file_name) or reprocess:
 
-        # Create random reference sequence
+        # Create random reference sequence, and it's doubled version
         seq_len = 10000
         a_seq = create_r_seq(seq_len)
         d_seq = a_seq + a_seq
 
-        # Align offset to reference sequence, or its double, using
-        # global and local alignment
+        # Align offset to reference sequence, or its double
         o_seq_score_a = []
         o_seq_score_d = []
         n_offs = range(0, int(seq_len / 2), int(seq_len / 20))
@@ -319,7 +318,7 @@ def plot_alignment_with_offsets(reprocess=False):
     # Plot absolute alignment score as a function of offset length
     fig, ax = plt.subplots()
     ax.plot(n_offs, o_seq_score_a, 'r')
-    ax.plot(n_offs, o_seq_score_d, 'b')
+    ax.plot(n_offs, o_seq_score_d, 'g')
     ax.set_title("Reference sequence length 10,000")
     ax.set_xlabel("Number of nucleotides offset")
     ax.set_ylabel("Absolute alignment score")
@@ -328,10 +327,10 @@ def plot_alignment_with_offsets(reprocess=False):
     return alignments
 
 
-def plot_alignment_with_errors(aligner_config, reprocess=False):
+def plot_alignment_with_errors(reprocess=False):
     """Plot alignment of error and reference sequences of length
     10,000 nt. Error sequences differ from the reference sequence by
-    from 0 to 10,000 nts.  The reference sequeence is doubled for
+    from 0 to 10,000 nts.  The reference sequence is doubled for
     alignment.
 
     Parameters
@@ -346,42 +345,46 @@ def plot_alignment_with_errors(aligner_config, reprocess=False):
     dct
         dictionary of alignment values
     """
-    # Create an aligner using the specified parameters
-    aligner = create_aligner(aligner_config)
+    # Read and parse configuration file
+    config_dir = "../../resources"
+    config_file = "pairwise-rl-01.cfg"
+    config_rl_01 = ConfigParser()
+    config_rl_01.read(os.path.join(config_dir, config_file))
+
+    # Create aligner using the specified parameters
+    aligner_rl_01 = create_aligner(config_rl_01['aligner'])
 
     # Process and dump, or load alignments
-    pickle_file_name = aligner_config['file'].replace(
-        "_options", "_errors").replace(".cfg", ".pickle")
+    pickle_file_name = config_file.replace(
+        ".cfg", "-errors.pickle")
     if not os.path.exists(pickle_file_name) or reprocess:
 
-        # Create random reference sequence
+        # Create random reference sequence, and it's doubled version
         seq_len = 10000
-        c_seq = create_r_seq(seq_len)
-        a_seq = c_seq + c_seq
-
-        # Create and align random candidate sequence
-        r_seq = create_r_seq(seq_len)
-        r_seq_score = aligner.score(r_seq, a_seq)
+        a_seq = create_r_seq(seq_len)
+        d_seq = a_seq + a_seq
 
         # Create and align error candidate sequences
-        e_seq_score = []
+        e_seq_score_a = []
+        e_seq_score_d = []
         n_errs = range(0, seq_len, int(seq_len / 50))
         for n_err in n_errs:
             print("Aligning with {:d} errors".format(n_err))
-            e_seq = create_e_seq(c_seq, n_err)
-            e_seq_score.append(aligner.score(e_seq, a_seq))
+            e_seq = create_e_seq(a_seq, n_err)
+            e_seq_score_a.append(aligner_rl_01.score(e_seq, a_seq))
+            e_seq_score_d.append(aligner_rl_01.score(e_seq, d_seq))
 
-        r_seq_score = np.array(r_seq_score)
         n_errs = np.array(n_errs)
-        e_seq_score = np.array(e_seq_score)
+        e_seq_score_a = np.array(e_seq_score_a)
+        e_seq_score_d = np.array(e_seq_score_d)
 
         # Dump alignments
         alignments = {}
-        alignments['config'] = dict(aligner_config)
+        alignments['config'] = dict(config_rl_01)
         alignments['seq_len'] = seq_len
-        alignments['r_seq_score'] = r_seq_score
         alignments['n_errs'] = n_errs
-        alignments['e_seq_score'] = e_seq_score
+        alignments['e_seq_score_a'] = e_seq_score_a
+        alignments['e_seq_score_d'] = e_seq_score_d
         print("Dumping alignments")
         with open(pickle_file_name, 'wb') as pickle_file:
             pickle.dump(alignments, pickle_file)
@@ -393,29 +396,132 @@ def plot_alignment_with_errors(aligner_config, reprocess=False):
         with open(pickle_file_name, 'rb') as pickle_file:
             alignments = pickle.load(pickle_file)
         seq_len = alignments['seq_len']
-        r_seq_score = alignments['r_seq_score']
         n_errs = alignments['n_errs']
-        e_seq_score = alignments['e_seq_score']
+        e_seq_score_a = alignments['e_seq_score_a']
+        e_seq_score_d = alignments['e_seq_score_d']
 
     # Plot absolute alignment score as a function of error length
     fig, ax = plt.subplots()
-    ax.plot([min(n_errs), max(n_errs)],
-            [r_seq_score, r_seq_score], 'b-')
-    ax.plot(n_errs, e_seq_score, 'r-')
+    ax.plot(n_errs, e_seq_score_a, 'r--')
+    ax.plot(n_errs, e_seq_score_d, 'g:')
     ax.set_title("Reference sequence length 10,000")
     ax.set_xlabel("Number of nucleotides in error")
     ax.set_ylabel("Absolute alignment score")
     plt.show()
 
-    # Plot relative alignment score as a function of error length
+    return alignments
+
+
+def plot_alignment_with_offsets_and_errors(reprocess=False):
+    """Plot alignment of random candidate and offset with errors to
+    reference sequences of length 10,000 nt. Offsets vary from 0 to
+    5,000 nt.  Error sequences differ from the reference sequence by
+    from 0 to 10,000 nts.  The reference sequence is doubled for
+    alignment.
+
+    Parameters
+    ----------
+    reprocess : bln
+        flag to reprocess alignments, or not
+
+    Returns
+    -------
+    dct
+        dictionary of alignment values
+    """
+    # Read and parse configuration file
+    config_dir = "../../resources"
+    config_file = "pairwise-rl-01.cfg"
+    config_rl_01 = ConfigParser()
+    config_rl_01.read(os.path.join(config_dir, config_file))
+
+    # Create aligner using the specified parameters
+    aligner_rl_01 = create_aligner(config_rl_01['aligner'])
+
+    # Process and dump, or load alignments
+    pickle_file_name = config_file.replace(
+        ".cfg", "-offsets-and-errors.pickle")
+    if not os.path.exists(pickle_file_name) or reprocess:
+
+        # Create random reference sequence, and it's doubled version
+        seq_len = 10000
+        a_seq = create_r_seq(seq_len)
+        d_seq = a_seq + a_seq
+
+        # Create and align offset candidate sequences with errors
+        n_offs = range(0, int(seq_len / 2), int(seq_len / 8))
+        n_errs = range(0, seq_len, int(seq_len / 10))
+
+        o_e_seq_score_a = np.empty((len(n_offs), len(n_errs)))
+        o_e_seq_score_d = np.empty((len(n_offs), len(n_errs)))
+        r_o_e_seq_score_a = np.empty((len(n_offs), len(n_errs)))
+
+        i_off = 0
+        for n_off in n_offs:
+            print("Aligning with offset {:d}".format(n_off))
+            o_seq = create_o_seq(a_seq, n_off)
+
+            i_err = 0
+            for n_err in n_errs:
+                print("Aligning with {:d} errors".format(n_err))
+                o_e_seq = create_e_seq(o_seq, n_err)
+
+                o_e_seq_score_a[i_off, i_err] = aligner_rl_01.score(
+                    o_e_seq, a_seq)
+                o_e_seq_score_d[i_off, i_err] = aligner_rl_01.score(
+                    o_e_seq, d_seq)
+
+                r_a_seq, r_o_e_seq = rotate_seqs(a_seq, o_e_seq)
+
+                r_o_e_seq_score_a[i_off, i_err] = aligner_rl_01.score(
+                    r_o_e_seq, r_a_seq)
+
+                i_err += 1
+
+            i_off += 1
+
+        n_errs = np.array(n_errs)
+
+        # Dump alignments
+        alignments = {}
+        alignments['config'] = dict(config_rl_01)
+        alignments['seq_len'] = seq_len
+        alignments['n_offs'] = n_offs
+        alignments['n_errs'] = n_errs
+        alignments['o_e_seq_score_a'] = o_e_seq_score_a
+        alignments['o_e_seq_score_d'] = o_e_seq_score_d
+        alignments['r_o_e_seq_score_a'] = r_o_e_seq_score_a
+        print("Dumping alignments")
+        with open(pickle_file_name, 'wb') as pickle_file:
+            pickle.dump(alignments, pickle_file)
+
+    else:
+
+        # Load alignments
+        print("Loading alignments")
+        with open(pickle_file_name, 'rb') as pickle_file:
+            alignments = pickle.load(pickle_file)
+        seq_len = alignments['seq_len']
+        n_offs = alignments['n_offs']
+        n_errs = alignments['n_errs']
+        o_e_seq_score_a = alignments['o_e_seq_score_a']
+        o_e_seq_score_d = alignments['o_e_seq_score_d']
+        r_o_e_seq_score_a = alignments['r_o_e_seq_score_a']
+
+    # Plot absolute alignment score as a function of error length for
+    # each offset
     fig, ax = plt.subplots()
-    rel_n_errs = 100.0 * n_errs / seq_len
-    rel_e_seq_score = (
-        100.0 * (e_seq_score - r_seq_score) / (seq_len - r_seq_score))
-    ax.plot(rel_n_errs, rel_e_seq_score, 'r-')
+    i_off = 0
+    for n_off in n_offs:
+        ax.plot(n_errs, o_e_seq_score_a[i_off, :], 'r1--')
+        ax.plot(n_errs, o_e_seq_score_d[i_off, :], 'g2-.')
+        ax.plot(n_errs, r_o_e_seq_score_a[i_off, :], 'b3:')
+
+        i_off += 1
+
     ax.set_title("Reference sequence length 10,000")
     ax.set_xlabel("Number of nucleotides in error")
-    ax.set_ylabel("Relative alignment score")
+    ax.set_ylabel("Absolute alignment score")
     plt.show()
 
     return alignments
@@ -486,8 +592,13 @@ def rotate_seqs(a_seq, o_seq):
         working_dir=working_dir,
     )
 
-    return [seq_record for seq_record in SeqIO.parse(
+    seq_records = [seq_record for seq_record in SeqIO.parse(
         os.path.join(hosting_dir, output_file), "fasta")]
+
+    r_a_seq = seq_records[0].seq
+    r_o_seq = seq_records[1].seq
+
+    return (r_a_seq, r_o_seq)
 
 
 if __name__ == "__main__":
@@ -496,8 +607,7 @@ if __name__ == "__main__":
     """
     # Add and parse arguments
     parser = ArgumentParser()
-    parser.add_argument('-c', '--config-file', required=True,
-                        help="configuration file")
+
     parser.add_argument('-n', '--plot-random',
                         action='store_true',
                         help="plot alignment with random")
@@ -507,9 +617,14 @@ if __name__ == "__main__":
     parser.add_argument('-e', '--plot-errors',
                         action='store_true',
                         help="plot alignment with errors")
+    parser.add_argument('-m', '--plot-offsets-and-errors',
+                        action='store_true',
+                        help="plot alignment with offsets and errors")
+
     parser.add_argument('-r', '--reprocess',
                         action='store_true',
                         help="reprocess alignments")
+
     parser.add_argument('-a', '--test-aligners',
                         action='store_true',
                         help="test various aligner configurations")
@@ -518,11 +633,6 @@ if __name__ == "__main__":
                         help="test cyclic rotation of sequence")
 
     options = parser.parse_args()
-
-    # Read and parse configuration file
-    config = ConfigParser()
-    config.read(options.config_file)
-    config['aligner']['file'] = options.config_file
 
     # Plot alignment with random
     if options.plot_random:
@@ -537,7 +647,14 @@ if __name__ == "__main__":
     # Plot alignment with errors
     if options.plot_errors:
         alignments_with_errors = plot_alignment_with_errors(
-            config['aligner'], options.reprocess)
+            options.reprocess)
+
+    # Plot alignment with offsets and errors
+    if options.plot_offsets_and_errors:
+        alignments_with_offsets_and_errors = (
+            plot_alignment_with_offsets_and_errors(
+                options.reprocess)
+        )
 
     # Test various aligner configurations
     if options.test_aligners:
