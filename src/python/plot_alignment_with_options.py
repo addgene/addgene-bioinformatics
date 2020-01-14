@@ -97,7 +97,7 @@ def test_aligners():
     default, and two recommended sets of parameters.
 
     """
-    # Read and parse default configuration files
+    # Read and parse configuration files
     config_deflt = ConfigParser()
     config_deflt.read('../../resources/pairwise-default.cfg')
     config_jn_01 = ConfigParser()
@@ -162,15 +162,14 @@ def test_aligners():
     )
 
 
-def plot_alignment_with_random(aligner_config, reprocess=False):
+def plot_alignment_with_random(reprocess=False):
     """Plot alignment of random candidate sequences of length 9000 to
     11,000 nt with a random reference sequence of length 10,000
-    nt.
+    nt. The reference sequence is used as is, and doubled for
+    alignment.
 
     Parameters
     ----------
-    aligner_config : dct
-        pairwise aligner configuration
     reprocess : bln
         flag to reprocess alignments, or not
 
@@ -179,35 +178,45 @@ def plot_alignment_with_random(aligner_config, reprocess=False):
     dct
         dictionary of alignment values
     """
-    # Create an aligner using the specified parameters
-    aligner = create_aligner(aligner_config)
+    # Read and parse configuration files
+    config_dir = "../../resources"
+    config_file = "pairwise-rl-01.cfg"
+    config_rl_01 = ConfigParser()
+    config_rl_01.read(os.path.join(config_dir, config_file))
+
+    # Create aligner using the specified parameters
+    aligner_rl_01 = create_aligner(config_rl_01['aligner'])
 
     # Process and dump, or load alignments
-    pickle_file_name = aligner_config['file'].replace(
-        "_options", "_random").replace(".cfg", ".pickle")
+    pickle_file_name = config_file.replace(".cfg", "-random.pickle")
     if not os.path.exists(pickle_file_name) or reprocess:
 
-        # Create random reference sequence
+        # Create random reference sequence, and it's doubled version
         seq_len = 10000
         a_seq = create_r_seq(seq_len)
+        d_seq = a_seq + a_seq
 
         # Create and align random candidate sequences
         seq_lens = range(9000, 11000, 100)
-        r_seq_score = []
+        r_seq_score_a = []
+        r_seq_score_d = []
         for seq_len in seq_lens:
             print("Aligning with length {:d}".format(seq_len))
             r_seq = create_r_seq(seq_len)
-            r_seq_score.append(aligner.score(r_seq, a_seq))
+            r_seq_score_a.append(aligner_rl_01.score(r_seq, a_seq))
+            r_seq_score_d.append(aligner_rl_01.score(r_seq, d_seq))
 
         seq_lens = np.array(seq_lens)
-        r_seq_score = np.array(r_seq_score)
+        r_seq_score_a = np.array(r_seq_score_a)
+        r_seq_score_d = np.array(r_seq_score_d)
 
         # Dump alignments
         alignments = {}
-        alignments['config'] = dict(aligner_config)
+        alignments['config'] = dict(config_rl_01)
         alignments['seq_len'] = seq_len
         alignments['seq_lens'] = seq_lens
-        alignments['r_seq_score'] = r_seq_score
+        alignments['r_seq_score_a'] = r_seq_score_a
+        alignments['r_seq_score_d'] = r_seq_score_d
         print("Dumping alignments")
         with open(pickle_file_name, 'wb') as pickle_file:
             pickle.dump(alignments, pickle_file)
@@ -220,23 +229,17 @@ def plot_alignment_with_random(aligner_config, reprocess=False):
             alignments = pickle.load(pickle_file)
         seq_len = alignments['seq_len']
         seq_lens = alignments['seq_lens']
-        r_seq_score = alignments['r_seq_score']
+        r_seq_score_a = alignments['r_seq_score_a']
+        r_seq_score_d = alignments['r_seq_score_d']
 
     # Plot absolute alignment score as a function of candidate
     # sequence length
     fig, ax = plt.subplots()
-    ax.plot(seq_lens, r_seq_score, 'r-')
+    ax.plot(seq_lens, r_seq_score_a, 'o')
+    ax.plot(seq_lens, r_seq_score_d, 'x')
     ax.set_title("Reference sequence length: 10,000")
     ax.set_xlabel("Candidate sequence length")
     ax.set_ylabel("Absolute alignment score")
-    plt.show()
-
-    # Plot relative score as a function of candidate sequence length
-    fig, ax = plt.subplots()
-    ax.plot(seq_lens, r_seq_score / seq_lens, 'r-')
-    ax.set_title("Reference sequence length: 10,000")
-    ax.set_xlabel("Candidate sequence length")
-    ax.set_ylabel("Relative alignment score")
     plt.show()
 
     return alignments
@@ -564,7 +567,7 @@ if __name__ == "__main__":
     # Plot alignment with random
     if options.plot_random:
         alignments_with_random = plot_alignment_with_random(
-            config['aligner'], options.reprocess)
+            options.reprocess)
 
     # Plot alignment with offsets
     if options.plot_offsets:
