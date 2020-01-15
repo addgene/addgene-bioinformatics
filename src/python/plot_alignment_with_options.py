@@ -525,9 +525,12 @@ def plot_alignment_with_offsets_and_errors(reprocess=False):
 
 
 def rotate_seqs(a_seq, o_seq):
-
+    """Finds the cyclic rotation of a_seq (or an approximation of it)
+    that minimizes the blockwise q-gram distance from o_seq using
+    Docker image "ralatsdio/csc:v0.1.0".
+    """
+    # Define image, Docker run parameters, and CSC command
     image = "ralatsdio/csc:v0.1.0"
-
     # [-a] `DNA' or `RNA' for nucleotide sequences or `PROT' for
     # protein sequences
     alphabet = "DNA"
@@ -570,17 +573,18 @@ def rotate_seqs(a_seq, o_seq):
          "-E", gap_extend_penalty
         ]
     )
-
     hosting_dir = os.path.dirname(os.path.abspath(__file__))
     working_dir = "/data"
     volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
 
+    # Write the multi-FASTA input file
     SeqIO.write(
         [SeqRecord(a_seq, id="id_a", name="name_a", description="reference"),
          SeqRecord(o_seq, id="id_o", name="name_o", description="offset")],
         os.path.join(hosting_dir, input_file),
         "fasta")
 
+    # Run the command in the Docker image
     client = docker.from_env()
     client.containers.run(
         image,
@@ -589,9 +593,11 @@ def rotate_seqs(a_seq, o_seq):
         working_dir=working_dir,
     )
 
+    # Read the multi-FASTA output file
     seq_records = [seq_record for seq_record in SeqIO.parse(
         os.path.join(hosting_dir, output_file), "fasta")]
 
+    # Assign and return the rotated sequences
     r_a_seq = seq_records[0].seq
     r_o_seq = seq_records[1].seq
 
