@@ -64,6 +64,7 @@ class PlateAssemblyJob(Job):
         for iW in range(nW):
             logger.info("Creating well assembly job {0}".format(
                 self.plate_spec + "_" + self.well_specs[iW]))
+            # Note that exceptions are caught in the well assembly job
             well_assembly_rvs.append(
                 self.addChild(
                     WellAssemblyJob(

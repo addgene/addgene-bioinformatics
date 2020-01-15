@@ -58,82 +58,95 @@ class WellAssemblyJob(Job):
         dict
             the return values of the SpadesJob and ApcJob
         """
-        if self.assembler == 'masurca':
-            masurca_job = MasurcaJob(
-                self.read_one_file_id,
-                self.read_two_file_id,
-            )
-            apc_job = ApcJob(
-                masurca_job.rv('masurca_rv', 'contigs_file', 'id'),
-                parent_rv=masurca_job.rv()
-            )
-            final_job = self.addChild(
-                masurca_job).addChild(
-                    apc_job)
+        try:
+            if self.assembler == 'masurca':
+                masurca_job = MasurcaJob(
+                    self.read_one_file_id,
+                    self.read_two_file_id,
+                )
+                apc_job = ApcJob(
+                    masurca_job.rv('masurca_rv', 'contigs_file', 'id'),
+                    parent_rv=masurca_job.rv()
+                )
+                final_job = self.addChild(
+                    masurca_job).addChild(
+                        apc_job)
 
-        elif self.assembler == 'novoplasty':
-            novoplasty_job = NovoplastyJob(
-                self.read_one_file_id,
-                self.read_two_file_id,
-            )
-            final_job = self.addChild(
-                novoplasty_job)
+            elif self.assembler == 'novoplasty':
+                novoplasty_job = NovoplastyJob(
+                    self.read_one_file_id,
+                    self.read_two_file_id,
+                )
+                final_job = self.addChild(
+                    novoplasty_job)
 
-        elif self.assembler == 'shovill':
-            shovill_job = ShovillJob(
-                self.read_one_file_id,
-                self.read_two_file_id,
-                self.output_directory,
-            )
-            apc_job = ApcJob(
-                shovill_job.rv('shovill_rv', 'contigs_file', 'id'),
-                parent_rv=shovill_job.rv()
-            )
-            final_job = self.addChild(
-                shovill_job).addChild(
-                    apc_job)
+            elif self.assembler == 'shovill':
+                shovill_job = ShovillJob(
+                    self.read_one_file_id,
+                    self.read_two_file_id,
+                    self.output_directory,
+                )
+                apc_job = ApcJob(
+                    shovill_job.rv('shovill_rv', 'contigs_file', 'id'),
+                    parent_rv=shovill_job.rv()
+                )
+                final_job = self.addChild(
+                    shovill_job).addChild(
+                        apc_job)
 
-        elif self.assembler == 'skesa':
-            skesa_job = SkesaJob(
-                self.read_one_file_id,
-                self.read_two_file_id,
-            )
-            apc_job = ApcJob(
-                skesa_job.rv('skesa_rv', 'contigs_file', 'id'),
-                parent_rv=skesa_job.rv()
-            )
-            final_job = self.addChild(
-                skesa_job).addChild(
-                    apc_job)
+            elif self.assembler == 'skesa':
+                skesa_job = SkesaJob(
+                    self.read_one_file_id,
+                    self.read_two_file_id,
+                )
+                apc_job = ApcJob(
+                    skesa_job.rv('skesa_rv', 'contigs_file', 'id'),
+                    parent_rv=skesa_job.rv()
+                )
+                final_job = self.addChild(
+                    skesa_job).addChild(
+                        apc_job)
 
-        elif self.assembler == 'spades':
-            spades_job = SpadesJob(
-                self.read_one_file_id,
-                self.read_two_file_id,
-                self.coverage_cutoff,
-                self.output_directory,
-            )
-            apc_job = ApcJob(
-                spades_job.rv('spades_rv', 'contigs_file', 'id'),
-                parent_rv=spades_job.rv()
-            )
-            final_job = self.addChild(
-                spades_job).addChild(
-                    apc_job)
+            elif self.assembler == 'spades':
+                spades_job = SpadesJob(
+                    self.read_one_file_id,
+                    self.read_two_file_id,
+                    self.coverage_cutoff,
+                    self.output_directory,
+                )
+                apc_job = ApcJob(
+                    spades_job.rv('spades_rv', 'contigs_file', 'id'),
+                    parent_rv=spades_job.rv()
+                )
+                final_job = self.addChild(
+                    spades_job).addChild(
+                        apc_job)
 
-        elif self.assembler == 'unicycler':
-            unicycler_job = UnicyclerJob(
-                self.read_one_file_id,
-                self.read_two_file_id,
-                self.output_directory,
-            )
-            apc_job = ApcJob(
-                unicycler_job.rv('unicycler_rv', 'contigs_file', 'id'),
-                parent_rv=unicycler_job.rv()
-            )
-            final_job = self.addChild(
-                unicycler_job).addChild(
-                    apc_job)
+            elif self.assembler == 'unicycler':
+                unicycler_job = UnicyclerJob(
+                    self.read_one_file_id,
+                    self.read_two_file_id,
+                    self.output_directory,
+                )
+                apc_job = ApcJob(
+                    unicycler_job.rv('unicycler_rv', 'contigs_file', 'id'),
+                    parent_rv=unicycler_job.rv()
+                )
+                final_job = self.addChild(
+                    unicycler_job).addChild(
+                        apc_job)
+
+            # Assign assembler return values
+            assembler_rv = final_job.rv()
+
+        except Exception as exc:
+            # Ensure expected return values on exceptions
+            logger.info("Assembler {0} failed for {1}: {2}".format(
+                self.assembler, self.output_directory, exc))
+            assembler_rv = {
+                self.assembler: {
+                }
+            }
 
         # Return file ids, and names for export
         return final_job.rv()
