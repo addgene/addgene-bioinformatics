@@ -329,8 +329,8 @@ def plot_alignment_with_offsets(reprocess=False):
 def plot_alignment_with_errors(reprocess=False):
     """Plot alignment of error and reference sequences of length
     10,000 nt. Error sequences differ from the reference sequence by
-    from 0 to 10,000 nts.  The reference sequence is doubled for
-    alignment.
+    from 0 to 10,000 nts. The reference sequence is used as is, and
+    doubled for alignment.
 
     Parameters
     ----------
@@ -414,8 +414,8 @@ def plot_alignment_with_offsets_and_errors(reprocess=False):
     """Plot alignment of random candidate and offset with errors to
     reference sequences of length 10,000 nt. Offsets vary from 0 to
     5,000 nt.  Error sequences differ from the reference sequence by
-    from 0 to 10,000 nts.  The reference sequence is doubled for
-    alignment.
+    from 0 to 10,000 nts. The reference sequence is used as is, and
+    doubled for alignment.
 
     Parameters
     ----------
