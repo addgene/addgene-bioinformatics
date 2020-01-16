@@ -553,15 +553,12 @@ if __name__ == "__main__":
 
     # Add and parse arguments
     parser = ArgumentParser()
-    parser.add_argument('-c', '--config-file',
-                        default=os.path.abspath(
-                            __file__).replace(".py", ".cfg"),
-                        help="configuration file")
     base_dir = os.path.join(
         os.sep, *os.path.abspath(__file__).split(os.sep)[0:-4])
     parser.add_argument('-d', '--assembler-data-directory',
                         default=os.path.join(base_dir,
-                                             "addgene-assembler-data"),
+                                             "addgene-assembler-data",
+                                             "results-2020-01-16"),
                         help="directory containing assembler run directory")
     parser.add_argument('-q', '--qc-sequences-file',
                         default=os.path.join(base_dir,
@@ -576,10 +573,12 @@ if __name__ == "__main__":
                         help="reprocess each run directory")
     options = parser.parse_args()
 
-    # Read and parse configuration
+    # Read and parse configuration file
+    config_dir = "../../resources"
+    config_file = "pairwise-rl-01.cfg"
     config = ConfigParser()
-    config.read(options.config_file)
-    config['aligner']['file'] = options.config_file
+    config.read(os.path.join(config_dir, config_file))
+    config['aligner']['file'] = config_file
 
     # Identify run directories
     assembler_run_dirs = []
@@ -600,7 +599,7 @@ if __name__ == "__main__":
         # Create and dump, or load candidate process sequences pickle
         cp_alignment_path = os.path.join(
             options.assembler_data_directory,
-            assembler_run_dir + "-" + os.path.basename(options.config_file)
+            assembler_run_dir + "-" + os.path.basename(config_file)
             ).replace(".cfg", ".pickle")
         if not os.path.isfile(cp_alignment_path) or options.reprocess:
 
