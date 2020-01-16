@@ -2,6 +2,7 @@ import logging
 import os
 from random import choice
 
+from Bio import Align
 from Bio.Alphabet import IUPAC
 from Bio.Seq import Seq
 
@@ -265,3 +266,37 @@ def create_r_seq(seq_len):
     r_seq_str = create_r_seq_str(seq_len)
     r_seq = Seq(r_seq_str, IUPAC.unambiguous_dna)
     return r_seq
+
+
+def create_aligner(config):
+    """Creates a pairwise aligner with the specified configuration.
+
+    Parameters
+    ----------
+    config : dct
+        pairwise aligner configuration
+
+    Returns
+    -------
+    Align.PairwiseAligner
+        the Biopython pairwise aligner
+    """
+    # Create a pairwise aligner with the specified configuration
+    aligner = Align.PairwiseAligner()
+    aligner.match_score = float(config['match_score'])
+    aligner.mismatch_score = float(config['mismatch_score'])
+    aligner.target_open_gap_score = float(config['target_open_gap_score'])
+    aligner.target_extend_gap_score = float(config['target_extend_gap_score'])
+    aligner.target_left_open_gap_score = float(config['target_left_open_gap_score'])
+    aligner.target_left_extend_gap_score = float(config['target_left_extend_gap_score'])
+    aligner.target_right_open_gap_score = float(config['target_right_open_gap_score'])
+    aligner.target_right_extend_gap_score = float(config['target_right_extend_gap_score'])
+    aligner.query_open_gap_score = float(config['query_open_gap_score'])
+    aligner.query_extend_gap_score = float(config['query_extend_gap_score'])
+    aligner.query_left_open_gap_score = float(config['query_left_open_gap_score'])
+    aligner.query_left_extend_gap_score = float(config['query_left_extend_gap_score'])
+    aligner.query_right_open_gap_score = float(config['query_right_open_gap_score'])
+    aligner.query_right_extend_gap_score = float(config['query_right_extend_gap_score'])
+    aligner.mode = config['mode']
+
+    return aligner
