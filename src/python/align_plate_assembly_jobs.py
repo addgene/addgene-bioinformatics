@@ -4,9 +4,8 @@ import csv
 import os
 import pickle
 
-from utilities import create_r_seq
+from utilities import create_r_seq, create_aligner
 
-from Bio import Align
 from Bio import SeqIO
 from Bio.Alphabet import IUPAC
 from Bio.Seq import Seq
@@ -91,7 +90,7 @@ def read_qc_sequences(assembler_data_dir, qc_sequences_fNm):
 def align_cp_to_qc_sequences(assembler_data_dir,
                              assembler_run_dir,
                              qc_sequences_fNm,
-                             aligner_config):
+                             config):
     """
     Aligns sequences produced by candidate sequence assembly processes
     to curated quality control full public sequences.
@@ -119,35 +118,20 @@ def align_cp_to_qc_sequences(assembler_data_dir,
     assembler = assembler_run_dir.split('-')[0]
 
     # Create a pairwise aligner with the specified configuration
-    aligner = Align.PairwiseAligner()
-    aligner.match_score = float(aligner_config['match_score'])
-    aligner.mismatch_score = float(aligner_config['mismatch_score'])
-    aligner.target_open_gap_score = float(aligner_config['target_open_gap_score'])
-    aligner.target_extend_gap_score = float(aligner_config['target_extend_gap_score'])
-    aligner.target_left_open_gap_score = float(aligner_config['target_left_open_gap_score'])
-    aligner.target_left_extend_gap_score = float(aligner_config['target_left_extend_gap_score'])
-    aligner.target_right_open_gap_score = float(aligner_config['target_right_open_gap_score'])
-    aligner.target_right_extend_gap_score = float(aligner_config['target_right_extend_gap_score'])
-    aligner.query_open_gap_score = float(aligner_config['query_open_gap_score'])
-    aligner.query_extend_gap_score = float(aligner_config['query_extend_gap_score'])
-    aligner.query_left_open_gap_score = float(aligner_config['query_left_open_gap_score'])
-    aligner.query_left_extend_gap_score = float(aligner_config['query_left_extend_gap_score'])
-    aligner.query_right_open_gap_score = float(aligner_config['query_right_open_gap_score'])
-    aligner.query_right_extend_gap_score = float(aligner_config['query_right_extend_gap_score'])
-    aligner.mode = aligner_config['mode']
+    aligner = create_aligner(config)
 
     # Read quality control (QC) sequences
     qc_sequences = read_qc_sequences(assembler_data_dir, qc_sequences_fNm)
 
     # Initialize candidate process (CP) sequences dictionary
     cp_sequences = {}
-    cp_sequences['config'] = dict(aligner_config)
+    cp_sequences['config'] = dict(config)
 
     # Consider each plate directory contained in the run directory
     output_file = open(
         os.path.join(
             assembler_data_dir,
-            assembler_run_dir + "-" + os.path.basename(aligner_config['file'])
+            assembler_run_dir + "-" + os.path.basename(config['file'])
             ).replace(".cfg", ".csv"), 'w')
     plate_specs = sorted(
         os.listdir(
