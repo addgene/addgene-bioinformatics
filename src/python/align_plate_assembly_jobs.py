@@ -158,7 +158,7 @@ def align_cp_to_qc_sequences(assembler_data_dir,
 
             # Assign quality control sequence values
             try:
-                qc_sequence = qc_sequences[plate][well]['sequence']
+                # qc_sequence = qc_sequences[plate][well]['sequence']
                 qc_sequence_len = qc_sequences[plate][well]['sequence_len']
                 qc_doubled_sequence = qc_sequences[plate][well]['doubled_sequence']
             except Exception as e:
