@@ -5,9 +5,8 @@ import os
 import pickle
 from random import choice, choices
 
-from utilities import create_r_seq
+from utilities import create_r_seq, create_aligner
 
-from Bio import Align
 from Bio import SeqIO
 from Bio.Alphabet import IUPAC
 from Bio.Seq import Seq
@@ -56,40 +55,6 @@ def create_e_seq(o_seq, n_err):
     e_seq_str = "".join(e_seq_lst)
     e_seq = Seq(e_seq_str, IUPAC.unambiguous_dna)
     return e_seq
-
-
-def create_aligner(aligner_config):
-    """Creates an aligner using the specified parameters.
-
-    Parameters
-    ----------
-    aligner_config : dct
-        pairwise aligner configuration
-
-    Returns
-    -------
-    Align.PairwiseAligner
-        the Biopython pairwise aligner
-    """
-    # Create a pairwise aligner with the specified configuration
-    aligner = Align.PairwiseAligner()
-    aligner.match_score = float(aligner_config['match_score'])
-    aligner.mismatch_score = float(aligner_config['mismatch_score'])
-    aligner.target_open_gap_score = float(aligner_config['target_open_gap_score'])
-    aligner.target_extend_gap_score = float(aligner_config['target_extend_gap_score'])
-    aligner.target_left_open_gap_score = float(aligner_config['target_left_open_gap_score'])
-    aligner.target_left_extend_gap_score = float(aligner_config['target_left_extend_gap_score'])
-    aligner.target_right_open_gap_score = float(aligner_config['target_right_open_gap_score'])
-    aligner.target_right_extend_gap_score = float(aligner_config['target_right_extend_gap_score'])
-    aligner.query_open_gap_score = float(aligner_config['query_open_gap_score'])
-    aligner.query_extend_gap_score = float(aligner_config['query_extend_gap_score'])
-    aligner.query_left_open_gap_score = float(aligner_config['query_left_open_gap_score'])
-    aligner.query_left_extend_gap_score = float(aligner_config['query_left_extend_gap_score'])
-    aligner.query_right_open_gap_score = float(aligner_config['query_right_open_gap_score'])
-    aligner.query_right_extend_gap_score = float(aligner_config['query_right_extend_gap_score'])
-    aligner.mode = aligner_config['mode']
-
-    return aligner
 
 
 def test_aligners():
