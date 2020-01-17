@@ -304,18 +304,10 @@ def align_cp_to_qc_sequences(assembler_data_dir,
             result += ", {:7.1f}".format(cp_random_score)
 
             if qc_sequence_len > 0 and cp_sequence_score > 0:
-                result += ", {:7.1f}".format(
-                    100 * (cp_sequence_score - cp_random_score)
-                    / (qc_sequence_len - cp_random_score))
-                result += ", {:7.1f}".format(
-                    100 * (cp_complement_score - cp_random_score)
-                    / (qc_sequence_len - cp_random_score))
-                result += ", {:7.1f}".format(
-                    100 * (cp_reverse_score - cp_random_score)
-                    / (qc_sequence_len - cp_random_score))
-                result += ", {:7.1f}".format(
-                    100 * (cp_reverse_complement_score - cp_random_score)
-                    / (qc_sequence_len - cp_random_score))
+                result += ", {:7.1f}".format(cp_sequence_score)
+                result += ", {:7.1f}".format(cp_complement_score)
+                result += ", {:7.1f}".format(cp_reverse_score)
+                result += ", {:7.1f}".format(cp_reverse_complement_score)
 
             else:
                 result += ", {:7.1f}".format(0)
@@ -327,18 +319,10 @@ def align_cp_to_qc_sequences(assembler_data_dir,
             result += ", {:7.1f}".format(cp_random_score)
 
             if qc_sequence_len > 0 and apc_sequence_score > 0:
-                result += ", {:7.1f}".format(
-                    100 * (apc_sequence_score - apc_random_score)
-                    / (qc_sequence_len - apc_random_score))
-                result += ", {:7.1f}".format(
-                    100 * (apc_complement_score - apc_random_score)
-                    / (qc_sequence_len - apc_random_score))
-                result += ", {:7.1f}".format(
-                    100 * (apc_reverse_score - apc_random_score)
-                    / (qc_sequence_len - apc_random_score))
-                result += ", {:7.1f}".format(
-                    100 * (apc_reverse_complement_score - apc_random_score)
-                    / (qc_sequence_len - apc_random_score))
+                result += ", {:7.1f}".format(apc_sequence_score)
+                result += ", {:7.1f}".format(apc_complement_score)
+                result += ", {:7.1f}".format(apc_reverse_score)
+                result += ", {:7.1f}".format(apc_reverse_complement_score)
 
             else:
                 result += ", {:7.1f}".format(0)
@@ -372,14 +356,11 @@ def accumulate_alignment_scores(assembler, cp_sequences):
     assembler_random_score = []
     assembler_maximum_score = []
     assembler_valid_score = []
-    assembler_relative_score = []
 
     circularizer_sequence_len = []
     circularizer_random_score = []
     circularizer_maximum_score = []
     circularizer_valid_score = []
-    circularizer_relative_score = []
-
     for plate, wells in cp_sequences.items():
         if plate == 'config' or not wells:
             continue
@@ -428,54 +409,25 @@ def accumulate_alignment_scores(assembler, cp_sequences):
     # zero
     if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
         vld_idx = ((assembler_sequence_len > 0) &
-                   (assembler_sequence_len
-                    != assembler_random_score))
-        assembler_valid_score[vld_idx] = assembler_maximum_score[vld_idx]
-
-        # Compute relative score
-        assembler_relative_score[vld_idx] = (
-            (assembler_maximum_score[vld_idx]
-             - assembler_random_score[vld_idx])
-            / (assembler_sequence_len[vld_idx]
-               - assembler_random_score[vld_idx]))
-
-    elif assembler in ['shovill', 'spades']:
-        # Identify results for which the sequence length is
-        # greater than zero, and not equal to the random sequence
-        # score
-        vld_idx = ((assembler_sequence_len > 0) &
-                   (circularizer_sequence_len > 0) &
-                   (assembler_sequence_len !=
-                    assembler_random_score) &
-                   (circularizer_sequence_len !=
-                    circularizer_random_score))
+                   (circularizer_sequence_len > 0))
         assembler_valid_score[vld_idx] = assembler_maximum_score[vld_idx]
         circularizer_valid_score[vld_idx] = circularizer_maximum_score[vld_idx]
 
-        # Compute relative score
-        assembler_relative_score[vld_idx] = (
-            (assembler_maximum_score[vld_idx]
-             - assembler_random_score[vld_idx])
-            / (assembler_sequence_len[vld_idx]
-               - assembler_random_score[vld_idx]))
+    else:
+        vld_idx = (assembler_sequence_len > 0)
+        assembler_valid_score[vld_idx] = assembler_maximum_score[vld_idx]
 
-        circularizer_relative_score[vld_idx] = (
-            (circularizer_maximum_score[vld_idx]
-             - circularizer_random_score[vld_idx])
-            / (circularizer_sequence_len[vld_idx]
-               - circularizer_random_score[vld_idx]))
+    cp_sequences['qc_sequence_len'] = qc_sequence_len
 
     cp_sequences['assembler_sequence_len'] = assembler_sequence_len
     cp_sequences['assembler_random_score'] = assembler_random_score
     cp_sequences['assembler_maximum_score'] = assembler_maximum_score
     cp_sequences['assembler_valid_score'] = assembler_valid_score
-    cp_sequences['assembler_relative_score'] = assembler_relative_score
 
     cp_sequences['circularizer_sequence_len'] = circularizer_sequence_len
     cp_sequences['circularizer_random_score'] = circularizer_random_score
     cp_sequences['circularizer_maximum_score'] = circularizer_maximum_score
     cp_sequences['circularizer_valid_score'] = circularizer_valid_score
-    cp_sequences['circularizer_relative_score'] = circularizer_relative_score
 
     return cp_sequences
 
@@ -499,33 +451,11 @@ def plot_alignment_socres(assembler, cp_sequences):
     # assembler_maximum_score = cp_sequences['assembler_maximum_score']
     vld_idx = cp_sequences['assembler_valid_score'] != 0.0
     assembler_valid_score = cp_sequences['assembler_valid_score'][vld_idx]
-    assembler_relative_score = cp_sequences['assembler_relative_score'][vld_idx]
 
     # circularizer_sequence_len = cp_sequences['circularizer_sequence_len']
     # circularizer_random_score = cp_sequences['circularizer_random_score']
     # circularizer_maximum_score = cp_sequences['circularizer_maximum_score']
     circularizer_valid_score = cp_sequences['circularizer_valid_score'][vld_idx]
-    circularizer_relative_score = cp_sequences['circularizer_relative_score'][vld_idx]
-
-    # Plot results, by assembler
-    if assembler in ['novoplasty']:
-
-        # Plot histogram of maximum score
-        fig, ax = plt.subplots()
-        ax.hist(assembler_valid_score, 20)
-        ax.set_title(assembler)
-        ax.set_xlabel("Absolute score")
-        ax.set_ylabel("Count")
-        plt.show()
-
-        # Plot histogram of maximum score
-        fig, ax = plt.subplots()
-        ax.hist(assembler_relative_score,
-                np.arange(90, 100.1, 0.2) / 100)
-        ax.set_title(assembler)
-        ax.set_xlabel("Relative score")
-        ax.set_ylabel("Count")
-        plt.show()
 
     # Plot histogram of valid score
     if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
@@ -537,13 +467,11 @@ def plot_alignment_socres(assembler, cp_sequences):
         ax.set_ylabel("Count")
         plt.show()
 
-        # Plot histogram of maximum score
+    else:
         fig, ax = plt.subplots()
-        ax.hist([assembler_relative_score,
-                 circularizer_relative_score],
-                np.arange(90, 100.1, 0.2) / 100)
+        ax.hist(assembler_valid_score, 20)
         ax.set_title(assembler)
-        ax.set_xlabel("Relative score")
+        ax.set_xlabel("Absolute score")
         ax.set_ylabel("Count")
         plt.show()
 
@@ -639,19 +567,21 @@ if __name__ == "__main__":
         if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
             print("    Aligned (within {:.1f}%): {:.1f}%".format(
                 100 * fraction_aligned,
-                100 * sum((1.0 - fraction_aligned <=
-                           cp_sequences['assembler_relative_score']) &
-                          (cp_sequences['assembler_relative_score'] <=
-                           1.0))
+                100 * sum(
+                    (cp_sequences['qc_sequence_len'] * (1.0 - fraction_aligned) <=
+                     cp_sequences['circularizer_valid_score']) &
+                    (cp_sequences['circularizer_valid_score'] <=
+                     cp_sequences['qc_sequence_len'] * (1.0 + fraction_aligned)))
                 / len(cp_sequences['assembler_sequence_len'])))
 
         else:
             print("    Aligned (within {:.1f}%): {:.1f}%".format(
                 100 * fraction_aligned,
                 100 * sum(
-                    (1.0 - fraction_aligned <= cp_sequences['circularizer_relative_score']) &
-                    (cp_sequences['circularizer_relative_score'] <= 1.0)
-                    )
+                    (cp_sequences['qc_sequence_len'] * (1.0 - fraction_aligned) <=
+                     cp_sequences['assembler_valid_score']) &
+                    (cp_sequences['assembler_valid_score'] <=
+                     cp_sequences['qc_sequence_len'] * (1.0 + fraction_aligned)))
                 / len(cp_sequences['assembler_sequence_len'])))
 
     print("")
@@ -659,18 +589,25 @@ if __name__ == "__main__":
     print("    Assembled (nozero length): {:.1f}%".format(
         100 * sum(
             (cp_alignment['novoplasty']['sequences']['assembler_sequence_len'] > 0) |
-            (cp_alignment['spades']['sequences']['assembler_sequence_len'] > 0) |
-            (cp_alignment['shovill']['sequences']['assembler_sequence_len'] > 0))
+            (cp_alignment['shovill']['sequences']['assembler_sequence_len'] > 0) |
+            (cp_alignment['spades']['sequences']['assembler_sequence_len'] > 0))
         / len(cp_sequences['assembler_sequence_len'])))
+
+    cp_alignment[assembler]['sequences'] = cp_sequences
 
     print("    Percent aligned (within {:.1f}%): {:.1f}".format(
         100 * fraction_aligned,
         100 * sum(
-            ((1.0 - fraction_aligned <= cp_alignment['novoplasty']['sequences']['assembler_relative_score']) &
-             (cp_alignment['novoplasty']['sequences']['assembler_relative_score'] <= 1.0)) |
-            ((1.0 - fraction_aligned <= cp_alignment['shovill']['sequences']['circularizer_relative_score']) &
-             (cp_alignment['shovill']['sequences']['circularizer_relative_score'] <= 1.0)) |
-            ((1.0 - fraction_aligned <= cp_alignment['spades']['sequences']['circularizer_relative_score']) &
-             (cp_alignment['spades']['sequences']['circularizer_relative_score'] <= 1.0))
-             )
+            (cp_alignment['novoplasty']['sequences']['qc_sequence_length'] * (1.0 - fraction_aligned) <=
+             cp_alignment['novoplasty']['sequences']['assembler_valid_score']) &
+            (cp_alignment['novoplasty']['sequences']['assembler_valid_score'] <=
+             cp_alignment['novoplasty']['sequences']['qc_sequence_length'] * (1.0 + fraction_aligned)) |
+            (cp_alignment['shovill']['sequences']['qc_sequence_length'] * (1.0 - fraction_aligned) <=
+             cp_alignment['shovill']['sequences']['assembler_valid_score']) &
+            (cp_alignment['shovill']['sequences']['assembler_valid_score'] <=
+             cp_alignment['shovill']['sequences']['qc_sequence_length'] * (1.0 + fraction_aligned)) |
+            (cp_alignment['spades']['sequences']['qc_sequence_length'] * (1.0 - fraction_aligned) <=
+             cp_alignment['spades']['sequences']['assembler_valid_score']) &
+            (cp_alignment['spades']['sequences']['assembler_valid_score'] <=
+             cp_alignment['spades']['sequences']['qc_sequence_length'] * (1.0 + fraction_aligned)))
         / len(cp_alignment['novoplasty']['sequences']['assembler_sequence_len'])))
