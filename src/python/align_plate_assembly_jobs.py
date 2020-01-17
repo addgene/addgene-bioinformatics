@@ -242,10 +242,7 @@ def align_cp_to_qc_sequences(assembler_data_dir,
             apc_reverse_score = 0
             apc_reverse_complement_score = 0
 
-            if assembler in ['novoplsty']:
-                pass
-
-            elif assembler in ['shovill', 'spades']:
+            if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
                 try:
                     apc_sequence = next(SeqIO.parse(
                         os.path.join(assembler_data_dir,
@@ -404,10 +401,7 @@ def accumulate_alignment_scores(assembler, cp_sequences):
                  sequences[assembler]['reverse_score'],
                  sequences[assembler]['reverse_complement_score']]))
 
-            if assembler in ['novoplasty']:
-                pass
-
-            elif assembler in ['shovill', 'spades']:
+            if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
                 circularizer_sequence_len.append(
                     len(sequences['apc']['sequence']))
                 circularizer_random_score.append(
@@ -424,18 +418,15 @@ def accumulate_alignment_scores(assembler, cp_sequences):
     assembler_random_score = np.array(assembler_random_score)
     assembler_maximum_score = np.array(assembler_maximum_score)
     assembler_valid_score = np.zeros(assembler_maximum_score.shape)
-    assembler_relative_score = np.zeros(assembler_maximum_score.shape)
 
     circularizer_sequence_len = np.array(circularizer_sequence_len)
     circularizer_random_score = np.array(circularizer_random_score)
     circularizer_maximum_score = np.array(circularizer_maximum_score)
     circularizer_valid_score = np.zeros(assembler_maximum_score.shape)
-    circularizer_relative_score = np.zeros(assembler_maximum_score.shape)
 
-    if assembler in ['novoplasty']:
-        # Identify results for which the sequence length is
-        # greater than zero, and not equal to the random sequence
-        # score
+    # Identify results for which the sequence length is greater than
+    # zero
+    if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
         vld_idx = ((assembler_sequence_len > 0) &
                    (assembler_sequence_len
                     != assembler_random_score))
@@ -536,9 +527,8 @@ def plot_alignment_socres(assembler, cp_sequences):
         ax.set_ylabel("Count")
         plt.show()
 
-    elif assembler in ['shovill', 'spades']:
-
-        # Plot histogram of maximum score
+    # Plot histogram of valid score
+    if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
         fig, ax = plt.subplots()
         ax.hist([assembler_valid_score,
                  circularizer_valid_score], 20)
@@ -646,7 +636,7 @@ if __name__ == "__main__":
             / len(cp_sequences['assembler_sequence_len'])))
 
         fraction_aligned = 0.10
-        if assembler in ['novoplasty']:
+        if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
             print("    Aligned (within {:.1f}%): {:.1f}%".format(
                 100 * fraction_aligned,
                 100 * sum((1.0 - fraction_aligned <=
@@ -655,7 +645,7 @@ if __name__ == "__main__":
                            1.0))
                 / len(cp_sequences['assembler_sequence_len'])))
 
-        elif assembler in ['shovill', 'spades']:
+        else:
             print("    Aligned (within {:.1f}%): {:.1f}%".format(
                 100 * fraction_aligned,
                 100 * sum(
