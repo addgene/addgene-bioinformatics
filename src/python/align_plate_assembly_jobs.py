@@ -158,7 +158,7 @@ def align_cp_to_qc_sequences(assembler_data_dir,
 
             # Assign quality control sequence values
             try:
-                # qc_sequence = qc_sequences[plate][well]['sequence']
+                qc_sequence = qc_sequences[plate][well]['sequence']
                 qc_sequence_len = qc_sequences[plate][well]['sequence_len']
                 qc_doubled_sequence = qc_sequences[plate][well]['doubled_sequence']
             except Exception as e:
@@ -207,10 +207,13 @@ def align_cp_to_qc_sequences(assembler_data_dir,
                 cp_reverse = Seq("", IUPAC.unambiguous_dna)
                 cp_reverse_complement = Seq("", IUPAC.unambiguous_dna)
 
+                cp_random_score = 0
                 cp_sequence_score = 0
                 cp_complement_score = 0
                 cp_reverse_score = 0
                 cp_reverse_complement_score = 0
+
+            cp_sequences[plate][well]['qc']['sequence'] = qc_sequence
 
             cp_sequences[plate][well][assembler]['sequence'] = cp_sequence
             cp_sequences[plate][well][assembler]['complement'] = cp_complement
@@ -366,6 +369,8 @@ def accumulate_alignment_scores(assembler, cp_sequences):
         doubled sequence, and corresponding alignment scores for each
         well in each plate in the run directory
     """
+    qc_sequence_len = []
+
     assembler_sequence_len = []
     assembler_random_score = []
     assembler_maximum_score = []
@@ -385,6 +390,9 @@ def accumulate_alignment_scores(assembler, cp_sequences):
         for well, sequences in wells.items():
             if not sequences:
                 continue
+
+            qc_sequence_len.append(
+                len(sequences['qc']['sequence']))
 
             assembler_sequence_len.append(
                 len(sequences[assembler]['sequence']))
@@ -409,6 +417,8 @@ def accumulate_alignment_scores(assembler, cp_sequences):
                      sequences['apc']['complement_score'],
                      sequences['apc']['reverse_score'],
                      sequences['apc']['reverse_complement_score']]))
+
+    qc_sequence_len = np.array(qc_sequence_len)
 
     assembler_sequence_len = np.array(assembler_sequence_len)
     assembler_random_score = np.array(assembler_random_score)
