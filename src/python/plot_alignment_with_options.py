@@ -5,7 +5,7 @@ import os
 import pickle
 from random import choice, choices
 
-from utilities import create_r_seq, create_aligner
+import utilities
 
 from Bio import SeqIO
 from Bio.Alphabet import IUPAC
@@ -71,17 +71,17 @@ def test_aligners():
     config_rl_01.read('../../resources/pairwise-rl-01.cfg')
 
     # Create aligners using the specified parameters
-    aligner_deflt = create_aligner(config_deflt['aligner'])
-    aligner_jn_01 = create_aligner(config_jn_01['aligner'])
-    aligner_rl_01 = create_aligner(config_rl_01['aligner'])
+    aligner_deflt = utilities.create_aligner(config_deflt['aligner'])
+    aligner_jn_01 = utilities.create_aligner(config_jn_01['aligner'])
+    aligner_rl_01 = utilities.create_aligner(config_rl_01['aligner'])
 
     # Create random reference sequence, and it's doubled version
     seq_len = 10000
-    a_seq = create_r_seq(seq_len)
+    a_seq = utilities.create_r_seq(seq_len)
     d_seq = a_seq + a_seq
 
     # Create random candidate sequence
-    r_seq = create_r_seq(seq_len)
+    r_seq = utilities.create_r_seq(seq_len)
 
     # Align random reference sequence to itself using all aligners
     a_seq_score_deflt_a = aligner_deflt.score(a_seq, a_seq)
@@ -150,7 +150,7 @@ def plot_alignment_with_random(reprocess=False):
     config_rl_01.read(os.path.join(config_dir, config_file))
 
     # Create aligner using the specified parameters
-    aligner_rl_01 = create_aligner(config_rl_01['aligner'])
+    aligner_rl_01 = utilities.create_aligner(config_rl_01['aligner'])
 
     # Process and dump, or load alignments
     pickle_file_name = config_file.replace(".cfg", "-random.pickle")
@@ -158,7 +158,7 @@ def plot_alignment_with_random(reprocess=False):
 
         # Create random reference sequence, and it's doubled version
         seq_len = 10000
-        a_seq = create_r_seq(seq_len)
+        a_seq = utilities.create_r_seq(seq_len)
         d_seq = a_seq + a_seq
 
         # Create and align random candidate sequences
@@ -167,7 +167,7 @@ def plot_alignment_with_random(reprocess=False):
         r_seq_score_d = []
         for seq_len in seq_lens:
             print("Aligning with length {:d}".format(seq_len))
-            r_seq = create_r_seq(seq_len)
+            r_seq = utilities.create_r_seq(seq_len)
             r_seq_score_a.append(aligner_rl_01.score(r_seq, a_seq))
             r_seq_score_d.append(aligner_rl_01.score(r_seq, d_seq))
 
@@ -232,7 +232,7 @@ def plot_alignment_with_offsets(reprocess=False):
     config_rl_01.read(os.path.join(config_dir, config_file))
 
     # Create aligner using the specified parameters
-    aligner_rl_01 = create_aligner(config_rl_01['aligner'])
+    aligner_rl_01 = utilities.create_aligner(config_rl_01['aligner'])
 
     # Process and dump, or load alignments
     pickle_file_name = config_file.replace(".cfg", "-offsets.pickle")
@@ -240,7 +240,7 @@ def plot_alignment_with_offsets(reprocess=False):
 
         # Create random reference sequence, and it's doubled version
         seq_len = 10000
-        a_seq = create_r_seq(seq_len)
+        a_seq = utilities.create_r_seq(seq_len)
         d_seq = a_seq + a_seq
 
         # Align offset to reference sequence, or its double
@@ -316,7 +316,7 @@ def plot_alignment_with_errors(reprocess=False):
     config_rl_01.read(os.path.join(config_dir, config_file))
 
     # Create aligner using the specified parameters
-    aligner_rl_01 = create_aligner(config_rl_01['aligner'])
+    aligner_rl_01 = utilities.create_aligner(config_rl_01['aligner'])
 
     # Process and dump, or load alignments
     pickle_file_name = config_file.replace(".cfg", "-errors.pickle")
@@ -324,7 +324,7 @@ def plot_alignment_with_errors(reprocess=False):
 
         # Create random reference sequence, and it's doubled version
         seq_len = 10000
-        a_seq = create_r_seq(seq_len)
+        a_seq = utilities.create_r_seq(seq_len)
         d_seq = a_seq + a_seq
 
         # Create and align error candidate sequences
@@ -399,7 +399,7 @@ def plot_alignment_with_offsets_and_errors(reprocess=False):
     config_rl_01.read(os.path.join(config_dir, config_file))
 
     # Create aligner using the specified parameters
-    aligner_rl_01 = create_aligner(config_rl_01['aligner'])
+    aligner_rl_01 = utilities.create_aligner(config_rl_01['aligner'])
 
     # Process and dump, or load alignments
     pickle_file_name = config_file.replace(".cfg", "-offsets-and-errors.pickle")
@@ -407,7 +407,7 @@ def plot_alignment_with_offsets_and_errors(reprocess=False):
 
         # Create random reference sequence, and it's doubled version
         seq_len = 10000
-        a_seq = create_r_seq(seq_len)
+        a_seq = utilities.create_r_seq(seq_len)
         d_seq = a_seq + a_seq
 
         # Create and align offset candidate sequences with errors
@@ -633,7 +633,7 @@ if __name__ == "__main__":
 
         # Create random reference sequence
         seq_len = 10000
-        a_seq = create_r_seq(seq_len)
+        a_seq = utilities.create_r_seq(seq_len)
 
         # Offset random reference sequence
         n_off = int(seq_len / 2)

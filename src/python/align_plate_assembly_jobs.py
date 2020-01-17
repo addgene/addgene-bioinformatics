@@ -4,7 +4,7 @@ import csv
 import os
 import pickle
 
-from utilities import create_r_seq, create_aligner
+import utilities
 
 from Bio import SeqIO
 from Bio.Alphabet import IUPAC
@@ -118,7 +118,7 @@ def align_cp_to_qc_sequences(assembler_data_dir,
     assembler = assembler_run_dir.split('-')[0]
 
     # Create a pairwise aligner with the specified configuration
-    aligner = create_aligner(config)
+    aligner = utilities.create_aligner(config)
 
     # Read quality control (QC) sequences
     qc_sequences = read_qc_sequences(assembler_data_dir, qc_sequences_fNm)
@@ -187,11 +187,10 @@ def align_cp_to_qc_sequences(assembler_data_dir,
                 cp_reverse = cp_sequence[::-1]
                 cp_reverse_complement = cp_complement[::-1]
 
-                r_sequence = create_r_seq(len(cp_sequence))
+                r_sequence = utilities.create_r_seq(len(cp_sequence))
 
                 cp_random_score = aligner.score(
                     qc_doubled_sequence, r_sequence)
-
                 cp_sequence_score = aligner.score(
                     qc_doubled_sequence, cp_sequence)
                 cp_complement_score = aligner.score(
@@ -256,7 +255,7 @@ def align_cp_to_qc_sequences(assembler_data_dir,
                     apc_reverse = apc_sequence[::-1]
                     apc_reverse_complement = apc_complement[::-1]
 
-                    r_sequence = create_r_seq(len(apc_sequence))
+                    r_sequence = utilities.create_r_seq(len(apc_sequence))
 
                     apc_random_score = aligner.score(
                         qc_doubled_sequence, r_sequence)
