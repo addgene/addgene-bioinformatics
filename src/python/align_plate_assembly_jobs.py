@@ -338,7 +338,8 @@ def align_cp_to_qc_sequences(assembler_data_dir,
     return cp_sequences
 
 
-def accumulate_alignment_scores(assembler, cp_sequences):
+def accumulate_alignment_scores(assembler,
+                                cp_sequences):
     """Accumulate alignement results.
 
     Parameters
@@ -433,8 +434,8 @@ def accumulate_alignment_scores(assembler, cp_sequences):
 
 
 def plot_alignment_socres(assembler, cp_sequences):
-    """Plot histograms of absolute and relative alignment scores
-    resulting form assembled and circularized sequences.
+    """Plot histograms of absolute alignment scores resulting form
+    assembled and circularized sequences.
 
     Parameters
     ----------
