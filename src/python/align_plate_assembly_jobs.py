@@ -441,17 +441,19 @@ def accumulate_alignment_scores(assembler,
     cp_sequences['assembler_sequence_len'] = assembler_sequence_len
     cp_sequences['assembler_random_score'] = assembler_random_score
     cp_sequences['assembler_maximum_score'] = assembler_maximum_score
+
     cp_sequences['assembler_valid_score'] = assembler_valid_score
 
     cp_sequences['circularizer_sequence_len'] = circularizer_sequence_len
     cp_sequences['circularizer_random_score'] = circularizer_random_score
     cp_sequences['circularizer_maximum_score'] = circularizer_maximum_score
+
     cp_sequences['circularizer_valid_score'] = circularizer_valid_score
 
     return cp_sequences
 
 
-def plot_alignment_socres(assembler, cp_sequences):
+def plot_alignment_scores(assembler, cp_sequences):
     """Plot histograms of absolute alignment scores resulting form
     assembled and circularized sequences.
 
@@ -573,7 +575,7 @@ if __name__ == "__main__":
 
         # Plot alignment results
         if options.plot:
-            plot_alignment_socres(assembler, cp_sequences)
+            plot_alignment_scores(assembler, cp_sequences)
 
         # Print alignment results
         print("")
