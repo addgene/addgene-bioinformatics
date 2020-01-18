@@ -161,20 +161,33 @@ def align_cp_to_qc_sequences(assembler_data_dir,
                 qc_sequence = qc_sequences[plate][well]['sequence']
                 qc_sequence_len = qc_sequences[plate][well]['sequence_len']
                 qc_doubled_sequence = qc_sequences[plate][well]['doubled_sequence']
+
             except Exception as e:
                 continue
 
             # Assign candidate process assembler sequence values
+            cp_sequences[plate][well]['qc'] = {}
             cp_sequences[plate][well][assembler] = {}
-            cp_sequence_fNm = ""
-            if assembler == 'novoplasty':
+            if assembler == 'masurca':
+                cp_sequence_fNm = "final.genome.scf.fasta"
+
+            elif assembler == 'novoplasty':
                 cp_sequence_fNm = "Circularized_assembly_1_Toil.fasta"
 
             elif assembler == 'shovill':
                 cp_sequence_fNm = "contigs.fa"
 
+            elif assembler == 'skesa':
+                cp_sequence_fNm = "contigs.fa"
+
             elif assembler == 'spades':
                 cp_sequence_fNm = "contigs.fasta"
+
+            elif assembler == 'unicycler':
+                cp_sequence_fNm = "assembly.fasta"
+
+            else:
+                raise(Exception("Unexpected assembler"))
             try:
                 cp_sequence = next(SeqIO.parse(
                     os.path.join(assembler_data_dir,
@@ -362,6 +375,7 @@ def accumulate_alignment_scores(assembler,
     circularizer_random_score = []
     circularizer_maximum_score = []
     circularizer_valid_score = []
+
     for plate, wells in cp_sequences.items():
         if plate == 'config' or not wells:
             continue
