@@ -503,22 +503,28 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     base_dir = os.path.join(
         os.sep, *os.path.abspath(__file__).split(os.sep)[0:-4])
-    parser.add_argument('-d', '--assembler-data-directory',
-                        default=os.path.join(base_dir,
-                                             "addgene-assembler-data",
-                                             "results-2020-01-16"),
-                        help="directory containing assembler run directory")
-    parser.add_argument('-q', '--qc-sequences-file',
-                        default=os.path.join(base_dir,
-                                             "addgene-assembler-data",
-                                             "2018_QC_Sequences.csv"),
-                        help="file containing QC sequences")
-    parser.add_argument('-p', '--plot',
-                        action='store_true',
-                        help="plot alignment results")
-    parser.add_argument('-r', '--reprocess',
-                        action='store_true',
-                        help="reprocess each run directory")
+    parser.add_argument(
+        '-d', '--assembler-data-directory',
+        default=os.path.join(
+            base_dir,
+            "addgene-assembler-data",
+            "results-2020-01-16"),
+        help="directory containing assembler run directory")
+    parser.add_argument(
+        '-q', '--qc-sequences-file',
+        default=os.path.join(
+            base_dir,
+            "addgene-assembler-data",
+            "2018_QC_Sequences.csv"),
+        help="file containing QC sequences")
+    parser.add_argument(
+        '-p', '--plot',
+        action='store_true',
+        help="plot alignment results")
+    parser.add_argument(
+        '-r', '--reprocess',
+        action='store_true',
+        help="reprocess each run directory")
     options = parser.parse_args()
 
     # Read and parse configuration file
@@ -532,8 +538,9 @@ if __name__ == "__main__":
     assembler_run_dirs = []
     for assembler_run_dir in os.listdir(options.assembler_data_directory):
         if os.path.isdir(
-            os.path.join(options.assembler_data_directory,
-                         assembler_run_dir)):
+            os.path.join(
+                options.assembler_data_directory,
+                assembler_run_dir)):
             assembler_run_dirs.append(assembler_run_dir)
 
     # Initialize candidate process alignment dictionary
@@ -609,26 +616,46 @@ if __name__ == "__main__":
     print("Assembler: any")
     print("    Assembled (nozero length): {:.1f}%".format(
         100 * sum(
+            (cp_alignment['masurca']['sequences']['assembler_sequence_len'] > 0) |
             (cp_alignment['novoplasty']['sequences']['assembler_sequence_len'] > 0) |
             (cp_alignment['shovill']['sequences']['assembler_sequence_len'] > 0) |
-            (cp_alignment['spades']['sequences']['assembler_sequence_len'] > 0))
-        / len(cp_sequences['assembler_sequence_len'])))
+            (cp_alignment['skesa']['sequences']['assembler_sequence_len'] > 0) |
+            (cp_alignment['spades']['sequences']['assembler_sequence_len'] > 0) |
+            (cp_alignment['unicycler']['sequences']['assembler_sequence_len'] > 0)
+        ) / len(cp_sequences['assembler_sequence_len'])))
 
     cp_alignment[assembler]['sequences'] = cp_sequences
 
     print("    Percent aligned (within {:.1f}%): {:.1f}".format(
         100 * fraction_aligned,
         100 * sum(
-            (cp_alignment['novoplasty']['sequences']['qc_sequence_length'] * (1.0 - fraction_aligned) <=
-             cp_alignment['novoplasty']['sequences']['assembler_valid_score']) &
-            (cp_alignment['novoplasty']['sequences']['assembler_valid_score'] <=
-             cp_alignment['novoplasty']['sequences']['qc_sequence_length'] * (1.0 + fraction_aligned)) |
-            (cp_alignment['shovill']['sequences']['qc_sequence_length'] * (1.0 - fraction_aligned) <=
-             cp_alignment['shovill']['sequences']['assembler_valid_score']) &
-            (cp_alignment['shovill']['sequences']['assembler_valid_score'] <=
-             cp_alignment['shovill']['sequences']['qc_sequence_length'] * (1.0 + fraction_aligned)) |
-            (cp_alignment['spades']['sequences']['qc_sequence_length'] * (1.0 - fraction_aligned) <=
-             cp_alignment['spades']['sequences']['assembler_valid_score']) &
-            (cp_alignment['spades']['sequences']['assembler_valid_score'] <=
-             cp_alignment['spades']['sequences']['qc_sequence_length'] * (1.0 + fraction_aligned)))
-        / len(cp_alignment['novoplasty']['sequences']['assembler_sequence_len'])))
+            ((cp_alignment['masurca']['sequences']['qc_sequence_len'] * (1.0 - fraction_aligned) <=
+              cp_alignment['masurca']['sequences']['assembler_valid_score']) &
+             (cp_alignment['masurca']['sequences']['assembler_valid_score'] <=
+              cp_alignment['masurca']['sequences']['qc_sequence_len'] * (1.0 + fraction_aligned))) |
+
+            ((cp_alignment['novoplasty']['sequences']['qc_sequence_len'] * (1.0 - fraction_aligned) <=
+              cp_alignment['novoplasty']['sequences']['assembler_valid_score']) &
+             (cp_alignment['novoplasty']['sequences']['assembler_valid_score'] <=
+              cp_alignment['novoplasty']['sequences']['qc_sequence_len'] * (1.0 + fraction_aligned))) |
+
+            ((cp_alignment['shovill']['sequences']['qc_sequence_len'] * (1.0 - fraction_aligned) <=
+              cp_alignment['shovill']['sequences']['assembler_valid_score']) &
+             (cp_alignment['shovill']['sequences']['assembler_valid_score'] <=
+              cp_alignment['shovill']['sequences']['qc_sequence_len'] * (1.0 + fraction_aligned))) |
+
+            ((cp_alignment['skesa']['sequences']['qc_sequence_len'] * (1.0 - fraction_aligned) <=
+              cp_alignment['skesa']['sequences']['assembler_valid_score']) &
+             (cp_alignment['skesa']['sequences']['assembler_valid_score'] <=
+              cp_alignment['skesa']['sequences']['qc_sequence_len'] * (1.0 + fraction_aligned))) |
+
+            ((cp_alignment['spades']['sequences']['qc_sequence_len'] * (1.0 - fraction_aligned) <=
+              cp_alignment['spades']['sequences']['assembler_valid_score']) &
+             (cp_alignment['spades']['sequences']['assembler_valid_score'] <=
+              cp_alignment['spades']['sequences']['qc_sequence_len'] * (1.0 + fraction_aligned))) |
+
+            ((cp_alignment['unicycler']['sequences']['qc_sequence_len'] * (1.0 - fraction_aligned) <=
+              cp_alignment['unicycler']['sequences']['assembler_valid_score']) &
+             (cp_alignment['unicycler']['sequences']['assembler_valid_score'] <=
+              cp_alignment['unicycler']['sequences']['qc_sequence_len'] * (1.0 + fraction_aligned)))
+        ) / len(cp_alignment['novoplasty']['sequences']['assembler_sequence_len'])))
