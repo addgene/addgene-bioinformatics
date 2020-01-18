@@ -199,11 +199,8 @@ def align_cp_to_qc_sequences(assembler_data_dir,
                 cp_complement = cp_sequence.complement()
                 cp_reverse = cp_sequence[::-1]
                 cp_reverse_complement = cp_complement[::-1]
-
                 r_sequence = utilities.create_r_seq(len(cp_sequence))
 
-                cp_random_score = aligner.score(
-                    qc_doubled_sequence, r_sequence)
                 cp_sequence_score = aligner.score(
                     qc_doubled_sequence, cp_sequence)
                 cp_complement_score = aligner.score(
@@ -212,19 +209,21 @@ def align_cp_to_qc_sequences(assembler_data_dir,
                     qc_doubled_sequence, cp_reverse)
                 cp_reverse_complement_score = aligner.score(
                     qc_doubled_sequence, cp_reverse_complement)
-
+                cp_random_score = aligner.score(
+                    qc_doubled_sequence, r_sequence)
 
             except Exception as e:
                 cp_sequence = Seq("", IUPAC.unambiguous_dna)
                 cp_complement = Seq("", IUPAC.unambiguous_dna)
                 cp_reverse = Seq("", IUPAC.unambiguous_dna)
                 cp_reverse_complement = Seq("", IUPAC.unambiguous_dna)
+                r_sequence = Seq("", IUPAC.unambiguous_dna)
 
-                cp_random_score = 0
                 cp_sequence_score = 0
                 cp_complement_score = 0
                 cp_reverse_score = 0
                 cp_reverse_complement_score = 0
+                cp_random_score = 0
 
             cp_sequences[plate][well]['qc']['sequence'] = qc_sequence
 
@@ -232,12 +231,13 @@ def align_cp_to_qc_sequences(assembler_data_dir,
             cp_sequences[plate][well][assembler]['complement'] = cp_complement
             cp_sequences[plate][well][assembler]['reverse'] = cp_reverse
             cp_sequences[plate][well][assembler]['reverse_complement'] = cp_reverse_complement
+            cp_sequences[plate][well][assembler]['random'] = r_sequence
 
-            cp_sequences[plate][well][assembler]['random_score'] = cp_random_score
             cp_sequences[plate][well][assembler]['sequence_score'] = cp_sequence_score
             cp_sequences[plate][well][assembler]['complement_score'] = cp_complement_score
             cp_sequences[plate][well][assembler]['reverse_score'] = cp_reverse_score
             cp_sequences[plate][well][assembler]['reverse_complement_score'] = cp_reverse_complement_score
+            cp_sequences[plate][well][assembler]['random_score'] = cp_random_score
 
             # Assign candidate process apc sequence values
             # Note: apc is not called after every assembler
@@ -247,13 +247,13 @@ def align_cp_to_qc_sequences(assembler_data_dir,
             apc_complement = Seq("", IUPAC.unambiguous_dna)
             apc_reverse = Seq("", IUPAC.unambiguous_dna)
             apc_reverse_complement = Seq("", IUPAC.unambiguous_dna)
-
-            apc_random_score = 0
+            r_sequence = Seq("", IUPAC.unambiguous_dna)
 
             apc_sequence_score = 0
             apc_complement_score = 0
             apc_reverse_score = 0
             apc_reverse_complement_score = 0
+            apc_random_score = 0
 
             if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
                 try:
@@ -267,11 +267,7 @@ def align_cp_to_qc_sequences(assembler_data_dir,
                     apc_complement = apc_sequence.complement()
                     apc_reverse = apc_sequence[::-1]
                     apc_reverse_complement = apc_complement[::-1]
-
                     r_sequence = utilities.create_r_seq(len(apc_sequence))
-
-                    apc_random_score = aligner.score(
-                        qc_doubled_sequence, r_sequence)
 
                     apc_sequence_score = aligner.score(
                         qc_doubled_sequence, apc_sequence)
@@ -281,28 +277,33 @@ def align_cp_to_qc_sequences(assembler_data_dir,
                         qc_doubled_sequence, apc_reverse)
                     apc_reverse_complement_score = aligner.score(
                         qc_doubled_sequence, apc_reverse_complement)
+                    apc_random_score = aligner.score(
+                        qc_doubled_sequence, r_sequence)
 
                 except Exception as e:
                     apc_sequence = Seq("", IUPAC.unambiguous_dna)
                     apc_complement = Seq("", IUPAC.unambiguous_dna)
                     apc_reverse = Seq("", IUPAC.unambiguous_dna)
                     apc_reverse_complement = Seq("", IUPAC.unambiguous_dna)
+                    r_sequence = Seq("", IUPAC.unambiguous_dna)
 
                     apc_sequence_score = 0
                     apc_complement_score = 0
                     apc_reverse_score = 0
                     apc_reverse_complement_score = 0
+                    apc_random_score = 0
 
             cp_sequences[plate][well]['apc']['sequence'] = apc_sequence
             cp_sequences[plate][well]['apc']['complement'] = apc_complement
             cp_sequences[plate][well]['apc']['reverse'] = apc_reverse
             cp_sequences[plate][well]['apc']['reverse_complement'] = apc_reverse_complement
+            cp_sequences[plate][well]['apc']['random'] = r_sequence
 
-            cp_sequences[plate][well]['apc']['random_score'] = apc_random_score
             cp_sequences[plate][well]['apc']['sequence_score'] = apc_sequence_score
             cp_sequences[plate][well]['apc']['complement_score'] = apc_complement_score
             cp_sequences[plate][well]['apc']['reverse_score'] = apc_reverse_score
             cp_sequences[plate][well]['apc']['reverse_complement_score'] = apc_reverse_complement_score
+            cp_sequences[plate][well]['apc']['random_score'] = apc_random_score
 
             # Print results to a file, and stdout
             result = ""
@@ -329,7 +330,7 @@ def align_cp_to_qc_sequences(assembler_data_dir,
                 result += ", {:7.1f}".format(0)
 
             result += ", {:5d}".format(len(apc_sequence))
-            result += ", {:7.1f}".format(cp_random_score)
+            result += ", {:7.1f}".format(apc_random_score)
 
             if qc_sequence_len > 0 and apc_sequence_score > 0:
                 result += ", {:7.1f}".format(apc_sequence_score)
@@ -389,35 +390,38 @@ def accumulate_alignment_scores(assembler,
 
             assembler_sequence_len.append(
                 len(sequences[assembler]['sequence']))
-            assembler_random_score.append(
-                sequences[assembler]['random_score'])
             assembler_maximum_score.append(max(
                 [sequences[assembler]['sequence_score'],
                  sequences[assembler]['complement_score'],
                  sequences[assembler]['reverse_score'],
                  sequences[assembler]['reverse_complement_score']]))
+            assembler_random_score.append(
+                sequences[assembler]['random_score'])
 
             if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
                 circularizer_sequence_len.append(
                     len(sequences['apc']['sequence']))
-                circularizer_random_score.append(
-                    sequences['apc']['random_score'])
+
                 circularizer_maximum_score.append(max(
                     [sequences['apc']['sequence_score'],
                      sequences['apc']['complement_score'],
                      sequences['apc']['reverse_score'],
                      sequences['apc']['reverse_complement_score']]))
+                circularizer_random_score.append(
+                    sequences['apc']['random_score'])
 
     qc_sequence_len = np.array(qc_sequence_len)
 
     assembler_sequence_len = np.array(assembler_sequence_len)
-    assembler_random_score = np.array(assembler_random_score)
     assembler_maximum_score = np.array(assembler_maximum_score)
+    assembler_random_score = np.array(assembler_random_score)
+
     assembler_valid_score = np.zeros(assembler_maximum_score.shape)
 
     circularizer_sequence_len = np.array(circularizer_sequence_len)
-    circularizer_random_score = np.array(circularizer_random_score)
     circularizer_maximum_score = np.array(circularizer_maximum_score)
+    circularizer_random_score = np.array(circularizer_random_score)
+
     circularizer_valid_score = np.zeros(assembler_maximum_score.shape)
 
     # Identify results for which the sequence length is greater than
