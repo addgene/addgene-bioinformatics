@@ -1,17 +1,13 @@
 from argparse import ArgumentParser
 from configparser import ConfigParser
-import math
 import os
 import pickle
 from random import choice, choices
 
 import utilities
 
-from Bio import SeqIO
 from Bio.Alphabet import IUPAC
 from Bio.Seq import Seq
-from Bio.SeqRecord import SeqRecord
-import docker
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -489,74 +485,11 @@ def plot_alignment_with_offsets_and_errors(reprocess=False):
     return alignments
 
 
-def rotate_seqs(a_seq, o_seq):
-    """Finds the cyclic rotation of a_seq (or an approximation of it)
-    that minimizes the blockwise q-gram distance from o_seq using
-    Docker image "ralatsdio/csc:v0.1.0".
-    """
-    # Define image, Docker run parameters, and CSC command
-    image = "ralatsdio/csc:v0.1.0"
-    # [-a] `DNA' or `RNA' for nucleotide sequences or `PROT' for
-    # protein sequences
-    alphabet = "DNA"
-    # [-m] `hCSC' for heuristic, `nCSC' for naive and `saCSC' for
-    # suffix-array algorithm
-    method = "saCSC"
-    # (Multi)FASTA input filename.
-    input_file = "csc_input.fasta"
-    # Output filename for the rotated sequences.
-    output_file = "csc_output.fasta"
-    # [-l] The length of each block
-    block_length = str(math.ceil(math.sqrt(len(a_seq))))
-    # [-q] The q-gram length
-    q_length = str(math.ceil(math.log(len(a_seq)) / math.log(4)))
-    # [-P] The number of blocks of length l to use to refine the
-    # results of saCSC by (e.g. 1.0)
-    blocks_refine = "1.0"
-    # [-O] The gap open penalty is the score taken away when a gap is
-    # created. The best value depends on the choice of comparison
-    # matrix.  The default value assumes you are using the EBLOSUM62
-    # matrix for protein sequences, and the EDNAFULL matrix for
-    # nucleotide sequences. Floating point number from 1.0 to
-    # 100.0. (default: 10.0)
-    gap_open_penalty = "10.0"
-    # [-E] The gap extension penalty is added to the standard gap
-    # penalty for each base or residue in the gap. This is how long
-    # gaps are penalized. Floating point number from 0.0 to 10.0.
-    # (default: 0.5)
-    gap_extend_penalty = "0.5"
-    command = " ".join(
-        ["csc",
-         "-m", method,
-         "-a", alphabet,
-         "-i", input_file,
-         "-o", output_file,
-         "-q", q_length,
-         "-l", block_length,
-         "-P", blocks_refine,
-         "-O", gap_open_penalty,
-         "-E", gap_extend_penalty
-        ]
-    )
-    hosting_dir = os.path.dirname(os.path.abspath(__file__))
-    working_dir = "/data"
-    volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
+            i_off += 1
 
-    # Write the multi-FASTA input file
-    SeqIO.write(
-        [SeqRecord(a_seq, id="id_a", name="name_a", description="reference"),
-         SeqRecord(o_seq, id="id_o", name="name_o", description="offset")],
-        os.path.join(hosting_dir, input_file),
-        "fasta")
-
-    # Run the command in the Docker image
-    client = docker.from_env()
-    client.containers.run(
-        image,
-        command=command,
-        volumes=volumes,
-        working_dir=working_dir,
-    )
+        ax.text(1000, o_e_seq_score_a[0, 0], 'Offset',
+                verticalalignment='center', color='c',
+                bbox=dict(facecolor='w', edgecolor='w'))
 
     # Read the multi-FASTA output file
     seq_records = [seq_record for seq_record in SeqIO.parse(
