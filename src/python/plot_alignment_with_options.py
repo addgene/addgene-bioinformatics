@@ -41,6 +41,11 @@ def create_e_seq(o_seq, n_err):
         the sequence in which to replace nucleotides
     n_err : int
         the number of nucleotides to replace
+
+    Returns
+    -------
+    Bio.Seq.Seq
+        the input sequence with errors
     """
     seq_len = len(o_seq)
     e_seq_lst = list(o_seq)
@@ -193,14 +198,16 @@ def plot_alignment_with_random(reprocess=False):
         r_seq_score_a = alignments['r_seq_score_a']
         r_seq_score_d = alignments['r_seq_score_d']
 
-    # Plot absolute alignment score as a function of candidate
-    # sequence length
+    # Plot and print absolute alignment score as a function of
+    # candidate sequence length
     fig, ax = plt.subplots()
     ax.plot(seq_lens, r_seq_score_a, 'r1')
     ax.plot(seq_lens, r_seq_score_d, 'g2')
     ax.set_title("Reference sequence length: 10,000")
     ax.set_xlabel("Candidate sequence length")
     ax.set_ylabel("Absolute alignment score")
+    plot_file_name = config_file.replace(".cfg", "-random.png")
+    plt.savefig(plot_file_name)
     plt.show()
 
     return alignments
@@ -275,13 +282,16 @@ def plot_alignment_with_offsets(reprocess=False):
         o_seq_score_a = alignments['o_seq_score_a']
         o_seq_score_d = alignments['o_seq_score_d']
 
-    # Plot absolute alignment score as a function of offset length
+    # Plot and print absolute alignment score as a function of offset
+    # length
     fig, ax = plt.subplots()
     ax.plot(n_offs, o_seq_score_a, 'r')
     ax.plot(n_offs, o_seq_score_d, 'g')
     ax.set_title("Reference sequence length 10,000")
     ax.set_xlabel("Number of nucleotides offset")
     ax.set_ylabel("Absolute alignment score")
+    plot_file_name = config_file.replace(".cfg", "-offsets.png")
+    plt.savefig(plot_file_name)
     plt.show()
 
     return alignments
@@ -359,13 +369,16 @@ def plot_alignment_with_errors(reprocess=False):
         e_seq_score_a = alignments['e_seq_score_a']
         e_seq_score_d = alignments['e_seq_score_d']
 
-    # Plot absolute alignment score as a function of error length
+    # Plot and print absolute alignment score as a function of error
+    # length
     fig, ax = plt.subplots()
     ax.plot(n_errs, e_seq_score_a, 'r--')
     ax.plot(n_errs, e_seq_score_d, 'g:')
     ax.set_title("Reference sequence length 10,000")
     ax.set_xlabel("Number of nucleotides in error")
     ax.set_ylabel("Absolute alignment score")
+    plot_file_name = config_file.replace(".cfg", "-errors.png")
+    plt.savefig(plot_file_name)
     plt.show()
 
     return alignments
@@ -408,7 +421,7 @@ def plot_alignment_with_offsets_and_errors(reprocess=False):
 
         # Create and align offset candidate sequences with errors
         n_offs = range(0, int(seq_len / 2), int(seq_len / 8))
-        n_errs = range(0, seq_len, int(seq_len / 10))
+        n_errs = range(0, int(seq_len / 2), int(seq_len / 20))
 
         o_e_seq_score_a = np.empty((len(n_offs), len(n_errs)))
         o_e_seq_score_d = np.empty((len(n_offs), len(n_errs)))
@@ -429,7 +442,7 @@ def plot_alignment_with_offsets_and_errors(reprocess=False):
                 o_e_seq_score_d[i_off, i_err] = aligner_rl_01.score(
                     o_e_seq, d_seq)
 
-                r_a_seq, r_o_e_seq = rotate_seqs(a_seq, o_e_seq)
+                r_a_seq, r_o_e_seq = utilities.rotate_seqs(a_seq, o_e_seq)
 
                 r_o_e_seq_score_a[i_off, i_err] = aligner_rl_01.score(
                     r_o_e_seq, r_a_seq)
@@ -466,24 +479,25 @@ def plot_alignment_with_offsets_and_errors(reprocess=False):
         o_e_seq_score_d = alignments['o_e_seq_score_d']
         r_o_e_seq_score_a = alignments['r_o_e_seq_score_a']
 
-    # Plot absolute alignment score as a function of error length for
-    # each offset
-    fig, ax = plt.subplots()
-    i_off = 0
-    for n_off in n_offs:
-        ax.plot(n_errs, o_e_seq_score_a[i_off, :], 'r1--')
-        ax.plot(n_errs, o_e_seq_score_d[i_off, :], 'g2-.')
-        ax.plot(n_errs, r_o_e_seq_score_a[i_off, :], 'b3:')
+    # Plot and print absolute alignment score as a function of error
+    # length for each offset
+    for i_fig in [1, 2, 3]:
+        fig, ax = plt.subplots()
 
-        i_off += 1
+        i_off = 0
+        for n_off in n_offs:
+            ax.plot(n_errs, o_e_seq_score_a[i_off, :], 'c')
 
-    ax.set_title("Reference sequence length 10,000")
-    ax.set_xlabel("Number of nucleotides in error")
-    ax.set_ylabel("Absolute alignment score")
-    plt.show()
+            ax.plot([n_errs[0] + 100, 1900],
+                    o_e_seq_score_a[i_off, [0, 0]], 'c:')
+            ax.text(2000, o_e_seq_score_a[i_off, 0], n_off,
+                    verticalalignment='center', color='c')
 
-    return alignments
+            if i_fig > 1:
+                ax.plot(n_errs, r_o_e_seq_score_a[i_off, :], 'b')
 
+            if i_fig > 2:
+                ax.plot(n_errs, o_e_seq_score_d[i_off, :], 'k')
 
             i_off += 1
 
@@ -491,15 +505,32 @@ def plot_alignment_with_offsets_and_errors(reprocess=False):
                 verticalalignment='center', color='c',
                 bbox=dict(facecolor='w', edgecolor='w'))
 
-    # Read the multi-FASTA output file
-    seq_records = [seq_record for seq_record in SeqIO.parse(
-        os.path.join(hosting_dir, output_file), "fasta")]
+        if i_fig > 1:
+            i_err = np.min(np.where(r_o_e_seq_score_a[0, :] < 5000))
 
-    # Assign and return the rotated sequences
-    r_a_seq = seq_records[0].seq
-    r_o_seq = seq_records[1].seq
+            ax.plot([n_errs[i_err] + 100, 2400],
+                    r_o_e_seq_score_a[0, [i_err, i_err]], 'b:')
+            ax.text(2500, r_o_e_seq_score_a[0, i_err], 'Optimal Rotation',
+                    verticalalignment='center', color='b')
 
-    return (r_a_seq, r_o_seq)
+        if i_fig > 2:
+            i_err = np.min(np.where(o_e_seq_score_d[0, :] < 3750))
+
+            ax.plot([n_errs[i_err] + 100, 2900],
+                    o_e_seq_score_a[0, [i_err, i_err]], 'k:')
+            ax.text(3000, o_e_seq_score_d[0, i_err], 'Doubled Reference',
+                    verticalalignment='center', color='k')
+
+        ax.set_title("Reference sequence length 10,000")
+        ax.set_xlabel("Number of nucleotides in error")
+        ax.set_ylabel("Absolute alignment score")
+
+        plot_file_name = config_file.replace(
+            ".cfg", "-offsets-and-errors-{}.png".format(i_fig))
+        plt.savefig(plot_file_name)
+        plt.show()
+
+    return alignments
 
 
 if __name__ == "__main__":
@@ -572,4 +603,4 @@ if __name__ == "__main__":
         n_off = int(seq_len / 2)
         o_seq = create_o_seq(a_seq, n_off)
 
-        print(rotate_seqs(a_seq, o_seq))
+        print(utilities.rotate_seqs(a_seq, o_seq))
