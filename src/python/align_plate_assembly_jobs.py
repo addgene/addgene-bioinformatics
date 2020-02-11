@@ -154,9 +154,15 @@ def align_cp_to_qc_sequences(assembler_data_dir,
 
     print(result)
 
+    # Consider each plate directory contained in the run directory
     plate_specs = sorted(
-        os.listdir(
-            os.path.join(assembler_data_dir, assembler_run_dir)))
+        filter(
+            '.DS_Store'.__ne__,
+            os.listdir(
+                os.path.join(assembler_data_dir, assembler_run_dir)
+            )
+        )
+    )
     for plate_spec in plate_specs:
 
         # Find the plate id
@@ -168,9 +174,15 @@ def align_cp_to_qc_sequences(assembler_data_dir,
 
         # Consider each well directory contained in the plate directory
         wells = sorted(
-            os.listdir(
-                os.path.join(
-                    assembler_data_dir, assembler_run_dir, plate_spec)))
+            filter(
+                '.DS_Store'.__ne__,
+                os.listdir(
+                    os.path.join(
+                        assembler_data_dir, assembler_run_dir, plate_spec
+                    )
+                )
+            )
+        )
         for well in wells:
 
             # Initialize well dictionary
@@ -307,6 +319,11 @@ def align_cp_to_qc_sequences(assembler_data_dir,
 def accumulate_alignment_scores(assembler,
                                 cp_sequences):
     """Accumulate alignement results.
+
+    Finds the maximum of the sequence and reverse complement
+    scores. Defines valid scores as maximum scores for which the
+    assembler length is greater than zero. All results are converted
+    to Numpy arrays.
 
     Parameters
     ----------
