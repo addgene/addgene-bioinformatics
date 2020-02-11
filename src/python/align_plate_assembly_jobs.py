@@ -340,16 +340,17 @@ def accumulate_alignment_scores(assembler,
          the input dictionary with sequence length, and random and
          maximum scores
     """
+    # Initialize return values
     qc_sequence_len = []
 
     assembler_sequence_len = []
-    assembler_random_score = []
     assembler_maximum_score = []
+    assembler_valid_index = []
     assembler_valid_score = []
 
     circularizer_sequence_len = []
-    circularizer_random_score = []
     circularizer_maximum_score = []
+    circularizer_valid_index = []
     circularizer_valid_score = []
 
     for plate, wells in cp_sequences.items():
@@ -381,32 +382,33 @@ def accumulate_alignment_scores(assembler,
 
     assembler_sequence_len = np.array(assembler_sequence_len)
     assembler_maximum_score = np.array(assembler_maximum_score)
-
     assembler_valid_score = np.zeros(assembler_maximum_score.shape)
 
     circularizer_sequence_len = np.array(circularizer_sequence_len)
     circularizer_maximum_score = np.array(circularizer_maximum_score)
-
     circularizer_valid_score = np.zeros(assembler_maximum_score.shape)
 
     # Identify results for which the sequence length is greater than
     # zero
-    vld_idx = (assembler_sequence_len > 0)
-    assembler_valid_score[vld_idx] = assembler_maximum_score[vld_idx]
+    assembler_valid_index = (assembler_sequence_len > 0)
+    assembler_valid_score[assembler_valid_index] = (
+        assembler_maximum_score[assembler_valid_index])
     if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
-        vld_idx = (circularizer_sequence_len > 0)
-        circularizer_valid_score[vld_idx] = circularizer_maximum_score[vld_idx]
+        circularizer_valid_index = (circularizer_sequence_len > 0)
+        circularizer_valid_score[circularizer_valid_index] = (
+            circularizer_maximum_score[circularizer_valid_index])
 
+    # Assign return values
     cp_sequences['qc_sequence_len'] = qc_sequence_len
 
     cp_sequences['assembler_sequence_len'] = assembler_sequence_len
     cp_sequences['assembler_maximum_score'] = assembler_maximum_score
-
+    cp_sequences['assembler_valid_index'] = assembler_valid_index
     cp_sequences['assembler_valid_score'] = assembler_valid_score
 
     cp_sequences['circularizer_sequence_len'] = circularizer_sequence_len
     cp_sequences['circularizer_maximum_score'] = circularizer_maximum_score
-
+    cp_sequences['circularizer_valid_index'] = circularizer_valid_index
     cp_sequences['circularizer_valid_score'] = circularizer_valid_score
 
     return cp_sequences
@@ -428,13 +430,13 @@ def plot_alignment_scores(assembler, cp_sequences):
     # Assign alignement results.
     # assembler_sequence_len = cp_sequences['assembler_sequence_len']
     # assembler_maximum_score = cp_sequences['assembler_maximum_score']
-    vld_idx = cp_sequences['assembler_valid_score'] != 0.0
-    assembler_valid_score = cp_sequences['assembler_valid_score'][vld_idx]
+    assembler_valid_index = cp_sequences['assembler_valid_index']
+    assembler_valid_score = cp_sequences['assembler_valid_score'][assembler_valid_index]
 
     # circularizer_sequence_len = cp_sequences['circularizer_sequence_len']
     # circularizer_maximum_score = cp_sequences['circularizer_maximum_score']
-    vld_idx = cp_sequences['circularizer_valid_score'] != 0.0
-    circularizer_valid_score = cp_sequences['circularizer_valid_score'][vld_idx]
+    circularizer_valid_index = cp_sequences['circularizer_valid_index']
+    circularizer_valid_score = cp_sequences['circularizer_valid_score'][circularizer_valid_index]
 
     # Plot histogram of valid score
     if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
@@ -540,7 +542,7 @@ if __name__ == "__main__":
         # Note in computing valid indexes below that since the
         # assembler results are from the same plates, the nonzero QC
         # sequences are the same for each assembler
-        vld_idx = (cp_sequences['qc_sequence_len'] > 0)
+        qc_valid_index = (cp_sequences['qc_sequence_len'] > 0)
 
         # TODO: Review all following lines
 
@@ -563,20 +565,20 @@ if __name__ == "__main__":
         print("    Assembly aligned (within {:.1f}%): {:.1f}%".format(
             100 * fraction_aligned,
             100 * sum(
-                (cp_sequences['qc_sequence_len'][vld_idx] * (1.0 - fraction_aligned) <=
-                 cp_sequences['assembler_valid_score'][vld_idx]) &
-                (cp_sequences['assembler_valid_score'][vld_idx] <=
-                 cp_sequences['qc_sequence_len'][vld_idx] * (1.0 + fraction_aligned)))
-            / len(cp_sequences['assembler_sequence_len'][vld_idx])))
+                (cp_sequences['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
+                 cp_sequences['assembler_valid_score'][qc_valid_index]) &
+                (cp_sequences['assembler_valid_score'][qc_valid_index] <=
+                 cp_sequences['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned)))
+            / len(cp_sequences['assembler_sequence_len'][qc_valid_index])))
         if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
             print("    Circularized assembly aligned (within {:.1f}%): {:.1f}%".format(
                 100 * fraction_aligned,
                 100 * sum(
-                    (cp_sequences['qc_sequence_len'][vld_idx] * (1.0 - fraction_aligned) <=
-                     cp_sequences['circularizer_valid_score'][vld_idx]) &
-                    (cp_sequences['circularizer_valid_score'][vld_idx] <=
-                     cp_sequences['qc_sequence_len'][vld_idx] * (1.0 + fraction_aligned)))
-                / sum(cp_sequences['assembler_sequence_len'][vld_idx] > 0)))
+                    (cp_sequences['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
+                     cp_sequences['circularizer_valid_score'][qc_valid_index]) &
+                    (cp_sequences['circularizer_valid_score'][qc_valid_index] <=
+                     cp_sequences['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned)))
+                / sum(cp_sequences['assembler_sequence_len'][qc_valid_index] > 0)))
 
     print("")
     print("Assembler: any")
@@ -602,69 +604,69 @@ if __name__ == "__main__":
     print("    Linear assembly aligned (within {:.1f}%): {:.1f}".format(
         100 * fraction_aligned,
         100 * sum(
-            # ((cp_alignment['masurca']['sequences']['qc_sequence_len'][vld_idx] * (1.0 - fraction_aligned) <=
-            #   cp_alignment['masurca']['sequences']['assembler_valid_score'][vld_idx]) &
-            #  (cp_alignment['masurca']['sequences']['assembler_valid_score'][vld_idx] <=
-            #   cp_alignment['masurca']['sequences']['qc_sequence_len'][vld_idx] * (1.0 + fraction_aligned))) |
+            # ((cp_alignment['masurca']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
+            #   cp_alignment['masurca']['sequences']['assembler_valid_score'][qc_valid_index]) &
+            #  (cp_alignment['masurca']['sequences']['assembler_valid_score'][qc_valid_index] <=
+            #   cp_alignment['masurca']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned))) |
 
-            ((cp_alignment['novoplasty']['sequences']['qc_sequence_len'][vld_idx] * (1.0 - fraction_aligned) <=
-              cp_alignment['novoplasty']['sequences']['assembler_valid_score'][vld_idx]) &
-             (cp_alignment['novoplasty']['sequences']['assembler_valid_score'][vld_idx] <=
-              cp_alignment['novoplasty']['sequences']['qc_sequence_len'][vld_idx] * (1.0 + fraction_aligned))) |
+            ((cp_alignment['novoplasty']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
+              cp_alignment['novoplasty']['sequences']['assembler_valid_score'][qc_valid_index]) &
+             (cp_alignment['novoplasty']['sequences']['assembler_valid_score'][qc_valid_index] <=
+              cp_alignment['novoplasty']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned))) |
 
-            ((cp_alignment['shovill']['sequences']['qc_sequence_len'][vld_idx] * (1.0 - fraction_aligned) <=
-              cp_alignment['shovill']['sequences']['assembler_valid_score'][vld_idx]) &
-             (cp_alignment['shovill']['sequences']['assembler_valid_score'][vld_idx] <=
-              cp_alignment['shovill']['sequences']['qc_sequence_len'][vld_idx] * (1.0 + fraction_aligned))) |
+            ((cp_alignment['shovill']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
+              cp_alignment['shovill']['sequences']['assembler_valid_score'][qc_valid_index]) &
+             (cp_alignment['shovill']['sequences']['assembler_valid_score'][qc_valid_index] <=
+              cp_alignment['shovill']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned))) |
 
-            # ((cp_alignment['skesa']['sequences']['qc_sequence_len'][vld_idx] * (1.0 - fraction_aligned) <=
-            #   cp_alignment['skesa']['sequences']['assembler_valid_score'][vld_idx]) &
-            #  (cp_alignment['skesa']['sequences']['assembler_valid_score'][vld_idx] <=
-            #   cp_alignment['skesa']['sequences']['qc_sequence_len'][vld_idx] * (1.0 + fraction_aligned))) |
+            # ((cp_alignment['skesa']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
+            #   cp_alignment['skesa']['sequences']['assembler_valid_score'][qc_valid_index]) &
+            #  (cp_alignment['skesa']['sequences']['assembler_valid_score'][qc_valid_index] <=
+            #   cp_alignment['skesa']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned))) |
 
-            ((cp_alignment['spades']['sequences']['qc_sequence_len'][vld_idx] * (1.0 - fraction_aligned) <=
-              cp_alignment['spades']['sequences']['assembler_valid_score'][vld_idx]) &
-             (cp_alignment['spades']['sequences']['assembler_valid_score'][vld_idx] <=
-              cp_alignment['spades']['sequences']['qc_sequence_len'][vld_idx] * (1.0 + fraction_aligned))) # |
+            ((cp_alignment['spades']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
+              cp_alignment['spades']['sequences']['assembler_valid_score'][qc_valid_index]) &
+             (cp_alignment['spades']['sequences']['assembler_valid_score'][qc_valid_index] <=
+              cp_alignment['spades']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned))) # |
 
-            # ((cp_alignment['unicycler']['sequences']['qc_sequence_len'][vld_idx] * (1.0 - fraction_aligned) <=
-            #   cp_alignment['unicycler']['sequences']['assembler_valid_score'][vld_idx]) &
-            #  (cp_alignment['unicycler']['sequences']['assembler_valid_score'][vld_idx] <=
-            #   cp_alignment['unicycler']['sequences']['qc_sequence_len'][vld_idx] * (1.0 + fraction_aligned)))
+            # ((cp_alignment['unicycler']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
+            #   cp_alignment['unicycler']['sequences']['assembler_valid_score'][qc_valid_index]) &
+            #  (cp_alignment['unicycler']['sequences']['assembler_valid_score'][qc_valid_index] <=
+            #   cp_alignment['unicycler']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned)))
 
         ) / len(cp_alignment['novoplasty']['sequences']['assembler_sequence_len'])))
 
     print("    Circular assembly aligned (within {:.1f}%): {:.1f}".format(
         100 * fraction_aligned,
         100 * sum(
-            # ((cp_alignment['masurca']['sequences']['qc_sequence_len'][vld_idx] * (1.0 - fraction_aligned) <=
-            #   cp_alignment['masurca']['sequences']['circularizer_valid_score'][vld_idx]) &
-            #  (cp_alignment['masurca']['sequences']['circularizer_valid_score'][vld_idx] <=
-            #   cp_alignment['masurca']['sequences']['qc_sequence_len'][vld_idx] * (1.0 + fraction_aligned))) |
+            # ((cp_alignment['masurca']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
+            #   cp_alignment['masurca']['sequences']['circularizer_valid_score'][qc_valid_index]) &
+            #  (cp_alignment['masurca']['sequences']['circularizer_valid_score'][qc_valid_index] <=
+            #   cp_alignment['masurca']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned))) |
 
-            ((cp_alignment['novoplasty']['sequences']['qc_sequence_len'][vld_idx] * (1.0 - fraction_aligned) <=
-              cp_alignment['novoplasty']['sequences']['assembler_valid_score'][vld_idx]) &
-             (cp_alignment['novoplasty']['sequences']['assembler_valid_score'][vld_idx] <=
-              cp_alignment['novoplasty']['sequences']['qc_sequence_len'][vld_idx] * (1.0 + fraction_aligned))) |
+            ((cp_alignment['novoplasty']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
+              cp_alignment['novoplasty']['sequences']['assembler_valid_score'][qc_valid_index]) &
+             (cp_alignment['novoplasty']['sequences']['assembler_valid_score'][qc_valid_index] <=
+              cp_alignment['novoplasty']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned))) |
 
-            ((cp_alignment['shovill']['sequences']['qc_sequence_len'][vld_idx] * (1.0 - fraction_aligned) <=
-              cp_alignment['shovill']['sequences']['circularizer_valid_score'][vld_idx]) &
-             (cp_alignment['shovill']['sequences']['circularizer_valid_score'][vld_idx] <=
-              cp_alignment['shovill']['sequences']['qc_sequence_len'][vld_idx] * (1.0 + fraction_aligned))) |
+            ((cp_alignment['shovill']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
+              cp_alignment['shovill']['sequences']['circularizer_valid_score'][qc_valid_index]) &
+             (cp_alignment['shovill']['sequences']['circularizer_valid_score'][qc_valid_index] <=
+              cp_alignment['shovill']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned))) |
 
-            # ((cp_alignment['skesa']['sequences']['qc_sequence_len'][vld_idx] * (1.0 - fraction_aligned) <=
-            #   cp_alignment['skesa']['sequences']['circularizer_valid_score'][vld_idx]) &
-            #  (cp_alignment['skesa']['sequences']['circularizer_valid_score'][vld_idx] <=
-            #   cp_alignment['skesa']['sequences']['qc_sequence_len'][vld_idx] * (1.0 + fraction_aligned))) |
+            # ((cp_alignment['skesa']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
+            #   cp_alignment['skesa']['sequences']['circularizer_valid_score'][qc_valid_index]) &
+            #  (cp_alignment['skesa']['sequences']['circularizer_valid_score'][qc_valid_index] <=
+            #   cp_alignment['skesa']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned))) |
 
-            ((cp_alignment['spades']['sequences']['qc_sequence_len'][vld_idx] * (1.0 - fraction_aligned) <=
-              cp_alignment['spades']['sequences']['circularizer_valid_score'][vld_idx]) &
-             (cp_alignment['spades']['sequences']['circularizer_valid_score'][vld_idx] <=
-              cp_alignment['spades']['sequences']['qc_sequence_len'][vld_idx] * (1.0 + fraction_aligned))) # |
+            ((cp_alignment['spades']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
+              cp_alignment['spades']['sequences']['circularizer_valid_score'][qc_valid_index]) &
+             (cp_alignment['spades']['sequences']['circularizer_valid_score'][qc_valid_index] <=
+              cp_alignment['spades']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned))) # |
 
-            # ((cp_alignment['unicycler']['sequences']['qc_sequence_len'][vld_idx] * (1.0 - fraction_aligned) <=
-            #   cp_alignment['unicycler']['sequences']['circularizer_valid_score'][vld_idx]) &
-            #  (cp_alignment['unicycler']['sequences']['circularizer_valid_score'][vld_idx] <=
-            #   cp_alignment['unicycler']['sequences']['qc_sequence_len'][vld_idx] * (1.0 + fraction_aligned)))
+            # ((cp_alignment['unicycler']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
+            #   cp_alignment['unicycler']['sequences']['circularizer_valid_score'][qc_valid_index]) &
+            #  (cp_alignment['unicycler']['sequences']['circularizer_valid_score'][qc_valid_index] <=
+            #   cp_alignment['unicycler']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned)))
 
-        ) / len(cp_alignment['novoplasty']['sequences']['assembler_sequence_len'][vld_idx])))
+        ) / len(cp_alignment['novoplasty']['sequences']['assembler_sequence_len'][qc_valid_index])))
