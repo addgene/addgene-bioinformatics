@@ -127,38 +127,28 @@ def align_cp_to_qc_sequences(assembler_data_dir,
     cp_sequences = {}
     cp_sequences['config'] = dict(config)
 
-    # Consider each plate directory contained in the run directory
+    # Print header to a file, and stdout
     output_file = open(
         os.path.join(
             assembler_data_dir,
             assembler_run_dir + "-" + os.path.basename(config['file'])
             ).replace(".cfg", ".csv"), 'w')
 
-    # Print header to a file, and stdout
     result = ""
 
     # TODO: Use more sensible formats
-    result += "{:10s}".format("assembler")
-    result += ", {:7s}".format("plate")
-    result += ", {:3s}".format("well")
+    result += "{:>11s},".format("assembler")
+    result += "{:>8s},".format("plate")
+    result += "{:>5s},".format("well")
 
-    result += ", {:5s}".format("qc_sequence_len")
+    result += "{:>11s},".format("qc_seq_len")
+    result += "{:>11s},".format("cp_seq_len")
+    result += "{:>11s},".format("cp_seq_scr")
+    result += "{:>11s},".format("cp_rcm_scr")
 
-    result += ", {:5s}".format("len(cp_sequence)")
-    result += ", {:7s}".format("cp_random_score")
-
-    result += ", {:7s}".format("cp_sequence_score")
-    result += ", {:7s}".format("cp_complement_score")
-    result += ", {:7s}".format("cp_reverse_score")
-    result += ", {:7s}".format("cp_reverse_complement_score")
-
-    result += ", {:5s}".format("len(apc_sequence)")
-    result += ", {:7s}".format("apc_random_score")
-
-    result += ", {:7s}".format("apc_sequence_score")
-    result += ", {:7s}".format("apc_complement_score")
-    result += ", {:7s}".format("apc_reverse_score")
-    result += ", {:7s}".format("apc_reverse_complement_score")
+    result += "{:>12s},".format("apc_seq_len")
+    result += "{:>12s},".format("apc_seq_scr")
+    result += "{:>12s}".format("apc_rcm_scr")
 
     output_file.write(result + '\n')
 
@@ -292,23 +282,21 @@ def align_cp_to_qc_sequences(assembler_data_dir,
             # Print results to a file, and stdout
             result = ""
 
-            result += "{:10s}".format(assembler)
-            result += ", {:7s}".format(plate)
-            result += ", {:3s}".format(well)
+            result += "{:>11s},".format(assembler)
+            result += "{:>8s},".format(plate)
+            result += "{:>5s},".format(well)
 
-            result += ", {:5d}".format(qc_sequence_len)
+            result += "{:11d},".format(qc_sequence_len)
+            result += "{:11d},".format(len(cp_sequence))
+            result += "{:11.1f},".format(cp_sequence_score)
+            result += "{:11.1f},".format(cp_reverse_complement_score)
 
-            result += ", {:5d}".format(len(cp_sequence))
-
-            result += ", {:7.1f}".format(cp_sequence_score)
-            result += ", {:7.1f}".format(cp_reverse_complement_score)
-
-            result += ", {:5d}".format(len(apc_sequence))
-
-            result += ", {:7.1f}".format(apc_sequence_score)
-            result += ", {:7.1f}".format(apc_reverse_complement_score)
+            result += "{:12d},".format(len(apc_sequence))
+            result += "{:12.1f},".format(apc_sequence_score)
+            result += "{:12.1f}".format(apc_reverse_complement_score)
 
             output_file.write(result + '\n')
+
             print(result)
 
     output_file.close()
