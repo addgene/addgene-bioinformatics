@@ -415,7 +415,7 @@ def accumulate_alignment_scores(assembler,
 
 
 def plot_alignment_scores(assembler, cp_sequences):
-    """Plot histograms of absolute alignment scores resulting form
+    """Plot histograms of relative alignment scores resulting form
     assembled and circularized sequences.
 
     Parameters
@@ -427,34 +427,54 @@ def plot_alignment_scores(assembler, cp_sequences):
         doubled sequence, and corresponding alignment scores for each
         well in each plate in the run directory
     """
-    # Assign alignement results.
-    # assembler_sequence_len = cp_sequences['assembler_sequence_len']
-    # assembler_maximum_score = cp_sequences['assembler_maximum_score']
+    fig, ax = plt.subplots()
+
+    bin_width = 5.0
+    bin_edges = np.arange(0.0, 100.0 + 2 * bin_width, bin_width)
+
+    # Compute and plot assembler score
     assembler_valid_index = cp_sequences['assembler_valid_index']
-    assembler_valid_score = cp_sequences['assembler_valid_score'][assembler_valid_index]
+    assembler_valid_score = (
+        100.0 * (1 +
+                 (cp_sequences['assembler_valid_score'][assembler_valid_index]
+                  - cp_sequences['qc_sequence_len'][assembler_valid_index])
+                 / cp_sequences['qc_sequence_len'][assembler_valid_index])
+   )
 
-    # circularizer_sequence_len = cp_sequences['circularizer_sequence_len']
-    # circularizer_maximum_score = cp_sequences['circularizer_maximum_score']
-    circularizer_valid_index = cp_sequences['circularizer_valid_index']
-    circularizer_valid_score = cp_sequences['circularizer_valid_score'][circularizer_valid_index]
+    assembler_histogram, tmp = np.histogram(assembler_valid_score, bin_edges)
+    ax.bar(bin_edges[:-1] - bin_width / 4,
+           100.0 * assembler_histogram / len(assembler_valid_index),
+           width=2.0, align='center', color='b')
 
-    # Plot histogram of valid score
+    # Compute and plot circularizer score
     if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
-        fig, ax = plt.subplots()
-        ax.hist([assembler_valid_score,
-                 circularizer_valid_score], 20)
-        ax.set_title(assembler)
-        ax.set_xlabel("Absolute score")
-        ax.set_ylabel("Count")
-        plt.show()
+        circularizer_valid_index = cp_sequences['circularizer_valid_index']
+        circularizer_valid_score = (
+            100.0 * (1 +
+                     (cp_sequences['circularizer_valid_score'][circularizer_valid_index]
+                      - cp_sequences['qc_sequence_len'][circularizer_valid_index])
+                     / cp_sequences['qc_sequence_len'][circularizer_valid_index])
+        )
 
-    else:
-        fig, ax = plt.subplots()
-        ax.hist(assembler_valid_score, 20)
-        ax.set_title(assembler)
-        ax.set_xlabel("Absolute score")
-        ax.set_ylabel("Count")
-        plt.show()
+        circularizer_histogram, tmp = np.histogram(circularizer_valid_score, bin_edges)
+        ax.bar(bin_edges[:-1] + bin_width / 4,
+               100.0 * circularizer_histogram / len(circularizer_valid_index),
+               width=2.0, align='center', color='r')
+
+    ax.set_title(assembler)
+    ax.set_xlabel("Alignment Score (% of QC Sequence Length)")
+    ax.set_ylabel("Fraction of Assemblies (%)")
+
+    x1, x2 = ax.get_xlim()
+    xW = x2 - x1
+
+    y1, y2 = ax.get_ylim()
+    yW = y2 - y1
+
+    ax.text(x1 + 0.10 * xW, y2 - 0.05 * yW,
+            "Assembled: {}".format(len(assembler_valid_index)))
+
+    plt.show()
 
 
 if __name__ == "__main__":
