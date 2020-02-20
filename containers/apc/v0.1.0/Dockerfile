@@ -26,7 +26,8 @@ ENV INSTALL_PFX=/home/biodocker
 ENV LAST_URL=http://last.cbrc.jp/last/
 ENV LAST_SRC=last
 ENV LAST_TAG=992
-RUN hg clone $LAST_URL && \
+RUN cd $INSTALL_PFX && \
+    hg clone $LAST_URL && \
     cd $LAST_SRC && \
     hg update $LAST_TAG && \
     make && \
@@ -38,7 +39,8 @@ RUN hg clone $LAST_URL && \
 ENV BWA_URL=https://github.com/lh3/bwa.git
 ENV BWA_SRC=bwa
 ENV BWA_TAG=v0.7.17
-RUN git clone $BWA_URL && \
+RUN cd $INSTALL_PFX && \
+    git clone $BWA_URL && \
     cd $BWA_SRC && \
     git checkout $BWA_TAG && \
     make && \
@@ -50,7 +52,8 @@ RUN git clone $BWA_URL && \
 ENV HTSLIB_ZIP=htslib-1.2.1.tar.bz2
 ENV HTSLIB_URL=https://github.com/BioDocker/software-archive/releases/download/htslib
 ENV HTSLIB_SRC=htslib-1.2.1
-RUN wget $HTSLIB_URL/$HTSLIB_ZIP -O $HTSLIB_ZIP && \
+RUN cd $INSTALL_PFX && \
+    wget $HTSLIB_URL/$HTSLIB_ZIP && \
     tar -jxvf $HTSLIB_ZIP && \
     rm $HTSLIB_ZIP && \
     cd $HTSLIB_SRC && \
@@ -67,7 +70,8 @@ RUN conda install ncurses samtools=$SAMTOOLS_VER
 ENV APC_URL=https://github.com/ralatsdc/apc.git
 ENV APC_SRC=apc
 ENV APC_TAG=v0.1.0
-RUN git clone $APC_URL && \
+RUN cd $INSTALL_PFX && \
+    git clone $APC_URL && \
     cd $APC_SRC && \
     git checkout $APC_TAG && \
     cp apc.pl $INSTALL_PFX/bin && \
