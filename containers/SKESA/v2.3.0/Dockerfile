@@ -23,10 +23,11 @@ USER root
 ENV INSTALL_PFX=/home/biodocker
 
 # Install SKESA
+ENV SKESA_VER=2.3.0
 RUN cd $INSTALL_PFX && \
     mkdir skesa && \
     cd skesa && \  
-    wget https://github.com/ncbi/SKESA/releases/download/v2.3.0/skesa.centos6.10 && \
+    wget https://github.com/ncbi/SKESA/releases/download/v$SKESA_VER/skesa.centos6.10 && \
     mv skesa.centos6.10 $INSTALL_PFX/bin/skesa && \
     chmod +x $INSTALL_PFX/bin/skesa
 

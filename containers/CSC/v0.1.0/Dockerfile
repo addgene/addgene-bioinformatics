@@ -23,16 +23,14 @@ USER root
 ENV INSTALL_PFX=/home/biodocker
 
 # Install apc (Use ralatsdc fork)
-ENV CSC_URL=https://github.com/ralatsdc/csc.git
-ENV CSC_SRC=csc
-ENV CSC_TAG=v0.1.0
+ENV CSC_VER=v0.1.0
 RUN cd $INSTALL_PFX && \
-    git clone $CSC_URL && \
-    cd $CSC_SRC && \
-    git checkout $CSC_TAG && \
+    git clone https://github.com/ralatsdc/csc.git && \
+    cd csc && \
+    git checkout $CSC_VER && \
     ./pre-install.sh && \
     make -f Makefile.64-bit.gcc && \
-    ln -s $INSTALL_PFX/$CSC_SRC/csc $INSTALL_PFX/bin
+    ln -s $INSTALL_PFX/csc/csc $INSTALL_PFX/bin
 
 ##### Configuration ############################################################
 
