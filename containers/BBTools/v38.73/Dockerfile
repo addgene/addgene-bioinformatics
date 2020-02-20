@@ -31,11 +31,12 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install BBTools
+ENV BBMAP_VER=38.73
 RUN cd $INSTALL_PFX && \
     mkdir bbtools && \
     cd bbtools && \
-    wget https://sourceforge.net/projects/bbmap/files/BBMap_38.73.tar.gz && \
-    tar -zxvf BBMap_38.73.tar.gz && \
+    wget https://sourceforge.net/projects/bbmap/files/BBMap_$BBMAP_VER.tar.gz && \
+    tar -zxvf BBMap_$BBMAP_VER.tar.gz && \
     cp -r bbmap/* $INSTALL_PFX/bin
 
 ##### Configuration ############################################################

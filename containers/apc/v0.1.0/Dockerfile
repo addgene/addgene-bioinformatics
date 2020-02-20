@@ -23,60 +23,52 @@ USER root
 ENV INSTALL_PFX=/home/biodocker
 
 # Install LAST
-ENV LAST_URL=http://last.cbrc.jp/last/
-ENV LAST_SRC=last
-ENV LAST_TAG=992
+ENV LAST_VER=992
 RUN cd $INSTALL_PFX && \
-    hg clone $LAST_URL && \
-    cd $LAST_SRC && \
-    hg update $LAST_TAG && \
+    hg clone http://last.cbrc.jp/last/ && \
+    cd last && \
+    hg update $LAST_VER && \
     make && \
     make install prefix=$INSTALL_PFX && \
     cd .. && \
-    rm -rf $LAST_SRC
+    rm -rf last
 
 # Install BWA
-ENV BWA_URL=https://github.com/lh3/bwa.git
-ENV BWA_SRC=bwa
-ENV BWA_TAG=v0.7.17
+ENV BWA_VER=v0.7.17
 RUN cd $INSTALL_PFX && \
-    git clone $BWA_URL && \
-    cd $BWA_SRC && \
-    git checkout $BWA_TAG && \
+    git clone https://github.com/lh3/bwa.git && \
+    cd bwa && \
+    git checkout $BWA_VER && \
     make && \
     cp bwa $INSTALL_PFX/bin && \
     cd .. && \
-    rm -rf $BWA_SRC
+    rm -rf bwa
 
 # Install HTSlib (Use BioContainers install)
-ENV HTSLIB_ZIP=htslib-1.2.1.tar.bz2
-ENV HTSLIB_URL=https://github.com/BioDocker/software-archive/releases/download/htslib
-ENV HTSLIB_SRC=htslib-1.2.1
+ENV HTSLIB_VER=1.2.1
 RUN cd $INSTALL_PFX && \
-    wget $HTSLIB_URL/$HTSLIB_ZIP && \
-    tar -jxvf $HTSLIB_ZIP && \
-    rm $HTSLIB_ZIP && \
-    cd $HTSLIB_SRC && \
+    wget https://github.com/BioDocker/software-archive/releases/download/htslib/htslib-$HTSLIB_VER.tar.bz2 && \
+    tar -jxvf htslib-$HTSLIB_VER.tar.bz2 && \
+    rm htslib-$HTSLIB_VER.tar.bz2 && \
+    cd htslib-$HTSLIB_VER && \
     make && \
     make install && \
     cd .. && \
-    rm -rf $HTSLIB_SRC
+    rm -rf htslib-$HTSLIB_VER
 
 # Install Samtools (Use BioContainers install)
 ENV SAMTOOLS_VER=1.7.0
 RUN conda install ncurses samtools=$SAMTOOLS_VER
 
 # Install apc (Use ralatsdc fork)
-ENV APC_URL=https://github.com/ralatsdc/apc.git
-ENV APC_SRC=apc
-ENV APC_TAG=v0.1.0
+ENV APC_VER=v0.1.0
 RUN cd $INSTALL_PFX && \
-    git clone $APC_URL && \
-    cd $APC_SRC && \
-    git checkout $APC_TAG && \
+    git clone https://github.com/ralatsdc/apc.git && \
+    cd apc && \
+    git checkout $APC_VER && \
     cp apc.pl $INSTALL_PFX/bin && \
     cd .. && \
-    rm -rf $APC_SRC
+    rm -rf apc
 
 ##### Configuration ############################################################
 

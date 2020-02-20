@@ -44,9 +44,10 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install Pilon
+ENV PILON_VER=1.22
 RUN cd $INSTALL_PFX && \
-    wget https://github.com/broadinstitute/pilon/releases/download/v1.22/pilon-1.22.jar -P pilon && \
-    echo '#!/bin/bash\njava -jar $INSTALL_PFX/pilon/pilon-1.22.jar $@' > pilon/pilon && \
+    wget https://github.com/broadinstitute/pilon/releases/download/v$PILON_VER/pilon-$PILON_VER.jar -P pilon && \
+    echo '#!/bin/bash\njava -jar $INSTALL_PFX/pilon/pilon-$PILON_VER.jar $@' > pilon/pilon && \
     chmod +x pilon/pilon
 
 # Install SPAdes
