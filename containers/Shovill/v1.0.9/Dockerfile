@@ -111,15 +111,15 @@ RUN cd $INSTALL_PFX && \
     make install
 
 # Install SKESA
+ENV SKESA_VER=2.3.0
 RUN cd $INSTALL_PFX && \
     mkdir skesa && \
     cd skesa && \
-    wget https://github.com/ncbi/SKESA/releases/download/v2.3.0/skesa.centos6.10 && \
+    wget https://github.com/ncbi/SKESA/releases/download/v$SKESA_VER/skesa.centos6.10 && \
     mv skesa.centos6.10 skesa && \
     chmod +x skesa
 
 # Install MEGAHIT
-
 ENV MEGAHIT_VER=1.1.4
 RUN cd $INSTALL_PFX && \
     mkdir megahit && \

@@ -23,16 +23,16 @@ USER root
 ENV INSTALL_PFX=/home/biodocker
 
 # Install SPAdes
-ENV ZIP=SPAdes-3.13.1-Linux.tar.gz
-ENV URL=http://cab.spbu.ru/files/release3.13.1
-ENV FOLDER=SPAdes-3.13.1-Linux
-RUN wget $URL/$ZIP -O $INSTALL_PFX/$ZIP && \
-    tar -zxvf $INSTALL_PFX/$ZIP -C $INSTALL_PFX && \
-    rm $INSTALL_PFX/$ZIP && \
-    cd $INSTALL_PFX/$FOLDER && \
-    mv $INSTALL_PFX/$FOLDER/bin/* $INSTALL_PFX/bin && \
-    mv $INSTALL_PFX/$FOLDER/share $INSTALL_PFX && \
-    rm -rf $INSTALL_PFX/$FOLDER
+ENV SPADES_VER=3.13.1
+RUN cd $INSTALL_PFX && \
+    wget http://cab.spbu.ru/files/release$SPADES_VER/SPAdes-$SPADES_VER-Linux.tar.gz && \
+    tar -zxvf SPAdes-$SPADES_VER-Linux.tar.gz && \
+    rm SPAdes-$SPADES_VER-Linux.tar.gz && \
+    cd SPAdes-$SPADES_VER-Linux && \
+    mv bin/* $INSTALL_PFX/bin && \
+    mv share $INSTALL_PFX && \
+    cd .. && \
+    rm -rf SPAdes-$SPADES_VER-Linux
 
 ##### Configuration ############################################################
 

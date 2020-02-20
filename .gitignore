@@ -1,4 +1,5 @@
 .DS_Store
-dat/miscellaneous/A11967A_sW0154_FASTA/apc*
+.idea
 .mypy_cache/
 .vscode/
+dat/miscellaneous/A11967A_sW0154_FASTA/apc*
