@@ -26,7 +26,8 @@ ENV INSTALL_PFX=/home/biodocker
 ENV NOVOPLASTY_URL=https://github.com/ndierckx/NOVOPlasty
 ENV NOVOPLASTY_SRC=NOVOPlasty
 ENV NOVOPLASTY_TAG=NOVOPlasty3.7
-RUN git clone $NOVOPLASTY_URL && \
+RUN cd $INSTALL_PFX && \
+    git clone $NOVOPLASTY_URL && \
     cd $NOVOPLASTY_SRC && \
     git checkout $NOVOPLASTY_TAG && \
     cp NOVOPlasty3.7.pl $INSTALL_PFX/bin/NOVOPlasty.pl && \
