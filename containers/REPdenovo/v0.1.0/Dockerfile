@@ -27,14 +27,13 @@ ENV JELLYFISH_VER=cf201901
 RUN conda install -c bioconda/label/$JELLYFISH_VER jellyfish
 
 # Build and install Velvet 1.2.10
-# TODO: Use "make ’MAXKMERLENGTH=60’"
 ENV VELVET_VER=1.2.10
 RUN cd $INSTALL_PFX && \
     wget https://github.com/BioDocker/software-archive/releases/download/velvet/velvet_$VELVET_VER.tgz && \
     tar -zxvf velvet_$VELVET_VER.tgz && \
     rm velvet_$VELVET_VER.tgz && \
     cd velvet_$VELVET_VER && \
-    make && \
+    make MAXKMERLENGTH=60 && \
     cp velvet* $INSTALL_PFX/bin && \
     cd .. && \
     rm -rf velvet_$VELVET_VER
