@@ -26,19 +26,14 @@ ENV INSTALL_PFX=/home/biodocker
 ENV JELLYFISH_VER=cf201901
 RUN conda install -c bioconda/label/$JELLYFISH_VER jellyfish
 
-# Install Velvet 1.2.10
-ENV VELVET_VER=cf201901
-RUN conda install -c bioconda/label/$VELVET_VER velvet
-
 # Build and install Velvet 1.2.10
-# TODO: Use "make ’MAXKMERLENGTH=60’"
 ENV VELVET_VER=1.2.10
 RUN cd $INSTALL_PFX && \
     wget https://github.com/BioDocker/software-archive/releases/download/velvet/velvet_$VELVET_VER.tgz && \
     tar -zxvf velvet_$VELVET_VER.tgz && \
     rm velvet_$VELVET_VER.tgz && \
     cd velvet_$VELVET_VER && \
-    make && \
+    make MAXKMERLENGTH=60 && \
     cp velvet* $INSTALL_PFX/bin && \
     cd .. && \
     rm -rf velvet_$VELVET_VER
@@ -56,11 +51,13 @@ ENV REPDENOVO_VER=0.1.0
 RUN cd $INSTALL_PFX && \
     wget https://github.com/ralatsdc/REPdenovo/archive/v$REPDENOVO_VER.tar.gz -O REPdenovo-$REPDENOVO_VER.tar.gz && \
     tar -zxvf REPdenovo-$REPDENOVO_VER.tar.gz && \
-    cd REPdenovo-$REPDENOVO_VER && \
-    cp TERefiner/TERefiner_1 $INSTALL_PFX/bin && \
+    rm REPdenovo-$REPDENOVO_VER.tar.gz && \
+    mv REPdenovo-$REPDENOVO_VER/* $INSTALL_PFX/bin && \
+    rm -rf REPdenovo-$REPDENOVO_VER && \
+    chown -R biodocker:biodocker $INSTALL_PFX/bin && \
     chmod +x $INSTALL_PFX/bin/TERefiner_1 && \
-    cp ContigsCompactor-v0.2.0/ContigsMerger/ContigsMerger $INSTALL_PFX/bin && \
-    chmod +x $INSTALL_PFX/bin/ContigsMerger
+    chmod +x $INSTALL_PFX/bin/ContigsMerger && \
+    chmod +x $INSTALL_PFX/bin/main.py
 
 ##### Configuration ############################################################
 
