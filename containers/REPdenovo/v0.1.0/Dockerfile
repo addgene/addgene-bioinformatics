@@ -51,11 +51,13 @@ ENV REPDENOVO_VER=0.1.0
 RUN cd $INSTALL_PFX && \
     wget https://github.com/ralatsdc/REPdenovo/archive/v$REPDENOVO_VER.tar.gz -O REPdenovo-$REPDENOVO_VER.tar.gz && \
     tar -zxvf REPdenovo-$REPDENOVO_VER.tar.gz && \
-    cd REPdenovo-$REPDENOVO_VER && \
-    cp TERefiner/TERefiner_1 $INSTALL_PFX/bin && \
+    rm REPdenovo-$REPDENOVO_VER.tar.gz && \
+    mv REPdenovo-$REPDENOVO_VER/* $INSTALL_PFX/bin && \
+    rm -rf REPdenovo-$REPDENOVO_VER && \
+    chown -R biodocker:biodocker $INSTALL_PFX/bin && \
     chmod +x $INSTALL_PFX/bin/TERefiner_1 && \
-    cp ContigsCompactor-v0.2.0/ContigsMerger/ContigsMerger $INSTALL_PFX/bin && \
-    chmod +x $INSTALL_PFX/bin/ContigsMerger
+    chmod +x $INSTALL_PFX/bin/ContigsMerger && \
+    chmod +x $INSTALL_PFX/bin/main.py
 
 ##### Configuration ############################################################
 
