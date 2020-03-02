@@ -26,10 +26,6 @@ ENV INSTALL_PFX=/home/biodocker
 ENV JELLYFISH_VER=cf201901
 RUN conda install -c bioconda/label/$JELLYFISH_VER jellyfish
 
-# Install Velvet 1.2.10
-ENV VELVET_VER=cf201901
-RUN conda install -c bioconda/label/$VELVET_VER velvet
-
 # Build and install Velvet 1.2.10
 # TODO: Use "make ’MAXKMERLENGTH=60’"
 ENV VELVET_VER=1.2.10
