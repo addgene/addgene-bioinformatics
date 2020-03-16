@@ -2,6 +2,7 @@ import logging
 import math
 import os
 from random import choice
+import re
 
 from Bio import Align
 from Bio import SeqIO
@@ -415,7 +416,7 @@ def rotate_seqs(a_seq, o_seq):
     return (r_a_seq, r_o_seq)
 
 
-def kmc():
+def kmc(input_file_names, k_mer_length=25, signature_length=9, count_min=2, count_max=1e9):
     """
     Counts k-mers.
 
@@ -461,7 +462,73 @@ def kmc():
 
     kmc ver. 3.1.1 (2019-05-19)
     """
-    raise(NotImplementedError("Utility kmc has not been implemented"))
+    # Determine the input file format implied by the input file name extension(s)
+    p_fa = re.compile(r"\.f(ast)?a(\.gz)?$")
+    p_fq = re.compile(r"\.f(ast)?q(\.gz)?$")
+    p_bm = re.compile(r"\.bam$")
+    p_ss = re.compile(r"^>")
+    for input_file_name in input_file_names:
+        if p_fa.search(input_file_name) is not None:  # FASTA
+
+            # Count number of sequences
+            with open(input_file_name, 'r') as f:
+                n_seq = 0
+                for line in f:
+                    if p_ss.search(line) is not None:
+                        n_seq += 1
+            if n_seq == 0:
+                raise Exception("No sequence found in FASTA file")
+
+            elif n_seq == 1:  # FASTA
+                input_format = "-fa"
+
+            else:  # n_seq > 1 -- multi FASTA
+                input_format = "-fm"
+
+        elif p_fq.search(input_file_name) is not None:
+            input_format = "-fq"  # FASTQ
+
+        elif p_bm.search(input_file_name) is not None:
+            input_format = "-fbam"  # BAM
+
+        else:
+            raise Exception("Unknown sequence file format")
+
+    # Determine whether to submit input file names as a string, or file
+    if len(input_file_names) > 1:
+        with open("kmc_input.txt", "w") as f:
+            for input_file_name in input_file_names:
+                f.write(input_file_name)
+        input_str = "@kmc_input.txt"
+    else:
+        input_str = input_file_names[0]
+
+    # Define image, and Docker run parameters, and KMC command
+    image = "ralatsdio/kmc:v3.1.1"
+    hosting_dir = os.path.dirname(os.path.abspath(__file__))
+    working_dir = "/data"
+    volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
+    command = " ".join(
+        ["kmc",
+         "-k" + str(k_mer_length),
+         "-p" + str(signature_length),
+         input_format,
+         "-ci" + str(int(count_min)),
+         "-cx" + str(int(count_max)),
+         input_str,
+         "kmc_output",
+         working_dir,
+        ]
+    )
+
+    # Run the command in the Docker image
+    client = docker.from_env()
+    client.containers.run(
+        image,
+        command=command,
+        volumes=volumes,
+        working_dir=working_dir,
+    )
 
 
 def kmc_transform():
@@ -702,3 +769,7 @@ def kmc_filter():
         kmc_tools filter kmc_db input.fastq -ci10 -cx100 filtered.fastq
     """
     raise(NotImplementedError("Utility kmc_filter has not been implemented"))
+
+
+if __name__ == "__main__":
+    kmc(["A11967A_sW0154_A01_R1_001.fastq.gz"])
