@@ -416,9 +416,12 @@ def rotate_seqs(a_seq, o_seq):
     return (r_a_seq, r_o_seq)
 
 
-def kmc(input_file_names, k_mer_length=25, signature_length=9, count_min=2, count_max=1e9):
+def kmc(read_file_names, database_file_name,
+        k_mer_length=25, signature_length=9, count_min=2, count_max=1e9):
     """
     Counts k-mers.
+
+    Documentation for kmc ver. 3.1.1 (2019-05-19):
 
     Usage:
         kmc [options] <input_file_name> <output_file_name> <working_directory>
@@ -459,66 +462,37 @@ def kmc(input_file_names, k_mer_length=25, signature_length=9, count_min=2, coun
     Examples:
         $ kmc -k27 -m24 NA19238.fastq NA.res /data/kmc_tmp_dir/
         $ kmc -k27 -m24 @files.lst NA.res /data/kmc_tmp_dir/
-
-    kmc ver. 3.1.1 (2019-05-19)
     """
-    # Determine the input file format implied by the input file name extension(s)
-    p_fa = re.compile(r"\.f(ast)?a(\.gz)?$")
-    p_fq = re.compile(r"\.f(ast)?q(\.gz)?$")
-    p_bm = re.compile(r"\.bam$")
-    p_ss = re.compile(r"^>")
-    for input_file_name in input_file_names:
-        if p_fa.search(input_file_name) is not None:  # FASTA
+    # Determine the read file format
+    read_format = get_kmc_read_format(read_file_names)
 
-            # Count number of sequences
-            with open(input_file_name, 'r') as f:
-                n_seq = 0
-                for line in f:
-                    if p_ss.search(line) is not None:
-                        n_seq += 1
-            if n_seq == 0:
-                raise Exception("No sequence found in FASTA file")
-
-            elif n_seq == 1:  # FASTA
-                input_format = "-fa"
-
-            else:  # n_seq > 1 -- multi FASTA
-                input_format = "-fm"
-
-        elif p_fq.search(input_file_name) is not None:
-            input_format = "-fq"  # FASTQ
-
-        elif p_bm.search(input_file_name) is not None:
-            input_format = "-fbam"  # BAM
-
-        else:
-            raise Exception("Unknown sequence file format")
-
-    # Determine whether to submit input file names as a string, or file
-    if len(input_file_names) > 1:
+    # Determine whether to submit read file names as a string, or file
+    if len(read_file_names) > 1:
         with open("kmc_input.txt", "w") as f:
-            for input_file_name in input_file_names:
+            for input_file_name in read_file_names:
                 f.write(input_file_name)
         input_str = "@kmc_input.txt"
     else:
-        input_str = input_file_names[0]
+        input_str = read_file_names[0]
 
-    # Define image, and Docker run parameters, and KMC command
+    # Define image, and Docker run parameters
     image = "ralatsdio/kmc:v3.1.1"
     hosting_dir = os.path.dirname(os.path.abspath(__file__))
     working_dir = "/data"
     volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
+
+    # Define kmc command
     command = " ".join(
         ["kmc",
          "-k" + str(k_mer_length),
          "-p" + str(signature_length),
-         input_format,
          "-ci" + str(int(count_min)),
          "-cx" + str(int(count_max)),
+         read_format,
          input_str,
-         "kmc_output",
+         database_file_name,
          working_dir,
-        ]
+         ]
     )
 
     # Run the command in the Docker image
@@ -531,9 +505,14 @@ def kmc(input_file_names, k_mer_length=25, signature_length=9, count_min=2, coun
     )
 
 
-def kmc_transform():
+def kmc_transform(inp_database_file_name, operation, out_database_file_name,
+                  inp_count_min=2, inp_count_max=1e9,
+                  out_count_min=2, out_count_max=1e9,
+                  is_sorted=False):
     """
     Transforms single input database to output (text file or KMC database).
+
+    Documentation for kmc_tools transform ver. 3.1.1 (2019-05-19):
 
     Usage:
         kmc_tools [options] transform <input> [input_params] \
@@ -581,15 +560,46 @@ def kmc_transform():
             reduce valid_kmers -ci11 \
             histogram histo.txt \
             dump dump.txt
-
-    kmc_tools ver. 3.1.1 (2019-05-19)
     """
-    raise(NotImplementedError("Utility kmc_transform has not been implemented"))
+    # Check input arguments
+    if operation not in ["reduce", "histogram", "dump"]:
+        raise(Exception("Operation is not implemented"))
+
+    # Define image, and Docker run parameters
+    image = "ralatsdio/kmc:v3.1.1"
+    hosting_dir = os.path.dirname(os.path.abspath(__file__))
+    working_dir = "/data"
+    volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
+
+    # Define kmc_tools command
+    command = " ".join(
+        ["kmc_tools", "transform",
+         inp_database_file_name,
+         "-ci" + str(int(inp_count_min)),
+         "-cx" + str(int(inp_count_max)),
+         operation, out_database_file_name,
+         "-ci" + str(int(out_count_min)),
+         "-cx" + str(int(out_count_max)),
+         ]
+    )
+    if operation == "dump" and is_sorted:
+        " ".join(command, "-s")
+
+    # Run the command in the Docker image
+    client = docker.from_env()
+    client.containers.run(
+        image,
+        command=command,
+        volumes=volumes,
+        working_dir=working_dir,
+    )
 
 
 def kmc_simple():
     """
     Performs set operation on two input KMC databases.
+
+    Documentation for kmc_tools simple ver. 3.1.1 (2019-05-19):
 
     Usage:
         kmc_tools [options] simple <input1 [input1_params]> <input2 [input2_params]> \
@@ -654,12 +664,14 @@ def kmc_simple():
 
     kmc_tools ver. 3.1.1 (2019-05-19)
     """
-    raise(NotImplementedError("Utility kmc_simple has not been implemented"))
+    raise(NotImplementedError("utility.kmc_simple() has not been implemented"))
 
 
 def kmc_complex():
     """
     Performs set operations for more than two input k-mers sets.
+
+    Documentation for kmc_tools complex ver. 3.1.1 (2019-05-19):
 
     Usage:
         kmc_tools [options] complex <operations_definition_file>
@@ -722,26 +734,32 @@ def kmc_complex():
 
     kmc_tools ver. 3.1.1 (2019-05-19)
     """
-    raise(NotImplementedError("Utility kmc_complex has not been implemented"))
+    raise(NotImplementedError("utility.kmc_complex() has not been implemented"))
 
 
-def kmc_filter():
+def kmc_filter(inp_database_file_name, inp_read_file_name, out_read_file_name,
+               trim_reads=False, hard_mask=False,
+               inp_db_count_min=2, inp_db_count_max=1e9,
+               inp_rd_count_min=2, inp_rd_count_max=1e9):
     """
     Filters out reads with too small number of k-mers.
 
+    Documentation for kmc_tools filter ver. 3.1.1 (2019-05-19):
+
     Usage:
-        kmc_tools [options] filter [filter_params] <kmc_input_db> [kmc_input_db_params] \
+        kmc_tools [options] filter [filter_options] <kmc_input_db> [kmc_input_db_params] \
             <input_read_set> [input_read_set_params] \
             <output_read_set> [output_read_set_params]
-
     Options:
         -t<value> - total number of threads (default: no. of CPU cores)
         -v - enable verbose mode (shows some information) (default: false)
         -hp - hide percentage progress (default: false)
 
-    Filter parameters:
+    Filter options:
         -t - trim reads on first invalid k-mer instead of remove entirely
         -hm - hard mask invalid k-mers in a read
+
+    Filter parameters:
         kmc_input_db - path to database generated by KMC
         input_read_set - path to input set of reads
         output_read_set - path to output set of reads
@@ -768,8 +786,114 @@ def kmc_filter():
         kmc_tools filter kmc_db -ci3 input.fastq -ci0.5 -cx1.0 filtered.fastq
         kmc_tools filter kmc_db input.fastq -ci10 -cx100 filtered.fastq
     """
-    raise(NotImplementedError("Utility kmc_filter has not been implemented"))
+    # Determine the input file format
+    read_format = get_kmc_read_format([inp_read_file_name])
+
+    # Define image, and Docker run parameters
+    image = "ralatsdio/kmc:v3.1.1"
+    hosting_dir = os.path.dirname(os.path.abspath(__file__))
+    working_dir = "/data"
+    volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
+
+    # Define kmc command
+    command = " ".join(
+        ["kmc_tools", "filter"]
+    )
+    # TODO: Determine if these options are mutually exclusive
+    if trim_reads:
+        " ".join(command, "-t")
+    if hard_mask:
+        " ".join(command, "-hm")
+    command = " ".join(
+        [command,
+         inp_database_file_name,
+         "-ci"+str(int(inp_db_count_min)),
+         "-cx"+str(int(inp_db_count_max)),
+         inp_read_file_name,
+         "-ci"+str(int(inp_rd_count_min)),
+         "-cx"+str(int(inp_rd_count_max)),
+         read_format,
+         out_read_file_name,
+         read_format,
+         ]
+    )
+
+    # Run the command in the Docker image
+    client = docker.from_env()
+    client.containers.run(
+        image,
+        command=command,
+        volumes=volumes,
+        working_dir=working_dir,
+    )
+
+
+def get_kmc_read_format(read_file_names):
+    """
+    Determine a valid read format implied by the read file name
+    extension(s).
+
+    Parameters
+    ----------
+    read_file_names : str
+        list of read file names
+
+    Returns
+    -------
+    str
+        valid read format: FASTA is "-fa", FASTQ is "-fq", multi
+        FASTA is "-fm", or BAM is "-fbam"; default is "-fq"
+    """
+    valid_read_format = ""
+    p_fa = re.compile(r"\.f(ast)?a(\.gz)?$")
+    p_fq = re.compile(r"\.f(ast)?q(\.gz)?$")
+    p_bm = re.compile(r"\.bam$")
+    p_ss = re.compile(r"^>")
+    for input_file_name in read_file_names:
+        if p_fa.search(input_file_name) is not None:  # FASTA
+
+            # Count number of sequences
+            with open(input_file_name, 'r') as f:
+                n_seq = 0
+                for line in f:
+                    if p_ss.search(line) is not None:
+                        n_seq += 1
+            if n_seq == 0:
+                raise(Exception("No sequence found in FASTA file"))
+
+            elif n_seq == 1:  # FASTA
+                read_format = "-fa"
+
+            else:  # n_seq > 1 -- multi FASTA
+                read_format = "-fm"
+
+        elif p_fq.search(input_file_name) is not None:
+            read_format = "-fq"  # FASTQ
+
+        elif p_bm.search(input_file_name) is not None:
+            read_format = "-fbam"  # BAM
+
+        else:
+            raise(Exception("Unknown sequence file format"))
+
+        if valid_read_format == "":
+            valid_read_format = read_format
+
+        elif read_format != valid_read_format:
+            raise(Exception("Input files must use the same format"))
+
+    return valid_read_format
 
 
 if __name__ == "__main__":
-    kmc(["A11967A_sW0154_A01_R1_001.fastq.gz"])
+
+    kmc(["A11967A_sW0154_A01_R1_001.fastq.gz"],
+        "A11967A_sW0154_A01_R1_001")
+
+    kmc_transform("A11967A_sW0154_A01_R1_001",
+                  "dump",
+                  "A11967A_sW0154_A01_R1_001.txt")
+
+    kmc_filter("A11967A_sW0154_A01_R1_001",
+               "A11967A_sW0154_A01_R1_001.fastq.gz",
+               "A11967A_sW0154_A01_R1_001_f")
