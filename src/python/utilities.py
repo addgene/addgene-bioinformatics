@@ -595,7 +595,12 @@ def kmc_transform(inp_database_file_name, operation, out_database_file_name,
     )
 
 
-def kmc_simple():
+def kmc_simple(inp_database_file_name_a, operation, inp_database_file_name_b,
+               out_database_file_name,
+               inp_count_min_a=2, inp_count_max_a=1e9,
+               inp_count_min_b=2, inp_count_max_b=1e9,
+               out_count_min=2, out_count_max=1e9,
+               out_calc_mode=""):
     """
     Performs set operation on two input KMC databases.
 
@@ -664,7 +669,46 @@ def kmc_simple():
 
     kmc_tools ver. 3.1.1 (2019-05-19)
     """
-    raise(NotImplementedError("utility.kmc_simple() has not been implemented"))
+    # Check input arguments
+    if operation not in ["intersect", "union", "kmers_subtract",
+                         "counters_subtract", "reverse_kmers_subtract",
+                         "reverse_counters_subtract"]:
+        raise(Exception("Invalid operation: {0}".format(operation)))
+    if out_calc_mode not in ["", "min", "max", "sum", "diff", "left", "right"]:
+        raise(Exception("Invalid output calculation mode: {0}".format(
+            out_calc_mode)))
+
+    # Define image, and Docker run parameters
+    image = "ralatsdio/kmc:v3.1.1"
+    hosting_dir = os.path.dirname(os.path.abspath(__file__))
+    working_dir = "/data"
+    volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
+
+    # Define kmc_tools command
+    command = " ".join(
+        ["kmc_tools", "simple",
+         inp_database_file_name_a,
+         "-ci" + str(int(inp_count_min_a)),
+         "-cx" + str(int(inp_count_max_a)),
+         inp_database_file_name_b,
+         "-ci" + str(int(inp_count_min_b)),
+         "-cx" + str(int(inp_count_max_b)),
+         operation, out_database_file_name,
+         "-ci" + str(int(out_count_min)),
+         "-cx" + str(int(out_count_max)),
+         ]
+    )
+    if out_calc_mode != "":
+        " ".join(command, "-oc{0}".format(out_calc_mode))
+
+    # Run the command in the Docker image
+    client = docker.from_env()
+    client.containers.run(
+        image,
+        command=command,
+        volumes=volumes,
+        working_dir=working_dir,
+    )
 
 
 def kmc_complex():
@@ -887,6 +931,7 @@ def get_kmc_read_format(read_file_names):
 
 if __name__ == "__main__":
 
+    # R1
     kmc(["A11967A_sW0154_A01_R1_001.fastq.gz"],
         "A11967A_sW0154_A01_R1_001")
 
@@ -896,4 +941,26 @@ if __name__ == "__main__":
 
     kmc_filter("A11967A_sW0154_A01_R1_001",
                "A11967A_sW0154_A01_R1_001.fastq.gz",
-               "A11967A_sW0154_A01_R1_001_f")
+               "A11967A_sW0154_A01_R1_001_f.fastq")
+
+    # R2
+    kmc(["A11967A_sW0154_A01_R2_001.fastq.gz"],
+        "A11967A_sW0154_A01_R2_001")
+
+    kmc_transform("A11967A_sW0154_A01_R2_001",
+                  "dump",
+                  "A11967A_sW0154_A01_R2_001.txt")
+
+    kmc_filter("A11967A_sW0154_A01_R2_001",
+               "A11967A_sW0154_A01_R2_001.fastq.gz",
+               "A11967A_sW0154_A01_R2_001_f.fastq")
+
+    # R1 intersect R2
+    kmc_simple("A11967A_sW0154_A01_R1_001",
+               "intersect",
+               "A11967A_sW0154_A01_R2_001",
+               "A11967A_sW0154_A01_R1_R2_001")
+
+    kmc_transform("A11967A_sW0154_A01_R1_R2_001",
+                  "dump",
+                  "A11967A_sW0154_A01_R1_R2_001_f")
