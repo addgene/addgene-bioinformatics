@@ -20,14 +20,19 @@ docker build --tag ralatsdio/unicycler:v0.4.7 Unicycler/v0.4.7 \
 # Build tool images
 docker build --tag ralatsdio/bbtools:v38.73 BBTools/v38.73 \
        | tee BBTools/v38.73/build.log 2>&1
+docker build --tag ralatsdio/csc:v0.1.0 CSC/v0.1.0 \
+       | tee CSC/v0.1.0/build.log 2>&1
+docker build --tag ralatsdio/kmc:v0.1.0 KMC/v3.1.1 \
+       | tee KMC/v3.1.1/build.log 2>&1
 docker build --tag ralatsdio/repdenovo:v0.1.0 REPdenovo/v0.1.0 \
        | tee REPdenovo/v0.1.0/build.log 2>&1
 docker build --tag ralatsdio/spade:v0.1.0 SPADE/v0.1.0 \
        | tee SPADE/v0.1.0/build.log 2>&1
+docker build --tag ralatsdio/samtools:v0.1.0 Samtools/v0.1.0 \
+       | tee Samtools/v0.1.0/build.log 2>&1
 docker build --tag ralatsdio/apc:v0.1.0 apc/v0.1.0 \
        | tee apc/v0.1.0/build.log 2>&1
-docker build --tag ralatsdio/csc:v0.1.0 csc/v0.1.0 \
-       | tee csc/v0.1.0/build.log 2>&1
+
 
 # Summarize build logs
 find . -name 'build.log' -exec echo ">{}" \; -exec tail -2 {} \;
