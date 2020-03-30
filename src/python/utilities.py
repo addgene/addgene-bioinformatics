@@ -470,7 +470,7 @@ def kmc(read_file_names, database_file_name,
     if len(read_file_names) > 1:
         with open("kmc_input.txt", "w") as f:
             for input_file_name in read_file_names:
-                f.write(input_file_name)
+                f.write("{0}\n".format(input_file_name))
         input_str = "@kmc_input.txt"
     else:
         input_str = read_file_names[0]
@@ -861,6 +861,78 @@ def kmc_filter(inp_database_file_name, inp_read_file_name, out_read_file_name,
          read_format,
          ]
     )
+
+    # Run the command in the Docker image
+    client = docker.from_env()
+    client.containers.run(
+        image,
+        command=command,
+        volumes=volumes,
+        working_dir=working_dir,
+    )
+
+
+def wgsim(inp_fa_fNm,
+          out_fq_one_fNm,
+          out_fq_two_fNm,
+          error_rate=0.020,
+          outer_distance=500,
+          standard_deviation=50,
+          number_pairs=1000000,
+          len_first_read=70,
+          len_second_read=70,
+          mutation_rate=0.0010,
+          indel_fraction=0.15,
+          indel_extended_prob=0.30,
+          random_seed=0,
+          ambiguous_base_frac=0.05,
+          haplotype_mode=""):
+    """
+    Simulating sequence reads from a reference genome.
+
+    Documentation for samtools ver. 1.10
+
+    Usage:   wgsim [options] <in.ref.fa> <out.read1.fq> <out.read2.fq>
+
+    Options: -e FLOAT      base error rate [0.020]
+             -d INT        outer distance between the two ends [500]
+             -s INT        standard deviation [50]
+             -N INT        number of read pairs [1000000]
+             -1 INT        length of the first read [70]
+             -2 INT        length of the second read [70]
+             -r FLOAT      rate of mutations [0.0010]
+             -R FLOAT      fraction of indels [0.15]
+             -X FLOAT      probability an indel is extended [0.30]
+             -S INT        seed for random generator [0, use the current time]
+             -A FLOAT      discard if the fraction of ambiguous bases higher than FLOAT [0.05]
+             -h            haplotype mode
+    """
+    # Define image, and Docker run parameters
+    image = "ralatsdio/samtools:v1.10"
+    hosting_dir = os.path.dirname(os.path.abspath(__file__))
+    working_dir = "/data"
+    volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
+
+    # Define kmc command
+    command = " ".join(
+        ["wgsim",
+         "-e" + str(error_rate),
+         "-d" + str(outer_distance),
+         "-s" + str(standard_deviation),
+         "-N" + str(number_pairs),
+         "-1" + str(len_first_read),
+         "-2" + str(len_second_read),
+         "-r" + str(mutation_rate),
+         "-R" + str(indel_fraction),
+         "-X" + str(indel_extended_prob),
+         "-S" + str(random_seed),
+         "-A" + str(ambiguous_base_frac),
+         inp_fa_fNm,
+         out_fq_one_fNm,
+         out_fq_two_fNm
+         ]
+    )
+    # "-h" + str(haplotype_mode)
 
     # Run the command in the Docker image
     client = docker.from_env()
