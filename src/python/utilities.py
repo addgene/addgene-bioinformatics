@@ -873,6 +873,63 @@ def kmc_filter(inp_database_file_name, inp_read_file_name, out_read_file_name,
     )
 
 
+def get_kmc_read_format(read_file_names):
+    """
+    Determine a valid read format implied by the read file name
+    extension(s).
+
+    Parameters
+    ----------
+    read_file_names : str
+        list of read file names
+
+    Returns
+    -------
+    str
+        valid read format: FASTA is "-fa", FASTQ is "-fq", multi
+        FASTA is "-fm", or BAM is "-fbam"; default is "-fq"
+    """
+    valid_read_format = ""
+    p_fa = re.compile(r"\.f(ast)?a(\.gz)?$")
+    p_fq = re.compile(r"\.f(ast)?q(\.gz)?$")
+    p_bm = re.compile(r"\.bam$")
+    p_ss = re.compile(r"^>")
+    for input_file_name in read_file_names:
+        if p_fa.search(input_file_name) is not None:  # FASTA
+
+            # Count number of sequences
+            with open(input_file_name, 'r') as f:
+                n_seq = 0
+                for line in f:
+                    if p_ss.search(line) is not None:
+                        n_seq += 1
+            if n_seq == 0:
+                raise(Exception("No sequence found in FASTA file"))
+
+            elif n_seq == 1:  # FASTA
+                read_format = "-fa"
+
+            else:  # n_seq > 1 -- multi FASTA
+                read_format = "-fm"
+
+        elif p_fq.search(input_file_name) is not None:
+            read_format = "-fq"  # FASTQ
+
+        elif p_bm.search(input_file_name) is not None:
+            read_format = "-fbam"  # BAM
+
+        else:
+            raise(Exception("Unknown sequence file format"))
+
+        if valid_read_format == "":
+            valid_read_format = read_format
+
+        elif read_format != valid_read_format:
+            raise(Exception("Input files must use the same format"))
+
+    return valid_read_format
+
+
 def wgsim(inp_fa_fNm,
           out_fq_one_fNm,
           out_fq_two_fNm,
@@ -943,63 +1000,6 @@ def wgsim(inp_fa_fNm,
         volumes=volumes,
         working_dir=working_dir,
     )
-
-
-def get_kmc_read_format(read_file_names):
-    """
-    Determine a valid read format implied by the read file name
-    extension(s).
-
-    Parameters
-    ----------
-    read_file_names : str
-        list of read file names
-
-    Returns
-    -------
-    str
-        valid read format: FASTA is "-fa", FASTQ is "-fq", multi
-        FASTA is "-fm", or BAM is "-fbam"; default is "-fq"
-    """
-    valid_read_format = ""
-    p_fa = re.compile(r"\.f(ast)?a(\.gz)?$")
-    p_fq = re.compile(r"\.f(ast)?q(\.gz)?$")
-    p_bm = re.compile(r"\.bam$")
-    p_ss = re.compile(r"^>")
-    for input_file_name in read_file_names:
-        if p_fa.search(input_file_name) is not None:  # FASTA
-
-            # Count number of sequences
-            with open(input_file_name, 'r') as f:
-                n_seq = 0
-                for line in f:
-                    if p_ss.search(line) is not None:
-                        n_seq += 1
-            if n_seq == 0:
-                raise(Exception("No sequence found in FASTA file"))
-
-            elif n_seq == 1:  # FASTA
-                read_format = "-fa"
-
-            else:  # n_seq > 1 -- multi FASTA
-                read_format = "-fm"
-
-        elif p_fq.search(input_file_name) is not None:
-            read_format = "-fq"  # FASTQ
-
-        elif p_bm.search(input_file_name) is not None:
-            read_format = "-fbam"  # BAM
-
-        else:
-            raise(Exception("Unknown sequence file format"))
-
-        if valid_read_format == "":
-            valid_read_format = read_format
-
-        elif read_format != valid_read_format:
-            raise(Exception("Input files must use the same format"))
-
-    return valid_read_format
 
 
 if __name__ == "__main__":
