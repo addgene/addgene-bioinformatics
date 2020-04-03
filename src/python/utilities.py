@@ -9,6 +9,7 @@ from Bio import SeqIO
 from Bio.Alphabet import IUPAC
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
+
 import docker
 
 logger = logging.getLogger(__name__)
