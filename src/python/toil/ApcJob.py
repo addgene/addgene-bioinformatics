@@ -111,7 +111,7 @@ if __name__ == "__main__":
     # making the output directory if needed
     parser = ArgumentParser()
     Job.Runner.addToilOptions(parser)
-    cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-1]
+    cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-2]
     cmps.extend(["A11967A_sW0154_B01"])
     parser.add_argument('-d', '--data-path',
                         default=os.sep + os.path.join(*cmps),
