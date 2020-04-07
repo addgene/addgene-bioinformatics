@@ -22,7 +22,7 @@ import utilities
 class ToilTestCase(unittest.TestCase):
 
     def setUp(self):
-        cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-3]
+        cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-4]
         cmps.extend(["dat", "miscellaneous"])
         self.data_directory = os.sep + os.path.join(*cmps)
         self.plate_spec_a = "A11967A_sW0154"

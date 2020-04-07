@@ -162,7 +162,7 @@ if __name__ == "__main__":
     # needed
     parser = ArgumentParser()
     Job.Runner.addToilOptions(parser)
-    cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-3]
+    cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-4]
     cmps.extend(["dat", "miscellaneous"])
     parser.add_argument('-d', '--data-path',
                         default=os.sep + os.path.join(*cmps),

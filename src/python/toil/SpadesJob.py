@@ -11,15 +11,15 @@ import utilities
 logger = logging.getLogger(__name__)
 
 
-class SkesaJob(Job):
+class SpadesJob(Job):
     """
-    Accepts paired-end Illumina reads for assembly using SKESA.
+    Accepts paired-end Illumina reads for assembly with a coverage
+    cutoff specification.
     """
     def __init__(self, read_one_file_id, read_two_file_id,
-                 parent_rv={},
+                 coverage_cutoff, output_directory, parent_rv={},
                  read_one_file_name="R1.fastq.gz",
                  read_two_file_name="R2.fastq.gz",
-                 output_file="contigs.fa",
                  *args, **kwargs):
         """
         Parameters
@@ -30,15 +30,20 @@ class SkesaJob(Job):
         read_two_file_id : toil.fileStore.FileID
             id of the file in the file store containing FASTQ Illumina
             short right paired reads
+        coverage_cutoff : str
+            read coverage cutoff value
+        output_directory : str
+            name of directory for output
         parent_rv : dict
             dictionary of return values from the parent job
         """
-        super(SkesaJob, self).__init__(*args, **kwargs)
+        super(SpadesJob, self).__init__(*args, **kwargs)
         self.read_one_file_id = read_one_file_id
         self.read_one_file_name = read_one_file_name
         self.read_two_file_id = read_two_file_id
         self.read_two_file_name = read_two_file_name
-        self.output_file = output_file
+        self.coverage_cutoff = coverage_cutoff
+        self.output_directory = output_directory
         self.parent_rv = parent_rv
 
     def run(self, fileStore):
@@ -46,13 +51,13 @@ class SkesaJob(Job):
         Returns
         -------
         dict of toil.fileStore.FileID and str
-            file ids and names of log and corrections files, and
+            file ids and names of warnings and spades log files, and
             contigs FASTA file
         """
         # Expected output file names
-        # TODO: Find a way to capture stderr
-        # log_file_name = "skesa.log"
-        contigs_file_name = self.output_file
+        warnings_file_name = "warnings.log"
+        spades_file_name = "spades.log"
+        contigs_file_name = "contigs.fasta"
 
         try:
             # Read the read files from the file store into the local
@@ -64,9 +69,9 @@ class SkesaJob(Job):
 
             # Mount the Toil local temporary directory to the same path in
             # the container, and use the path as the working directory in
-            # the container, then call SKESA
+            # the container, then call spades.py
             # TODO: Specify the container on construction
-            image = "ralatsdio/skesa:v2.3.0"
+            image = "ralatsdio/spades:v3.13.1"
             working_dir = fileStore.localTempDir
             logger.info("Calling image {0}".format(image))
             apiDockerCall(
@@ -74,56 +79,65 @@ class SkesaJob(Job):
                 image=image,
                 volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
                 working_dir=working_dir,
-                parameters=["skesa",
-                            "--fastq",
-                            ",".join([read_one_file_path, read_two_file_path]),
-                            "--contigs_out",
-                            os.path.join(working_dir, contigs_file_name),
-                            ],
-                # stderr=True,
-                # steamfile=log_file_name,
-                )
+                parameters=["spades.py",
+                            "-1",
+                            read_one_file_path,
+                            "-2",
+                            read_two_file_path,
+                            "-o",
+                            os.path.join(working_dir, self.output_directory),
+                            "--cov-cutoff",
+                            self.coverage_cutoff,
+                            ])
 
-            # Write the SKESA log, and contigs FASTA file from the
-            # local temporary directory into the file store
-            # log_file_id = utilities.writeGlobalFile(
-            #     fileStore, log_file_name)
+            # Write the warnings and spades log files, and contigs FASTA
+            # file from the local temporary directory into the file store
+            warnings_file_id = utilities.writeGlobalFile(
+                fileStore, self.output_directory, warnings_file_name)
+            spades_file_id = utilities.writeGlobalFile(
+                fileStore, self.output_directory, spades_file_name)
             contigs_file_id = utilities.writeGlobalFile(
-                fileStore, contigs_file_name)
+                fileStore, self.output_directory, contigs_file_name)
 
         except Exception as exc:
             # Ensure expectred return values on exceptions
-            # log_file_id = None
             logger.info("Calling image {0} failed: {1}".format(image, exc))
+            warnings_file_id = None
+            spades_file_id = None
             contigs_file_id = None
 
         # Return file ids and names for export
-        skesa_rv = {
-            'skesa_rv': {
-                # 'log_file': {
-                #     'id': log_file_id,
-                #     'name': log_file_name,
-                # },
+        spades_rv = {
+            'spades_rv': {
+                'warnings_file': {
+                    'id': warnings_file_id,
+                    'name': warnings_file_name,
+                },
+                'spades_file': {
+                    'id': spades_file_id,
+                    'name': spades_file_name,
+                },
                 'contigs_file': {
                     'id': contigs_file_id,
                     'name': contigs_file_name,
                 },
             }
         }
-        skesa_rv.update(self.parent_rv)
-        logger.info("Return value {0}".format(skesa_rv))
-        return skesa_rv
+        spades_rv.update(self.parent_rv)
+        logger.info("Return value {0}".format(spades_rv))
+        return spades_rv
 
 
 if __name__ == "__main__":
     """
     Assemble reads corresponding to a single well.
     """
-    # Parse FASTQ data path, plate and well specification, and output
-    # directory, making the output directory if needed
+    # Parse FASTQ data path, plate and well specification, coverage
+    # cutoff, and output directory, making the output directory if
+    # needed
     parser = ArgumentParser()
     Job.Runner.addToilOptions(parser)
-    cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-3]
+    cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-4]
     cmps.extend(["dat", "miscellaneous"])
     parser.add_argument('-d', '--data-path',
                         default=os.sep + os.path.join(*cmps),
@@ -135,6 +149,8 @@ if __name__ == "__main__":
                         help="the plate specification")
     parser.add_argument('-w', '--well-spec', default="B01",
                         help="the well specification")
+    parser.add_argument('-c', '--coverage-cutoff', default="100",
+                        help="the coverage cutoff")
     parser.add_argument('-o', '--output-directory', default=None,
                         help="the directory containing all output files")
     options = parser.parse_args()
@@ -152,19 +168,21 @@ if __name__ == "__main__":
                 toil, options.data_path, options.plate_spec,
                 [options.well_spec], options.source_scheme)
 
-            # Construct and start the SKESA job
-            skesa_job = SkesaJob(
+            # Construct and start the SPAdes job
+            spades_job = SpadesJob(
                 read_one_file_ids[0],
                 read_two_file_ids[0],
+                options.coverage_cutoff,
+                options.output_directory,
                 )
-            skesa_rv = toil.start(skesa_job)
+            spades_rv = toil.start(spades_job)
 
         else:
 
-            # Restart the SKESA job
-            skesa_rv = toil.restart(skesa_job)
+            # Restart the SPAdes job
+            spades_rv = toil.restart(spades_job)
 
-        # Export all SKESA output files from the file store
+        # Export all SPAdes output files from the file store
         utilities.exportFiles(
-            toil, options.output_directory, skesa_rv['skesa_rv']
+            toil, options.output_directory, spades_rv['spades_rv']
         )
