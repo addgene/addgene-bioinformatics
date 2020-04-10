@@ -20,21 +20,23 @@ using Docker Desktop on macOS, this mount is accomplished in
 $ git clone git@github.com:addgene/addgene-bioinformatics.git
 ```
 
-## Create a virtual environment (using a Python 2 version), and install the requirements:
+## Create a virtual environment (using a Python 3 version), and install the requirements:
 
 ```
 $ mkvirtualenv addgene-bioinformatics
 $ pip install -r requirements.txt
 ```
 
-Note that Toil runs fine using a python 3 version, however, the Toil
-appliance (a docker image) still uses a python 2 version.
-
 ## Pull required images from Docker Hub:
 
 ```
-$ docker pull biocontainers/spades:v3.13.1_cv1
-$ docker pull ralatsdio/apc:latest
+$ docker pull ralatsdio/masurca:v3.3.1
+$ docker pull ralatsdio/novoplasty:v3.7.0
+$ docker pull ralatsdio/shovill:v1.0.9
+$ docker pull ralatsdio/skesa:v2.3.0
+$ docker pull ralatsdio/spades:v3.13.1
+$ docker pull ralatsdio/unicycler:v0.4.7
+$ docker pull ralatsdio/apc:v0.1.0
 ```
 
 # Demonstration
@@ -88,12 +90,6 @@ $ toil ssh-cluster --zone us-east-1a assembly-cluster
 # cd
 # tar -zxvf python.tar.gz
 # tar -zxvf miscellaneous.tar.gz
-```
-
-### Run the Toil sort example:
-
-```
-# python sort.py --provisioner aws --nodeTypes c3.large --maxNodes 2 --batchSystem mesos aws:us-east-1:sort
 ```
 
 ### Run the default plate assembly job on the cluster leader only with a local or S3 file store:
