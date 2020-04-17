@@ -178,7 +178,8 @@ def rotate_seqs(a_seq, o_seq):
 
 
 def kmc(read_file_names, database_file_name,
-        k_mer_length=25, signature_length=9, count_min=2, count_max=1e9):
+        k_mer_length=25, signature_length=9,
+        count_min=2, max_count=255, count_max=1e9):
     """
     Counts k-mers.
 
@@ -248,6 +249,7 @@ def kmc(read_file_names, database_file_name,
          "-k" + str(k_mer_length),
          "-p" + str(signature_length),
          "-ci" + str(int(count_min)),
+         "-cs" + str(int(max_count)),
          "-cx" + str(int(count_max)),
          read_format,
          input_str,
@@ -360,7 +362,7 @@ def kmc_simple(inp_database_file_name_a, operation, inp_database_file_name_b,
                out_database_file_name,
                inp_count_min_a=2, inp_count_max_a=1e9,
                inp_count_min_b=2, inp_count_max_b=1e9,
-               out_count_min=2, out_count_max=1e9,
+               out_count_min=2, out_max_count=255, out_count_max=1e9,
                out_calc_mode=""):
     """
     Performs set operation on two input KMC databases.
@@ -456,6 +458,7 @@ def kmc_simple(inp_database_file_name_a, operation, inp_database_file_name_b,
          "-cx" + str(int(inp_count_max_b)),
          operation, out_database_file_name,
          "-ci" + str(int(out_count_min)),
+         "-cs" + str(int(out_max_count)),
          "-cx" + str(int(out_count_max)),
          ]
     )
