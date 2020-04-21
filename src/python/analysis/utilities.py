@@ -179,7 +179,8 @@ def rotate_seqs(a_seq, o_seq):
 
 def kmc(read_file_names, database_file_name,
         k_mer_length=25, signature_length=9,
-        count_min=2, max_count=255, count_max=1e9):
+        count_min=2, max_count=255, count_max=1e9,
+        canonical_form=True):
     """
     Counts k-mers.
 
@@ -251,6 +252,12 @@ def kmc(read_file_names, database_file_name,
          "-ci" + str(int(count_min)),
          "-cs" + str(int(max_count)),
          "-cx" + str(int(count_max)),
+         ]
+    )
+    if not canonical_form:
+        command = " ".join([command, "-b"])
+    command = " ".join(
+        [command,
          read_format,
          input_str,
          database_file_name,
@@ -346,7 +353,7 @@ def kmc_transform(inp_database_file_name, operation, out_database_file_name,
          ]
     )
     if operation == "dump" and is_sorted:
-        " ".join(command, "-s")
+        command = " ".join([command, "-s"])
 
     # Run the command in the Docker image
     client = docker.from_env()
@@ -463,7 +470,7 @@ def kmc_simple(inp_database_file_name_a, operation, inp_database_file_name_b,
          ]
     )
     if out_calc_mode != "":
-        " ".join(command, "-oc{0}".format(out_calc_mode))
+        command = " ".join([command, "-oc{0}".format(out_calc_mode)])
 
     # Run the command in the Docker image
     client = docker.from_env()
@@ -609,9 +616,9 @@ def kmc_filter(inp_database_file_name, inp_read_file_name, out_read_file_name,
     )
     # TODO: Determine if these options are mutually exclusive
     if trim_reads:
-        " ".join(command, "-t")
+        command = " ".join([command, "-t"])
     if hard_mask:
-        " ".join(command, "-hm")
+        command = " ".join([command, "-hm"])
     command = " ".join(
         [command,
          inp_database_file_name,
@@ -707,7 +714,7 @@ def wgsim(inp_fa_fNm,
           indel_extended_prob=0.30,
           random_seed=0,
           ambiguous_base_frac=0.05,
-          haplotype_mode=""):
+          haplotype_mode=False):
     """
     Simulating sequence reads from a reference genome.
 
@@ -753,7 +760,8 @@ def wgsim(inp_fa_fNm,
          out_fq_two_fNm
          ]
     )
-    # "-h" + str(haplotype_mode)
+    if haplotype_mode:
+        command = " ".join([command, "-h"])
 
     # Run the command in the Docker image
     client = docker.from_env()
