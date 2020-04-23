@@ -1,3 +1,5 @@
+from argparse import ArgumentParser
+from configparser import ConfigParser
 import os
 import pickle
 import random
@@ -5,10 +7,8 @@ import re
 import time
 
 from Bio import SeqIO
-from Bio.Alphabet import IUPAC
-from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-
+import matplotlib.pyplot as plt
 import numpy as np
 
 import utilities
@@ -46,7 +46,7 @@ def simulate_paired_reads_clean(seq, seq_nm, number_pairs=50000,
         i_rd2 = i_rd1 + outer_distance - len_second_read
         rd2_seq_rcd = SeqRecord(
             seq[i_rd2:i_rd2 + len_first_read],
-            id=str(iP), name="one", description="second read of read pair")
+            id=str(iP), name="two", description="second read of read pair")
         rd2_seq_rcd.letter_annotations["phred_quality"] = (
             40 * np.ones(len_second_read, dtype=int)).tolist()
         rd2_seq_rcds.append(rd2_seq_rcd)
@@ -80,8 +80,8 @@ def simulate_paired_reads_wgsim(seq, seq_nm, number_pairs=50000,
                     indel_fraction=0.0,
                     indel_extended_prob=0.0,
                     random_seed=0,
-                    ambiguous_base_frac=1.0,
-                    haplotype_mode="")
+                    ambiguous_base_frac=0.0,
+                    haplotype_mode=True)
     return rd1_fNm, rd2_fNm
 
 
@@ -150,122 +150,159 @@ def read_k_mer_counts(k_mer_counts_fNm, k_mers, seq_id=0):
 
 
 if __name__ == "__main__":
+    # Add and parse arguments
+    parser = ArgumentParser()
 
-    start_time = time.time()
-    print("creating random sequence with repeats ...", end=" ", flush=True)
-    r_seq = create_r_seq_w_rep()
-    print("done in {0} s".format(time.time() - start_time), flush=True)
-    print("random sequence length: {0}".format(len(r_seq)))
+    parser.add_argument('-w', '--with-repeats',
+                        action='store_true',
+                        help="create a random sequence with repeats")
+
+    parser.add_argument('-p', '--plot-histogram',
+                        action='store_true',
+                        help="plot histogram of k-mer counts")
+
+    parser.add_argument('-r', '--reprocess',
+                        action='store_true',
+                        help="reprocess alignments")
+
+    options = parser.parse_args()
+
+    pickle_file_name = __name__+"pickle"
+    if not os.path.exists(pickle_file_name) or options.reprocess:
+        start_time = time.time()
+        print("creating random sequence with repeats ...", end=" ", flush=True)
+        if options.with_repeats:
+            r_seq = create_r_seq_w_rep()
+        else:
+            r_seq = utilities.create_r_seq(10000)
+        print("done in {0} s".format(time.time() - start_time), flush=True)
+        print("random sequence length: {0}".format(len(r_seq)))
+
+        start_time = time.time()
+        print("counting k_mers in sequence ...", end=" ", flush=True)
+        k_mers_in_seq = count_k_mers_in_seq(r_seq + r_seq, {})
+        print("done in {0} s".format(time.time() - start_time), flush=True)
+
+        # === clean ===
+
+        start_time = time.time()
+        print("simulating paired reads ...", end=" ", flush=True)
+        rd1_fNm, rd2_fNm = simulate_paired_reads_clean(r_seq + r_seq, "ccc_clean")
+        print("done in {0} s".format(time.time() - start_time), flush=True)
+
+        start_time = time.time()
+        print("counting k_mers in reads ...", end=" ", flush=True)
+        k_mers_in_rd1_c, _ = count_k_mers_in_rds(rd1_fNm, {})
+        k_mers_in_rd2_c, _ = count_k_mers_in_rds(rd2_fNm, {})
+        print("done in {0} s".format(time.time() - start_time), flush=True)
+
+        start_time = time.time()
+        print("writing k_mers and counts in reads ...", end=" ", flush=True)
+        write_k_mer_counts_in_rds(k_mers_in_rd1_c, k_mers_in_rd2_c, "ccc_clean_cnt.txt")
+        print("done in {0} s".format(time.time() - start_time), flush=True)
+
+        start_time = time.time()
+        print("counting k_mers in reads using kmc ...", end=" ", flush=True)
+        read_file_names = [rd1_fNm, rd2_fNm]
+        inp_database_file_name = "ccc_clean"
+        out_database_file_name = "ccc_clean_kmc.txt"
+        utilities.kmc(read_file_names, inp_database_file_name,
+                      count_min=0, max_count=1e9, canonical_form=False)
+        utilities.kmc_transform(inp_database_file_name, "dump",
+                                out_database_file_name)
+        print("done in {0} s".format(time.time() - start_time), flush=True)
+
+        start_time = time.time()
+        print("reading k_mers counted using kmc ...", end=" ", flush=True)
+        k_mers_by_kmc_c = read_k_mer_counts(out_database_file_name, {})
+        print("done in {0} s".format(time.time() - start_time), flush=True)
+
+        counts = {}
+        counts['r_seq'] = r_seq
+        counts['k_mers_in_seq'] = k_mers_in_seq
+        counts['k_mers_in_rd1_c'] = k_mers_in_rd1_c
+        counts['k_mers_in_rd2_c'] = k_mers_in_rd2_c
+        counts['k_mers_by_kmc_c'] = k_mers_by_kmc_c
+        print("Dumping counts")
+        with open(pickle_file_name, 'wb') as pickle_file:
+            pickle.dump(counts, pickle_file)
+
+    else:
+
+        print("Loading counts")
+        with open(pickle_file_name, 'rb') as pickle_file:
+            counts = pickle.load(pickle_file)
+        r_seq = counts['r_seq']
+        k_mers_in_seq = counts['k_mers_in_seq']
+        k_mers_in_rd1_c = counts['k_mers_in_rd1_c']
+        k_mers_in_rd2_c = counts['k_mers_in_rd2_c']
+        k_mers_by_kmc_c = counts['k_mers_by_kmc_c']
+
+
     print("r_seq: ", r_seq)
     print("r_seq + r_seq: ", r_seq + r_seq)
-
-    # TODO: Double or single?
-    start_time = time.time()
-    print("counting k_mers in sequence ...", end=" ", flush=True)
-    k_mers_in_seq = count_k_mers_in_seq(r_seq + r_seq, {})
-    print("done in {0} s".format(time.time() - start_time), flush=True)
-
-    # === clean ===
-
-    # TODO: Double or single?
-    start_time = time.time()
-    print("simulating paired reads ...", end=" ", flush=True)
-    rd1_fNm, rd2_fNm = simulate_paired_reads_clean(r_seq + r_seq, "ccc_clean")
-    print("done in {0} s".format(time.time() - start_time), flush=True)
-
-    start_time = time.time()
-    print("counting k_mers in reads ...", end=" ", flush=True)
-    k_mers_in_rd1_c, _ = count_k_mers_in_rds(rd1_fNm, {})
-    k_mers_in_rd2_c, _ = count_k_mers_in_rds(rd2_fNm, {})
-    print("done in {0} s".format(time.time() - start_time), flush=True)
-
-    start_time = time.time()
-    print("writing k_mers and counts in reads ...", end=" ", flush=True)
-    write_k_mer_counts_in_rds(k_mers_in_rd1_c, k_mers_in_rd2_c, "ccc_clean_cnt.txt")
-    print("done in {0} s".format(time.time() - start_time), flush=True)
-
-    start_time = time.time()
-    print("counting k_mers in reads using kmc ...", end=" ", flush=True)
-    read_file_names = [rd1_fNm, rd2_fNm]
-    inp_database_file_name = "ccc_clean"
-    out_database_file_name = "ccc_clean_kmc.txt"
-    utilities.kmc(read_file_names, inp_database_file_name,
-                  count_min=0, max_count=1e9, canonical_form=False)
-    utilities.kmc_transform(inp_database_file_name, "dump",
-                            out_database_file_name)
-    print("done in {0} s".format(time.time() - start_time), flush=True)
-
-    start_time = time.time()
-    print("reading k_mers counted using kmc ...", end=" ", flush=True)
-    k_mers_by_kmc_c = read_k_mer_counts(out_database_file_name, {})
-    print("done in {0} s".format(time.time() - start_time), flush=True)
-
-    # === wgsim ===
-
-    start_time = time.time()
-    print("simulating paired reads ...", end=" ", flush=True)
-    rd1_fNm, rd2_fNm = simulate_paired_reads_wgsim(r_seq + r_seq, "ccc_wgsim")
-    print("done in {0} s".format(time.time() - start_time), flush=True)
-
-    start_time = time.time()
-    print("writing k_mers and counts in reads ...", end=" ", flush=True)
-    k_mers_in_rd1_n, _ = count_k_mers_in_rds(rd1_fNm, {})
-    k_mers_in_rd2_n, _ = count_k_mers_in_rds(rd2_fNm, {})
-    print("done in {0} s".format(time.time() - start_time), flush=True)
-
-    start_time = time.time()
-    print("writing k_mers and counts in reads ...", end=" ", flush=True)
-    write_k_mer_counts_in_rds(k_mers_in_rd1_n, k_mers_in_rd2_n, "ccc_wgsim_cnt.txt")
-    print("done in {0} s".format(time.time() - start_time), flush=True)
-
-    start_time = time.time()
-    print("counting k_mers in reads using kmc ...", end=" ", flush=True)
-    read_file_names = [rd1_fNm, rd2_fNm]
-    inp_database_file_name = "ccc_wgsim"
-    out_database_file_name = "ccc_wgsim_kmc.txt"
-    utilities.kmc(read_file_names, inp_database_file_name,
-                  count_min=0, max_count=1e9, canonical_form=False)
-    utilities.kmc_transform(inp_database_file_name, "dump",
-                            out_database_file_name)
-    print("done in {0} s".format(time.time() - start_time), flush=True)
-
-    start_time = time.time()
-    print("reading k_mers counted using kmc ...", end=" ", flush=True)
-    k_mers_by_kmc_n = read_k_mer_counts(out_database_file_name, {})
-    print("done in {0} s".format(time.time() - start_time), flush=True)
-
     for k_mer in k_mers_in_seq.keys():
-
         ln = "k_mer: {0} in_seq: {1:6d}".format(k_mer, k_mers_in_seq[k_mer]["cnt"])
-
         if k_mer in k_mers_in_rd1_c.keys():
             ln += ", in_rd1_c: {0:6d}".format(k_mers_in_rd1_c[k_mer]["cnt"])
         else:
             ln += ", in_rd1_c: {0:6d}".format(0)
-
         if k_mer in k_mers_in_rd2_c.keys():
             ln += ", in_rd2_c: {0:6d}".format(k_mers_in_rd2_c[k_mer]["cnt"])
         else:
             ln += ", in_rd2_c: {0:6d}".format(0)
-
         if k_mer in k_mers_by_kmc_c.keys():
             ln += ", by_kmc_c: {0:6d}".format(k_mers_by_kmc_c[k_mer]["cnt"])
         else:
             ln += ", by_kmc_c: {0:6d}".format(0)
-
-        if k_mer in k_mers_in_rd1_n.keys():
-            ln += ", in_rd1_n: {0:6d}".format(k_mers_in_rd1_n[k_mer]["cnt"])
-        else:
-            ln += ", in_rd1_n: {0:6d}".format(0)
-
-        if k_mer in k_mers_in_rd2_n.keys():
-            ln += ", in_rd2_n: {0:6d}".format(k_mers_in_rd2_n[k_mer]["cnt"])
-        else:
-            ln += ", in_rd2_n: {0:6d}".format(0)
-
-        if k_mer in k_mers_by_kmc_n.keys():
-            ln += ", by_kmc_n: {0:6d}".format(k_mers_by_kmc_n[k_mer]["cnt"])
-        else:
-            ln += ", by_kmc_n: {0:6d}".format(0)
-
         print(ln)
+
+    if options.plot_histogram:
+        cn_in_seq = np.array([val['cnt'] / 2.0 for val in k_mers_in_seq.values()])
+        cn_in_rds_c = np.array(
+            [(k_mers_in_rd1_c[key]['cnt'] + k_mers_in_rd2_c[key]['cnt']) / 2.0
+             for key in k_mers_in_rd1_c.keys()]
+        )
+        cn_by_kmc_c = np.array([val['cnt'] / 2.0 for val in k_mers_by_kmc_c.values()])
+
+        coverage = int(np.sum(cn_in_rds_c) / np.sum(cn_in_seq))
+
+        cn_in_rds_c = cn_in_rds_c / coverage
+        cn_by_kmc_c = cn_by_kmc_c / coverage
+
+        bin_stp = 1.0
+        bin_min = min(np.min(cn_in_seq), np.min(cn_in_rds_c), np.min(cn_by_kmc_c)) - bin_stp / 2
+        bin_max = max(np.max(cn_in_seq), np.max(cn_in_rds_c), np.max(cn_by_kmc_c)) + bin_stp / 2
+
+        bin_edges = np.arange(bin_min, bin_max, bin_stp)
+
+        cn_in_seq_hist, _ = np.histogram(cn_in_seq, bin_edges)
+
+        cn_in_rds_c_hist, _ = np.histogram(cn_in_rds_c, bin_edges)
+        cn_by_kmc_c_hist, _ = np.histogram(cn_by_kmc_c, bin_edges)
+
+        fig, ax = plt.subplots()
+
+        ax.bar(bin_edges[:-1] + bin_stp / 2 + 1 * bin_stp / 6, cn_in_seq_hist,
+               width=0.3, align='center', color='r')
+
+        ax.bar(bin_edges[:-1] + bin_stp / 2 + 3 * bin_stp / 6, cn_in_rds_c_hist,
+               width=0.3, align='center', color='g')
+
+        ax.bar(bin_edges[:-1] + bin_stp / 2 + 5 * bin_stp / 6, cn_by_kmc_c_hist,
+               width=0.3, align='center', color='b')
+
+        ax.set_title("Random sequence with repeats")
+        ax.set_xlabel("k-mer counts")
+        ax.set_ylabel("Frequency")
+
+        x1, x2 = ax.get_xlim()
+        xW = x2 - x1
+
+        y1, y2 = ax.get_ylim()
+        yW = y2 - y1
+
+        ax.text(x1 + 0.10 * xW, y2 - 0.05 * yW,
+                "Coverage: {}".format(coverage))
+
+        plt.show()
