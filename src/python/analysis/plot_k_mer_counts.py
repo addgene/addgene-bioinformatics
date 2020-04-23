@@ -23,6 +23,10 @@ def create_r_seq_w_rep(k_mer_len=25, k_mer_cnt=[2**(n+1) for n in range(8)]):
     return r_seq
 
 
+# TODO: Add error rate, outer distance standard deviation, indel
+# fraction, indel extension probablility, and random seed:
+# error_rate=0.020, standard_deviation=50, indel_fraction=0.15,
+# indel_extended_prob=0.30, random_seed=0,
 def simulate_paired_reads_clean(seq, seq_nm, number_pairs=50000,
                                 len_first_read=250, len_second_read=250,
                                 outer_distance=500):
@@ -54,6 +58,7 @@ def simulate_paired_reads_clean(seq, seq_nm, number_pairs=50000,
     return rd1_fNm, rd2_fNm
 
 
+# TODO: Validate
 def simulate_paired_reads_wgsim(seq, seq_nm, number_pairs=50000,
                                 len_first_read=250, len_second_read=250,
                                 outer_distance=500):
