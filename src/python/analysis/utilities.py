@@ -755,13 +755,17 @@ def wgsim(inp_fa_fNm,
          "-X" + str(indel_extended_prob),
          "-S" + str(random_seed),
          "-A" + str(ambiguous_base_frac),
+         ]
+    )
+    if haplotype_mode:
+        command = " ".join([command, "-h"])
+    command = " ".join(
+        [command,
          inp_fa_fNm,
          out_fq_one_fNm,
          out_fq_two_fNm
          ]
     )
-    if haplotype_mode:
-        command = " ".join([command, "-h"])
 
     # Run the command in the Docker image
     client = docker.from_env()
