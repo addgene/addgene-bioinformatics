@@ -447,7 +447,7 @@ def plot_alignment_scores(assembler, cp_sequences):
                  / cp_sequences['qc_sequence_len'][assembler_valid_index])
    )
 
-    assembler_histogram, tmp = np.histogram(assembler_valid_score, bin_edges)
+    assembler_histogram, _ = np.histogram(assembler_valid_score, bin_edges)
     ax.bar(bin_edges[:-1] - bin_width / 4,
            100.0 * assembler_histogram / len(assembler_valid_index),
            width=2.0, align='center', color='b')
@@ -462,7 +462,7 @@ def plot_alignment_scores(assembler, cp_sequences):
                      / cp_sequences['qc_sequence_len'][circularizer_valid_index])
         )
 
-        circularizer_histogram, tmp = np.histogram(circularizer_valid_score, bin_edges)
+        circularizer_histogram, _ = np.histogram(circularizer_valid_score, bin_edges)
         ax.bar(bin_edges[:-1] + bin_width / 4,
                100.0 * circularizer_histogram / len(circularizer_valid_index),
                width=2.0, align='center', color='r')
