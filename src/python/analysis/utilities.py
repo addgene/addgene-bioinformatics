@@ -1,3 +1,4 @@
+import gzip
 import logging
 import math
 import os
@@ -52,6 +53,31 @@ def create_r_seq(seq_len):
     return r_seq
 
 
+def create_r_seq_w_rep(k_mer_len=25, k_mer_cnt=[2**(n+1) for n in range(8)]):
+    """Creates a k-mer set of randomly selected nucleotides and uses
+    the set to construct a sequence with the specified number of
+    repeats.
+
+    Parameters
+    ----------
+    k_mer_len : int
+        the length of the k_mer to create
+    k_mer_cnt : [int]
+        the number of times to repeat each k_mer
+
+    Returns
+    -------
+    Bio.Seq.Seq
+        the sequence
+    """
+    r_seq = create_r_seq(k_mer_len)
+    for kMC in k_mer_cnt:
+        t_seq = create_r_seq(k_mer_len)
+        for iKM in range(kMC):
+            r_seq += t_seq
+    return r_seq
+
+
 def create_aligner(config):
     """Creates a pairwise aligner with the specified configuration.
 
@@ -92,9 +118,9 @@ def rotate_seqs(a_seq, o_seq):
 
     Parameters
     ----------
-    a_seq: Bio.Seq.Seq
+    a_seq : Bio.Seq.Seq
         thought of as the reference sequence
-    o_seq: Bio.Seq.Seq
+    o_seq : Bio.Seq.Seq
         thought of as the candidate sequence
 
     Returns
@@ -167,14 +193,150 @@ def rotate_seqs(a_seq, o_seq):
     )
 
     # Read the multi-FASTA output file
-    seq_records = [seq_record for seq_record in SeqIO.parse(
+    seq_rcds = [seq_record for seq_record in SeqIO.parse(
         os.path.join(hosting_dir, output_file), "fasta")]
 
     # Assign and return the rotated sequences
-    r_a_seq = seq_records[0].seq
-    r_o_seq = seq_records[1].seq
+    r_a_seq = seq_rcds[0].seq
+    r_o_seq = seq_rcds[1].seq
 
     return (r_a_seq, r_o_seq)
+
+
+def count_k_mers_in_seq(seq, seq_id=0, k_mer_len=25, k_mers=None):
+    """Count k-mers of a specified length in a sequence with a
+    specified identifier.
+
+    Parameters
+    ----------
+    seq : Bio.Seq.Seq
+        the sequence in which to count
+    seq_id : int
+        the sequence identifer
+    k_mer_len : int
+        the length of k-mers to count
+    k_mers : None or dct
+        None or dictionary returned by this method
+
+    Returns
+    -------
+    dct
+        dictionay containing k-mer keys and counts and source sequence
+        identifiers values
+    """
+    if k_mers is None:
+        k_mers = {}
+    seq_len = len(seq)
+    for i_seq in range(seq_len - k_mer_len + 1):
+        k_mer = str(seq[i_seq:i_seq + k_mer_len])
+        if k_mer not in k_mers:
+            k_mers[k_mer] = {}
+            k_mers[k_mer]["src"] = set([seq_id])
+            k_mers[k_mer]["cnt"] = 1
+        else:
+            k_mers[k_mer]["src"].add(seq_id)
+            k_mers[k_mer]["cnt"] += 1
+    return k_mers
+
+
+def count_k_mers_in_rds(rd_fNm, k_mer_len=25, k_mers=None, seq_rcds=None):
+    """Count k-mers of a specified length in a gzipped file of reads
+    in the specified format.
+
+    Parameters
+    ----------
+    rd_fNm : str
+        the name of the gzipped read file
+    k_mer_len : int
+        the length of k-mers to count
+    k_mers : None or dct
+        None or dictionary returned by count_k_mers_in_seq()
+    seq_rcds : None or lst
+        None or list of sequence records in which k-mers were counted
+
+    Returns
+    -------
+    (dct, [Bio.SeqRecord.SeqRecord])
+        dictionay containing k-mer keys and count and source sequence
+        record index values, and list of sequence records in which
+        k-mers were counted
+    """
+    if k_mers is None:
+        k_mers = {}
+    if seq_rcds is None:
+        seq_rcds = []
+    read_format, is_gzipped = get_bio_read_format(rd_fNm)
+    _open = open
+    if is_gzipped:
+        _open = gzip.open
+    with _open(rd_fNm, "rt") as f:
+        seq_rcd_gen = SeqIO.parse(f, format=read_format)
+        i_seq = -1
+        for seq_rcd in seq_rcd_gen:
+            i_seq += 1
+            k_mers = count_k_mers_in_seq(seq_rcd.seq, i_seq, k_mers=k_mers)
+            seq_rcds.append(seq_rcd)
+    return k_mers, seq_rcds
+
+
+def write_k_mer_counts_in_rds(k_mers_in_rd1, k_mers_in_rd2, k_mer_counts_fNm):
+    """Sum, then write the k-mer counts corresponding to paired reads.
+
+    Parameters
+    ----------
+    k_mers_in_rd1 : dct
+        dictionary returned by count_k_mers_in_seq()
+    k_mers_in_rd2 : dct
+        dictionary returned by count_k_mers_in_seq()
+    k_mer_counts_fNm
+        file name to which to write k-mers and their counts
+    """
+    with open(k_mer_counts_fNm, "w") as f:
+        k_mer_set_rd1 = set(k_mers_in_rd1.keys())
+        k_mer_set_rd2 = set(k_mers_in_rd2.keys())
+        k_mer_set = k_mer_set_rd1.union(k_mer_set_rd2)
+        for k_mer in sorted(k_mer_set):
+            k_mer_cnt = 0
+            if k_mer in k_mer_set_rd1:
+                k_mer_cnt += k_mers_in_rd1[k_mer]['cnt']
+            if k_mer in k_mer_set_rd2:
+                k_mer_cnt += k_mers_in_rd2[k_mer]['cnt']
+            f.write("{0} {1:10d}\n".format(k_mer, int(k_mer_cnt / 2)))
+
+
+def read_k_mer_counts(k_mer_counts_fNm, seq_id=0, k_mers=None):
+    """Read k-mer counts from the specified file.
+
+    Parameters
+    ----------
+    k_mers_counts_fNm : str
+        the name of the file containing k-mers and their counts
+    seq_id : int
+        the sequence identifer
+    k_mers : None or dct
+        None or dictionary returned by count_k_mers_in_seq()
+
+    Returns
+    -------
+    dct
+        dictionay containing k-mer keys and counts and source sequence
+        identifiers values
+    """
+    if k_mers is None:
+        k_mers = {}
+    with open(k_mer_counts_fNm) as f:
+        for ln in f:
+            flds = ln.split()
+            k_mer = flds[0]
+            cnt = int(flds[1])
+            if k_mer in k_mers:
+                print("Second occurance of k-mer: {0} unexpected".format(
+                    k_mer))
+            else:
+                k_mers[k_mer] = {}
+                k_mers[k_mer]["src"] = set([seq_id])
+                k_mers[k_mer]["cnt"] = cnt
+    return k_mers
 
 
 def kmc(read_file_names, database_file_name,
@@ -365,6 +527,7 @@ def kmc_transform(inp_database_file_name, operation, out_database_file_name,
     )
 
 
+# TODO: Validate
 def kmc_simple(inp_database_file_name_a, operation, inp_database_file_name_b,
                out_database_file_name,
                inp_count_min_a=2, inp_count_max_a=1e9,
@@ -482,6 +645,7 @@ def kmc_simple(inp_database_file_name_a, operation, inp_database_file_name_b,
     )
 
 
+# TODO: Validate
 def kmc_complex():
     """
     Performs set operations for more than two input k-mers sets.
@@ -552,6 +716,7 @@ def kmc_complex():
     raise(NotImplementedError("utility.kmc_complex() has not been implemented"))
 
 
+# TODO: Validate
 def kmc_filter(inp_database_file_name, inp_read_file_name, out_read_file_name,
                trim_reads=False, hard_mask=False,
                inp_db_count_min=2, inp_db_count_max=1e9,
@@ -581,7 +746,7 @@ def kmc_filter(inp_database_file_name, inp_read_file_name, out_read_file_name,
 
     Database parameters:
         -ci<value> - exclude k-mers occurring less than <value> times
-        -cx<value> - exclude k-mers occurring more of than <value> times
+        -cx<value> - exclude k-mers occurring more than <value> times
 
     Input read set parameters:
         -ci<value> - remove reads containing less k-mers than
@@ -650,7 +815,7 @@ def get_kmc_read_format(read_file_names):
 
     Parameters
     ----------
-    read_file_names : str
+    read_file_names : [str]
         list of read file names
 
     Returns
@@ -670,8 +835,8 @@ def get_kmc_read_format(read_file_names):
             # Count number of sequences
             with open(input_file_name, 'r') as f:
                 n_seq = 0
-                for line in f:
-                    if p_ss.search(line) is not None:
+                for ln in f:
+                    if p_ss.search(ln) is not None:
                         n_seq += 1
             if n_seq == 0:
                 raise(Exception("No sequence found in FASTA file"))
@@ -698,6 +863,40 @@ def get_kmc_read_format(read_file_names):
             raise(Exception("Input files must use the same format"))
 
     return valid_read_format
+
+
+def get_bio_read_format(read_file_name):
+    """
+    Determine a valid read format implied by the read file name
+    extension.
+
+    Parameters
+    ----------
+    read_file_name : str
+        list of read file names
+
+    Returns
+    -------
+    (str, boolean)
+        valid read format: "fasta" or "fastq", and flag indicating
+        gzip extension, or not
+    """
+    read_format = ""
+    is_gzipped = False
+    p_fa = re.compile(r"\.f(ast)?a(\.gz)?$")
+    p_fq = re.compile(r"\.f(ast)?q(\.gz)?$")
+    p_gz = re.compile(r"(\.gz)$")
+    if p_fa.search(read_file_name) is not None:
+        read_format = "fasta"
+
+    elif p_fq.search(read_file_name) is not None:
+        read_format = "fastq"
+
+    else:
+        raise(Exception("Unknown read file format"))
+    if p_gz.search(read_file_name) is not None:
+        is_gzipped = True
+    return read_format, is_gzipped
 
 
 def wgsim(inp_fa_fNm,
