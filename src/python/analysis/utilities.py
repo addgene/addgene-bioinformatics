@@ -70,12 +70,14 @@ def create_r_seq_w_rep(k_mer_len=25, k_mer_cnt=[2**(n+1) for n in range(8)]):
     Bio.Seq.Seq
         the sequence
     """
+    r_k_mers = []
     r_seq = create_r_seq(k_mer_len)
     for kMC in k_mer_cnt:
-        t_seq = create_r_seq(k_mer_len)
+        r_k_mer = create_r_seq(k_mer_len)
+        r_k_mers.append(r_k_mer)
         for iKM in range(kMC):
-            r_seq += t_seq
-    return r_seq
+            r_seq += r_k_mer
+    return r_seq, r_k_mers
 
 
 def create_aligner(config):
