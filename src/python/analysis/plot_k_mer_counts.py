@@ -99,7 +99,7 @@ if __name__ == "__main__":
     if not os.path.exists(pickle_file_name) or options.reprocess:
 
         start_time = time.time()
-        print("Creating random sequence with repeats, or not ... ", end=" ",
+        print("Creating random sequence with repeats, or not ...", end=" ",
               flush=True)
         if options.with_repeats:
             r_seq, r_k_mers = utilities.create_r_seq_w_rep(
@@ -107,22 +107,22 @@ if __name__ == "__main__":
         else:
             r_seq = utilities.create_r_seq(sum(k_mer_cnt) * k_mer_len)
         print("done in {0} s".format(time.time() - start_time), flush=True)
-        print("random sequence length: {0}".format(len(r_seq)))
+        print("Random sequence length: {0}".format(len(r_seq)))
 
         start_time = time.time()
-        print("Counting k_mers in doubled sequence ... ", end=" ", flush=True)
+        print("Counting k_mers in doubled sequence ...", end=" ", flush=True)
         k_mers_in_seq = utilities.count_k_mers_in_seq(r_seq + r_seq)
         print("done in {0} s".format(time.time() - start_time), flush=True)
 
         start_time = time.time()
-        print("Simulating paired reads from doubled sequence ... ", end=" ",
+        print("Simulating paired reads from doubled sequence ...", end=" ",
               flush=True)
         rd1_fNm, rd2_fNm = simulate_paired_reads_clean(
             r_seq + r_seq, base_file_name)
         print("done in {0} s".format(time.time() - start_time), flush=True)
 
         start_time = time.time()
-        print("Counting k_mers in reads ... ", end=" ", flush=True)
+        print("Counting k_mers in reads ...", end=" ", flush=True)
         k_mers_in_rd1_c, seq_rcds_rd1_c = utilities.count_k_mers_in_rds(
             rd1_fNm)
         k_mers_in_rd2_c, seq_rcds_rd2_c = utilities.count_k_mers_in_rds(
@@ -130,13 +130,13 @@ if __name__ == "__main__":
         print("done in {0} s".format(time.time() - start_time), flush=True)
 
         start_time = time.time()
-        print("Writing k_mers and counts in reads ... ", end=" ", flush=True)
+        print("Writing k_mers and counts in reads ...", end=" ", flush=True)
         utilities.write_k_mer_counts_in_rds(
             k_mers_in_rd1_c, k_mers_in_rd2_c, base_file_name + "_cnt.txt")
         print("done in {0} s".format(time.time() - start_time), flush=True)
 
         start_time = time.time()
-        print("Counting k_mers in reads using kmc ... ", end=" ", flush=True)
+        print("Counting k_mers in reads using kmc ...", end=" ", flush=True)
         inp_read_file_names = [rd1_fNm, rd2_fNm]
         inp_database_file_name = base_file_name
         out_database_file_name = base_file_name + "_kmc.txt"
@@ -147,7 +147,7 @@ if __name__ == "__main__":
         print("done in {0} s".format(time.time() - start_time), flush=True)
 
         start_time = time.time()
-        print("Reading k_mers counted using kmc ... ", end=" ", flush=True)
+        print("Reading k_mers counted using kmc ...", end=" ", flush=True)
         k_mers_by_kmc_c = utilities.read_k_mer_counts(out_database_file_name)
         print("done in {0} s".format(time.time() - start_time), flush=True)
 
@@ -166,7 +166,7 @@ if __name__ == "__main__":
         coverage_kmc = int(np.sum(cn_by_kmc_c) / np.sum(cn_in_seq))
 
         start_time = time.time()
-        print("Dumping results ... ", end=" ", flush=True)
+        print("Dumping results ...", end=" ", flush=True)
         counts = {}
         counts['r_seq'] = r_seq
         counts['r_k_mers'] = r_k_mers
@@ -190,7 +190,7 @@ if __name__ == "__main__":
     else:
 
         start_time = time.time()
-        print("Loading results ... ", end=" ", flush=True)
+        print("Loading results ...", end=" ", flush=True)
         with open(pickle_file_name, 'rb') as pickle_file:
             counts = pickle.load(pickle_file)
         r_seq = counts['r_seq']
