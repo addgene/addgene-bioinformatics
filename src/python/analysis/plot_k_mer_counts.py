@@ -284,7 +284,7 @@ if __name__ == "__main__":
         cn_in_rds_p_hist, _ = np.histogram(cn_in_rds_p, bin_edges)
         cn_by_kmc_p_hist, _ = np.histogram(cn_by_kmc_p, bin_edges)
 
-        for case in range(2):
+        for case in range(3):
 
             fig, ax = plt.subplots()
 
@@ -318,7 +318,11 @@ if __name__ == "__main__":
                 ax.set_ylim((0, 128))
 
             elif case == 1:
-                ax.set_xlim((8, 32))
+                ax.set_xlim((4, 36))
+                ax.set_ylim((0, 32))
+
+            elif case == 2:
+                ax.set_xlim((0, 12))
                 ax.set_ylim((0, 32))
 
             plt.show()
