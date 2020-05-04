@@ -106,6 +106,7 @@ if __name__ == "__main__":
                 k_mer_len=k_mer_len, k_mer_cnt=k_mer_cnt)
         else:
             r_seq = utilities.create_r_seq(sum(k_mer_cnt) * k_mer_len)
+            r_k_mers = []
         print("done in {0} s".format(time.time() - start_time), flush=True)
         print("Random sequence length: {0}".format(len(r_seq)))
 
@@ -210,37 +211,55 @@ if __name__ == "__main__":
         inp_database_file_name = counts['inp_database_file_name']
         print("done in {0} s".format(time.time() - start_time), flush=True)
 
-    # Write reads corresponding to the k_mer with a specified actual
-    # rd1 count
-    count_exp = 16
-    r_k_mer_exp = str(r_k_mers[k_mer_cnt.index(count_exp)])
-    r_k_mers_act = list(k_mers_in_rd1_c.keys())
-    r_k_mer_act = r_k_mers_act[np.where(
-        np.round(
-            cn_in_rds_c / coverage_rds / 2
-        ).astype(int) == count_exp
-    )[0][0]]
-    out_read_file_name = base_file_name + "_act_r1.fastq"
-    with open(out_read_file_name, "w") as f:
-        for i_seq in k_mers_in_rd1_c[r_k_mer_act]['src']:
-            SeqIO.write(seq_rcds_rd1_c[i_seq], f, "fastq")
+    # Write reads corresponding to the k_mer with a specified actual ...
+    if options.with_repeats:
 
-    # Write reads corresponding to the k_mer with the observed actual
-    # kmc count
-    count_kmc = 12
-    count_stp = 2
-    inp_db_count_min = (count_kmc - 2) * coverage_kmc  # 2
-    inp_db_count_max = (count_kmc + 2) * coverage_kmc  # 1e9
-    inp_rd_count_min = 2
-    inp_rd_count_max = 1e9
-    out_read_file_name = base_file_name + "_flt_r1.fastq"
-    utilities.kmc_filter(inp_database_file_name,
-                         inp_read_file_names[0],
-                         out_read_file_name,
-                         inp_db_count_min=inp_db_count_min,
-                         inp_db_count_max=inp_db_count_max,
-                         inp_rd_count_min=inp_rd_count_min,
-                         inp_rd_count_max=inp_rd_count_max)
+        # ... rd1 and rd2 count
+        count_exp = 16
+        r_k_mer_exp = str(r_k_mers[k_mer_cnt.index(count_exp)])
+        r_k_mers_act = list(k_mers_in_rd1_c.keys())
+        r_k_mer_act = r_k_mers_act[np.where(
+            np.round(
+                cn_in_rds_c / coverage_rds / 2
+            ).astype(int) == count_exp
+        )[0][0]]
+        start_time = time.time()
+        print("Writing reads based on read count ...", end=" ", flush=True)
+        rd1_read_file_name = base_file_name + "_act_rd1.fastq"
+        rd2_read_file_name = base_file_name + "_act_rd2.fastq"
+        with open(rd1_read_file_name, "w") as f1:
+            with open(rd2_read_file_name, "w") as f2:
+                for i_seq in k_mers_in_rd1_c[r_k_mer_act]['src']:
+                    SeqIO.write(seq_rcds_rd1_c[i_seq], f1, "fastq")
+                    SeqIO.write(seq_rcds_rd2_c[i_seq], f2, "fastq")
+        print("done in {0} s".format(time.time() - start_time), flush=True)
+
+        # ... kmc count
+        count_kmc = 12
+        count_stp = 2
+        inp_db_count_min = (count_kmc - 2) * coverage_kmc  # 2
+        inp_db_count_max = (count_kmc + 2) * coverage_kmc  # 1e9
+        inp_rd_count_min = 2
+        inp_rd_count_max = 1e9
+        start_time = time.time()
+        print("Writing reads based on kmc count ...", end=" ", flush=True)
+        out_read_file_name = base_file_name + "_flt_r1.fastq"
+        utilities.kmc_filter(inp_database_file_name,
+                             inp_read_file_names[0],
+                             out_read_file_name,
+                             inp_db_count_min=inp_db_count_min,
+                             inp_db_count_max=inp_db_count_max,
+                             inp_rd_count_min=inp_rd_count_min,
+                             inp_rd_count_max=inp_rd_count_max)
+        out_read_file_name = base_file_name + "_flt_r2.fastq"
+        utilities.kmc_filter(inp_database_file_name,
+                             inp_read_file_names[1],
+                             out_read_file_name,
+                             inp_db_count_min=inp_db_count_min,
+                             inp_db_count_max=inp_db_count_max,
+                             inp_rd_count_min=inp_rd_count_min,
+                             inp_rd_count_max=inp_rd_count_max)
+        print("done in {0} s".format(time.time() - start_time), flush=True)
 
     # Print sequence it's double, and counts
     for k_mer in k_mers_in_seq.keys():
@@ -261,8 +280,9 @@ if __name__ == "__main__":
         print(ln)
     print("r_seq: ", r_seq)
     print("r_seq + r_seq: ", r_seq + r_seq)
-    print("count: {0} - r_k_mer_exp: {1}".format(count_exp, r_k_mer_exp))
-    print("count: {0} - r_k_mer_act: {1}".format(count_exp, r_k_mer_act))
+    if options.with_repeats:
+        print("count: {0} - r_k_mer_exp: {1}".format(count_exp, r_k_mer_exp))
+        print("count: {0} - r_k_mer_act: {1}".format(count_exp, r_k_mer_act))
 
     # Plot histogram of scaled copy number, or not
     if options.plot_histogram:
