@@ -19,6 +19,8 @@ class UnicyclerJob(Job):
                  output_directory, parent_rv={},
                  read_one_file_name="R1.fastq.gz",
                  read_two_file_name="R2.fastq.gz",
+                 mode=None,
+                 depth_filter=None,
                  *args, **kwargs):
         """
         Parameters
@@ -33,6 +35,11 @@ class UnicyclerJob(Job):
             name of directory for output
         parent_rv : dict
             dictionary of return values from the parent job
+        mode : Optional[str]
+            one of "conservative", "normal", or "bold".
+        depth_filter : Optional[float]
+            filter out contigs lower than this fraction of the chromosomal
+            depth, if doing so does not result in graph dead ends
         """
         super(UnicyclerJob, self).__init__(*args, **kwargs)
         self.read_one_file_id = read_one_file_id
@@ -41,6 +48,8 @@ class UnicyclerJob(Job):
         self.read_two_file_name = read_two_file_name
         self.output_directory = output_directory
         self.parent_rv = parent_rv
+        self.mode = mode
+        self.depth_filter = depth_filter
 
     def run(self, fileStore):
         """
@@ -69,19 +78,26 @@ class UnicyclerJob(Job):
             image = "ralatsdio/unicycler:v0.4.7"
             working_dir = fileStore.localTempDir
             logger.info("Calling image {0}".format(image))
+            parameters = ["unicycler",
+                          "--short1",
+                          read_one_file_path,
+                          "--short2",
+                          read_two_file_path,
+                          "--out",
+                          os.path.join(working_dir, self.output_directory),
+                         ]
+            # add in optional args
+            if self.mode is not None:
+                parameters.extend(["--mode", self.mode])
+            if self.depth_filter is not None:
+                parameters.extend(["--depth-filter", self.depth_filter])
+
             apiDockerCall(
                 self,
                 image=image,
                 volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
                 working_dir=working_dir,
-                parameters=["unicycler",
-                            "--short1",
-                            read_one_file_path,
-                            "--short2",
-                            read_two_file_path,
-                            "--out",
-                            os.path.join(working_dir, self.output_directory),
-                            ])
+                parameters=parameters)
 
             # Write the Unicycler log, and final assembly contigs
             # FASTA and graph GFA v1 files from the local temporary

@@ -20,6 +20,7 @@ class SpadesJob(Job):
                  coverage_cutoff, output_directory, parent_rv={},
                  read_one_file_name="R1.fastq.gz",
                  read_two_file_name="R2.fastq.gz",
+                 careful=False,
                  *args, **kwargs):
         """
         Parameters
@@ -32,6 +33,8 @@ class SpadesJob(Job):
             short right paired reads
         coverage_cutoff : str
             read coverage cutoff value (must be "off", "auto", or a string representing a positive float)
+        careful : bool
+            whether to use careful mode to reduce the number of mismatches and short indels
         output_directory : str
             name of directory for output
         parent_rv : dict
@@ -45,9 +48,7 @@ class SpadesJob(Job):
         self.coverage_cutoff = coverage_cutoff
         self.output_directory = output_directory
         self.parent_rv = parent_rv
-
-        # Check that the value of the coverage cutoff is a positive float, "auto", or "off"
-        assert coverage_cutoff == "auto" or coverage_cutoff == "off" or float(coverage_cutoff) > 0
+        self.careful = careful
 
     def run(self, fileStore):
         """
@@ -77,21 +78,24 @@ class SpadesJob(Job):
             image = "ralatsdio/spades:v3.13.1"
             working_dir = fileStore.localTempDir
             logger.info("Calling image {0}".format(image))
+            parameters = ["spades.py",
+                          "-1",
+                          read_one_file_path,
+                          "-2",
+                          read_two_file_path,
+                          "-o",
+                          os.path.join(working_dir, self.output_directory),
+                          "--cov-cutoff",
+                          self.coverage_cutoff,
+                         ]
+            if self.careful:
+                parameters.append("--careful")
             apiDockerCall(
                 self,
                 image=image,
                 volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
                 working_dir=working_dir,
-                parameters=["spades.py",
-                            "-1",
-                            read_one_file_path,
-                            "-2",
-                            read_two_file_path,
-                            "-o",
-                            os.path.join(working_dir, self.output_directory),
-                            "--cov-cutoff",
-                            self.coverage_cutoff,
-                            ])
+                parameters=parameters)
 
             # Write the warnings and spades log files, and contigs FASTA
             # file from the local temporary directory into the file store
