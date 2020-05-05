@@ -31,7 +31,7 @@ class SpadesJob(Job):
             id of the file in the file store containing FASTQ Illumina
             short right paired reads
         coverage_cutoff : str
-            read coverage cutoff value
+            read coverage cutoff value (must be "off", "auto", or a string representing a positive float)
         output_directory : str
             name of directory for output
         parent_rv : dict
@@ -45,6 +45,9 @@ class SpadesJob(Job):
         self.coverage_cutoff = coverage_cutoff
         self.output_directory = output_directory
         self.parent_rv = parent_rv
+
+        # Check that the value of the coverage cutoff is a positive float, "auto", or "off"
+        assert coverage_cutoff == "auto" or coverage_cutoff == "off" or float(coverage_cutoff) > 0
 
     def run(self, fileStore):
         """

@@ -67,8 +67,8 @@ def create_r_seq_w_rep(k_mer_len=25, k_mer_cnt=[2**(n+1) for n in range(8)]):
 
     Returns
     -------
-    Bio.Seq.Seq
-        the sequence
+    (Bio.Seq.Seq, [Bio.Seq.Seq])
+        the sequence and list of repeated k-mers
     """
     r_k_mers = []
     r_seq = create_r_seq(k_mer_len)

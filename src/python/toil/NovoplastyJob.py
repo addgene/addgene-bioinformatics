@@ -94,7 +94,7 @@ class NovoplastyJob(Job):
 -----------------------
 Project name          = {project_name}
 Type                  = mito
-Genome Range          = 1800-35000
+Genome Range          = 1500-60000
 K-mer                 = 121
 Max memory            = 3
 Extended log          =
