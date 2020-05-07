@@ -90,7 +90,7 @@ class UnicyclerJob(Job):
             if self.mode is not None:
                 parameters.extend(["--mode", self.mode])
             if self.depth_filter is not None:
-                parameters.extend(["--depth-filter", self.depth_filter])
+                parameters.extend(["--depth_filter", str(self.depth_filter)])
 
             apiDockerCall(
                 self,
@@ -160,6 +160,10 @@ if __name__ == "__main__":
                         help="the well specification")
     parser.add_argument('-o', '--output-directory', default=None,
                         help="the directory containing all output files")
+    parser.add_argument("-m", "--mode", default=None, 
+                        help='one of "conservative", "normal", or "bold"')
+    parser.add_argument("--depth-filter", default=None, type=float,
+                        help="filter out contigs lower than this fraction of depth")
     options = parser.parse_args()
     if options.output_directory is None:
         options.output_directory = options.plate_spec + "_" + options.well_spec
@@ -180,6 +184,8 @@ if __name__ == "__main__":
                 read_one_file_ids[0],
                 read_two_file_ids[0],
                 options.output_directory,
+                mode=options.mode,
+                depth_filter=options.depth_filter
                 )
             unicycler_rv = toil.start(unicycler_job)
 
