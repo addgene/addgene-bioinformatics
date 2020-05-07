@@ -160,6 +160,8 @@ if __name__ == "__main__":
                         help="the coverage cutoff")
     parser.add_argument('-o', '--output-directory', default=None,
                         help="the directory containing all output files")
+    parser.add_argument("--careful", help="whether to use careful mode", 
+                        default=False, action="store_true")
     options = parser.parse_args()
     if options.output_directory is None:
         options.output_directory = options.plate_spec + "_" + options.well_spec
@@ -181,6 +183,7 @@ if __name__ == "__main__":
                 read_two_file_ids[0],
                 options.coverage_cutoff,
                 options.output_directory,
+                careful=options.careful
                 )
             spades_rv = toil.start(spades_job)
 
