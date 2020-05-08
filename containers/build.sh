@@ -28,11 +28,12 @@ docker build --tag ralatsdio/repdenovo:v0.1.0 REPdenovo/v0.1.0 \
        | tee REPdenovo/v0.1.0/build.log 2>&1
 docker build --tag ralatsdio/spade:v0.1.0 SPADE/v0.1.0 \
        | tee SPADE/v0.1.0/build.log 2>&1
+docker build --tag ralatsdio/SSAKE:v0.1.0 SSAKE/v4.0.1 \
+       | tee SSAKE/v4.0.1/build.log 2>&1
 docker build --tag ralatsdio/samtools:v0.1.0 Samtools/v0.1.0 \
        | tee Samtools/v0.1.0/build.log 2>&1
 docker build --tag ralatsdio/apc:v0.1.0 apc/v0.1.0 \
        | tee apc/v0.1.0/build.log 2>&1
-
 
 # Summarize build logs
 find . -name 'build.log' -exec echo ">{}" \; -exec tail -2 {} \;
