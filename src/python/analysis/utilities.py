@@ -108,8 +108,8 @@ def simulate_paired_reads(seq, seq_nm, number_pairs=25000,
             40 * np.ones(len_second_read, dtype=int)).tolist()
         rd2_seq_rcds.append(rd2_seq_rcd)
 
-    rd1_fNm = seq_nm + "_r1.fastq"
-    rd2_fNm = seq_nm + "_r2.fastq"
+    rd1_fNm = seq_nm + "_rd1.fastq"
+    rd2_fNm = seq_nm + "_rd2.fastq"
     SeqIO.write(rd1_seq_rcds, rd1_fNm, "fastq")
     SeqIO.write(rd2_seq_rcds, rd2_fNm, "fastq")
     return rd1_fNm, rd2_fNm
@@ -386,8 +386,8 @@ def simulate_paired_reads_wgsim(seq, seq_nm, number_pairs=25000,
                                 outer_distance=500):
     seq_rcd = SeqRecord(seq, id="0", name="base", description="reference")
     seq_fNm = seq_nm + ".fasta"
-    rd1_fNm = seq_nm + "_r1.fastq"
-    rd2_fNm = seq_nm + "_r2.fastq"
+    rd1_fNm = seq_nm + "_rd1.fastq"
+    rd2_fNm = seq_nm + "_rd2.fastq"
     SeqIO.write(seq_rcd, seq_fNm, "fasta")
     wgsim(seq_fNm,
           rd1_fNm,
