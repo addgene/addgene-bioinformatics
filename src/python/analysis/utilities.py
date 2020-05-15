@@ -225,7 +225,7 @@ def count_k_mers_in_rds(rd_fNm, k_mer_len=25, k_mers=None, seq_rcds=None):
 
 
 def write_k_mer_counts_in_rds(k_mers_in_rd1, k_mers_in_rd2, k_mer_counts_fNm):
-    """Sum, then write the k-mer counts corresponding to paired reads.
+    """Write the k-mer counts corresponding to paired reads.
 
     Parameters
     ----------
@@ -264,7 +264,7 @@ def read_k_mer_counts(k_mer_counts_fNm, seq_id=0, k_mers=None):
     Returns
     -------
     dct
-        dictionay containing k-mer keys and counts and source sequence
+        dictionay containing k-mer keys, and counts and source sequence
         identifiers values
     """
     if k_mers is None:
