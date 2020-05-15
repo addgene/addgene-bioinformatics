@@ -2,7 +2,7 @@ import gzip
 import logging
 import math
 import os
-from random import choice
+import random
 import re
 
 from Bio import Align
@@ -10,8 +10,8 @@ from Bio import SeqIO
 from Bio.Alphabet import IUPAC
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-
 import docker
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ def create_r_seq_str(seq_len):
     """
     r_seq_str = ""
     for count in range(seq_len):
-        r_seq_str += choice("CGTA")
+        r_seq_str += random.choice("CGTA")
     return r_seq_str
 
 
@@ -111,98 +111,6 @@ def create_aligner(config):
     aligner.mode = config['mode']
 
     return aligner
-
-
-def rotate_seqs(a_seq, o_seq):
-    """Finds the cyclic rotation of a_seq (or an approximation of it)
-    that minimizes the blockwise q-gram distance from o_seq using
-    Docker image "ralatsdio/csc:v0.1.0".
-
-    Parameters
-    ----------
-    a_seq : Bio.Seq.Seq
-        thought of as the reference sequence
-    o_seq : Bio.Seq.Seq
-        thought of as the candidate sequence
-
-    Returns
-    -------
-    tpl
-        tuple containing the rotated reference and candidate sequences
-    """
-    # Define image, Docker run parameters, and CSC command
-    image = "ralatsdio/csc:v0.1.0"
-    # [-a] `DNA' or `RNA' for nucleotide sequences or `PROT' for
-    # protein sequences
-    alphabet = "DNA"
-    # [-m] `hCSC' for heuristic, `nCSC' for naive and `saCSC' for
-    # suffix-array algorithm
-    method = "saCSC"
-    # (Multi)FASTA input filename.
-    input_file = "csc_input.fasta"
-    # Output filename for the rotated sequences.
-    output_file = "csc_output.fasta"
-    # [-l] The length of each block
-    block_length = str(math.ceil(math.sqrt(len(a_seq))))
-    # [-q] The q-gram length
-    q_length = str(math.ceil(math.log(len(a_seq)) / math.log(4)))
-    # [-P] The number of blocks of length l to use to refine the
-    # results of saCSC by (e.g. 1.0)
-    blocks_refine = "1.0"
-    # [-O] The gap open penalty is the score taken away when a gap is
-    # created. The best value depends on the choice of comparison
-    # matrix.  The default value assumes you are using the EBLOSUM62
-    # matrix for protein sequences, and the EDNAFULL matrix for
-    # nucleotide sequences. Floating point number from 1.0 to
-    # 100.0. (default: 10.0)
-    gap_open_penalty = "10.0"
-    # [-E] The gap extension penalty is added to the standard gap
-    # penalty for each base or residue in the gap. This is how long
-    # gaps are penalized. Floating point number from 0.0 to 10.0.
-    # (default: 0.5)
-    gap_extend_penalty = "0.5"
-    command = " ".join(
-        ["csc",
-         "-m", method,
-         "-a", alphabet,
-         "-i", input_file,
-         "-o", output_file,
-         "-q", q_length,
-         "-l", block_length,
-         "-P", blocks_refine,
-         "-O", gap_open_penalty,
-         "-E", gap_extend_penalty
-        ]
-    )
-    hosting_dir = os.path.dirname(os.path.abspath(__file__))
-    working_dir = "/data"
-    volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
-
-    # Write the multi-FASTA input file
-    SeqIO.write(
-        [SeqRecord(a_seq, id="id_a", name="name_a", description="reference"),
-         SeqRecord(o_seq, id="id_o", name="name_o", description="offset")],
-        os.path.join(hosting_dir, input_file),
-        "fasta")
-
-    # Run the command in the Docker image
-    client = docker.from_env()
-    client.containers.run(
-        image,
-        command=command,
-        volumes=volumes,
-        working_dir=working_dir,
-    )
-
-    # Read the multi-FASTA output file
-    seq_rcds = [seq_record for seq_record in SeqIO.parse(
-        os.path.join(hosting_dir, output_file), "fasta")]
-
-    # Assign and return the rotated sequences
-    r_a_seq = seq_rcds[0].seq
-    r_o_seq = seq_rcds[1].seq
-
-    return (r_a_seq, r_o_seq)
 
 
 def count_k_mers_in_seq(seq, seq_id=0, k_mer_len=25, k_mers=None):
@@ -330,15 +238,136 @@ def read_k_mer_counts(k_mer_counts_fNm, seq_id=0, k_mers=None):
         for ln in f:
             flds = ln.split()
             k_mer = flds[0]
-            cnt = int(flds[1])
+            cnt_rd1 = int(flds[1])
+            cnt_rd2 = int(flds[2])
             if k_mer in k_mers:
                 print("Second occurance of k-mer: {0} unexpected".format(
                     k_mer))
             else:
                 k_mers[k_mer] = {}
                 k_mers[k_mer]["src"] = set([seq_id])
-                k_mers[k_mer]["cnt"] = cnt
+                k_mers[k_mer]["rd1"] = cnt_rd1
+                k_mers[k_mer]["rd2"] = cnt_rd2
     return k_mers
+
+
+def rotate_seqs(a_seq, o_seq):
+    """Finds the cyclic rotation of a_seq (or an approximation of it)
+    that minimizes the blockwise q-gram distance from o_seq using
+    Docker image "ralatsdio/csc:v0.1.0".
+
+    Parameters
+    ----------
+    a_seq : Bio.Seq.Seq
+        thought of as the reference sequence
+    o_seq : Bio.Seq.Seq
+        thought of as the candidate sequence
+
+    Returns
+    -------
+    tpl
+        tuple containing the rotated reference and candidate sequences
+    """
+    # Define image, Docker run parameters, and CSC command
+    image = "ralatsdio/csc:v0.1.0"
+    # [-a] `DNA' or `RNA' for nucleotide sequences or `PROT' for
+    # protein sequences
+    alphabet = "DNA"
+    # [-m] `hCSC' for heuristic, `nCSC' for naive and `saCSC' for
+    # suffix-array algorithm
+    method = "saCSC"
+    # (Multi)FASTA input filename.
+    input_file = "csc_input.fasta"
+    # Output filename for the rotated sequences.
+    output_file = "csc_output.fasta"
+    # [-l] The length of each block
+    block_length = str(math.ceil(math.sqrt(len(a_seq))))
+    # [-q] The q-gram length
+    q_length = str(math.ceil(math.log(len(a_seq)) / math.log(4)))
+    # [-P] The number of blocks of length l to use to refine the
+    # results of saCSC by (e.g. 1.0)
+    blocks_refine = "1.0"
+    # [-O] The gap open penalty is the score taken away when a gap is
+    # created. The best value depends on the choice of comparison
+    # matrix.  The default value assumes you are using the EBLOSUM62
+    # matrix for protein sequences, and the EDNAFULL matrix for
+    # nucleotide sequences. Floating point number from 1.0 to
+    # 100.0. (default: 10.0)
+    gap_open_penalty = "10.0"
+    # [-E] The gap extension penalty is added to the standard gap
+    # penalty for each base or residue in the gap. This is how long
+    # gaps are penalized. Floating point number from 0.0 to 10.0.
+    # (default: 0.5)
+    gap_extend_penalty = "0.5"
+    command = " ".join(
+        ["csc",
+         "-m", method,
+         "-a", alphabet,
+         "-i", input_file,
+         "-o", output_file,
+         "-q", q_length,
+         "-l", block_length,
+         "-P", blocks_refine,
+         "-O", gap_open_penalty,
+         "-E", gap_extend_penalty
+        ]
+    )
+    hosting_dir = os.path.dirname(os.path.abspath(__file__))
+    working_dir = "/data"
+    volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
+
+    # Write the multi-FASTA input file
+    SeqIO.write(
+        [SeqRecord(a_seq, id="id_a", name="name_a", description="reference"),
+         SeqRecord(o_seq, id="id_o", name="name_o", description="offset")],
+        os.path.join(hosting_dir, input_file),
+        "fasta")
+
+    # Run the command in the Docker image
+    client = docker.from_env()
+    client.containers.run(
+        image,
+        command=command,
+        volumes=volumes,
+        working_dir=working_dir,
+    )
+
+    # Read the multi-FASTA output file
+    seq_rcds = [seq_record for seq_record in SeqIO.parse(
+        os.path.join(hosting_dir, output_file), "fasta")]
+
+    # Assign and return the rotated sequences
+    r_a_seq = seq_rcds[0].seq
+    r_o_seq = seq_rcds[1].seq
+
+    return (r_a_seq, r_o_seq)
+
+
+# TODO: Complete in order to validate use of wgsim
+def simulate_paired_reads_wgsim(seq, seq_nm, number_pairs=25000,
+                                len_first_read=250, len_second_read=250,
+                                outer_distance=500):
+    seq_rcd = SeqRecord(seq, id="0", name="base", description="reference")
+    seq_fNm = seq_nm + ".fasta"
+    rd1_fNm = seq_nm + "_r1.fastq"
+    rd2_fNm = seq_nm + "_r2.fastq"
+    SeqIO.write(seq_rcd, seq_fNm, "fasta")
+    wgsim(seq_fNm,
+          rd1_fNm,
+          rd2_fNm,
+          error_rate=0.0,
+          outer_distance=outer_distance,
+          standard_deviation=0,
+          number_pairs=number_pairs,
+          len_first_read=len_first_read,
+          len_second_read=len_second_read,
+          mutation_rate=0.0,
+          indel_fraction=0.0,
+          indel_extended_prob=0.0,
+          random_seed=0,
+          ambiguous_base_frac=0.0,
+          haplotype_mode=True)
+    return rd1_fNm, rd2_fNm
 
 
 def kmc(read_file_names, database_file_name,
