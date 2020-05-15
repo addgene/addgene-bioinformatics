@@ -179,7 +179,7 @@ if __name__ == "__main__":
         inp_rd_count_max = 1e9
         start_time = time.time()
         print("Writing reads based on kmc count ...", end=" ", flush=True)
-        out_read_file_name = base_file_name + "_flt_r1.fastq"
+        out_read_file_name = base_file_name + "_flt_rd1.fastq"
         utilities.kmc_filter(inp_database_file_name,
                              inp_read_file_names[0],
                              out_read_file_name,
@@ -187,7 +187,7 @@ if __name__ == "__main__":
                              inp_db_count_max=inp_db_count_max,
                              inp_rd_count_min=inp_rd_count_min,
                              inp_rd_count_max=inp_rd_count_max)
-        out_read_file_name = base_file_name + "_flt_r2.fastq"
+        out_read_file_name = base_file_name + "_flt_rd2.fastq"
         utilities.kmc_filter(inp_database_file_name,
                              inp_read_file_names[1],
                              out_read_file_name,
