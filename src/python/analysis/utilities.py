@@ -1046,8 +1046,8 @@ def wgsim(inp_fa_fNm,
 
 def ssake(inp_fq_one_fNm,
           inp_fq_two_fNm,
-          fragment_len,
           out_base_fNm,
+          fragment_len,
           phred_threshold=20,  # -x
           n_consec_bases=70,   # -n
           ascii_offset=33,     # -d
