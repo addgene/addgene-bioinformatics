@@ -80,6 +80,41 @@ def create_r_seq_w_rep(k_mer_len=25, k_mer_cnt=[2**(n+1) for n in range(8)]):
     return r_seq, r_k_mers
 
 
+# TODO: Add error rate, outer distance standard deviation, indel
+# fraction, indel extension probablility, and random seed:
+# error_rate=0.020, standard_deviation=50, indel_fraction=0.15,
+# indel_extended_prob=0.30, and random_seed=0, then move to utilities
+def simulate_paired_reads(seq, seq_nm, number_pairs=25000,
+                          len_first_read=250, len_second_read=250,
+                          outer_distance=500):
+    rd1_seq_rcds = []
+    rd2_seq_rcds = []
+    seq_len = len(seq)
+    for iP in range(number_pairs):
+
+        i_rd1 = random.randint(0, seq_len - outer_distance - 1)
+        rd1_seq_rcd = SeqRecord(
+            seq[i_rd1:i_rd1 + len_first_read],
+            id=str(iP), name="one", description="first read of read pair")
+        rd1_seq_rcd.letter_annotations["phred_quality"] = (
+            40 * np.ones(len_first_read, dtype=int)).tolist()
+        rd1_seq_rcds.append(rd1_seq_rcd)
+
+        i_rd2 = i_rd1 + outer_distance - len_second_read
+        rd2_seq_rcd = SeqRecord(
+            seq[i_rd2 + len_second_read:i_rd2:-1],
+            id=str(iP), name="two", description="second read of read pair")
+        rd2_seq_rcd.letter_annotations["phred_quality"] = (
+            40 * np.ones(len_second_read, dtype=int)).tolist()
+        rd2_seq_rcds.append(rd2_seq_rcd)
+
+    rd1_fNm = seq_nm + "_r1.fastq"
+    rd2_fNm = seq_nm + "_r2.fastq"
+    SeqIO.write(rd1_seq_rcds, rd1_fNm, "fastq")
+    SeqIO.write(rd2_seq_rcds, rd2_fNm, "fastq")
+    return rd1_fNm, rd2_fNm
+
+
 def create_aligner(config):
     """Creates a pairwise aligner with the specified configuration.
 
