@@ -33,10 +33,32 @@ def collect_k_mer_cnt(k_mers, seq_cnt=2):
     )
 
 
-def write_reads_for_cnt(k_mer_cnt_rds, coverage, k_mers, seq_rcds,
-                        k_mer_cnt_rep, exp_cnt, case):
-    """Use k-means clustering to separate reads into those containing
-    a k-mer with the expected count, and all others.
+def write_paired_reads_for_cnt(
+        k_mer_cnt_rd1, coverage_rd1, k_mers_rd1, seq_rcds_rd1,
+        k_mer_cnt_rd2, coverage_rd2, k_mers_rd2, seq_rcds_rd2,
+        k_mer_cnt_rep, exp_cnt):
+
+    if len(seq_rcds_rd1) != len(seq_rcds_rd2):
+        raise(Exception("Number of sequence records for each pair must agree"))
+
+    i_rcds_rd1, _ = find_seq_rcds_for_cnt(
+        k_mer_cnt_rd1, coverage_rd1, k_mers_rd1)
+    i_rcds_rd2, _ = find_seq_rcds_for_cnt(
+        k_mer_cnt_rd2, coverage_rd2, k_mers_rd2)
+    i_rcds = i_rcds_rd1.intersection(i_rcds_rd2)
+
+    rd1_wr_file_name, rd1_wo_file_name = write_reads_for_cnt(
+        i_rcds, seq_rcds_rd1, "rd1")
+    rd2_wr_file_name, rd2_wo_file_name = write_reads_for_cnt(
+        i_rcds, seq_rcds_rd2, "rd2")
+
+    return (rd1_wr_file_name, rd1_wo_file_name,
+            rd2_wr_file_name, rd2_wo_file_name)
+
+
+def find_seq_rcds_for_cnt(k_mer_cnt_rds, coverage, k_mers):
+    """Use k-means clustering to identify reads containing a k-mer
+    with the expected count.
     """
     # Cluster counts in the expected number of clusters
     kmeans = KMeans(n_clusters=len(k_mer_cnt_rep) + 1, random_state=0).fit(
@@ -51,8 +73,16 @@ def write_reads_for_cnt(k_mer_cnt_rds, coverage, k_mers, seq_rcds,
     for key in keys[kmeans.labels_ == label]:
         i_rcds = i_rcds.union(k_mers[key]['src'])
 
-    # Write a FASTQ file containing the sequence records (reads)
-    # corresponding to the expected count
+    return i_rcds, kmeans
+
+
+def write_reads_for_cnt(i_rcds, seq_rcds, case):
+    """Write a FASTQ file containing the sequence records (reads)
+    specified, and a file containing all other sequence records
+    (reads).
+    """
+    # Write a FASTQ file containing the specified sequence records
+    # (reads)
     read_wr_file_name = base_file_name + "_wr_" + case + ".fastq"
     with open(read_wr_file_name, "w") as f:
         for i_rcd in i_rcds:
@@ -64,7 +94,7 @@ def write_reads_for_cnt(k_mer_cnt_rds, coverage, k_mers, seq_rcds,
         for i_rcd in set(range(number_pairs)).difference(i_rcds):
             SeqIO.write(seq_rcds[i_rcd], f, "fastq")
 
-    return read_wr_file_name, read_wo_file_name, kmeans
+    return read_wr_file_name, read_wo_file_name
 
 
 if __name__ == "__main__":
@@ -182,7 +212,6 @@ if __name__ == "__main__":
         seq_rcds_rd2 = results['seq_rcds_rd2']
         print("done in {0} s".format(time.time() - start_time), flush=True)
 
-    """
     # Assemble paired reads using SPAdes
     start_time = time.time()
     print("Assembling paired reads using SPAdes ...", end=" ", flush=True)
@@ -192,7 +221,6 @@ if __name__ == "__main__":
                      spades_wo_out_dir,
                      phred_offset="33")
     print("done in {0} s".format(time.time() - start_time), flush=True)
-    """
 
     # Perform processing for repetitive sequences
     if options.with_repeats:
@@ -209,12 +237,11 @@ if __name__ == "__main__":
         print("Writing reads based on read count ...", end=" ", flush=True)
         r_k_mer_exp_rd1 = str(r_k_mers[k_mer_cnt_rep.index(exp_cnt)])
         r_k_mer_exp_rd2 = r_k_mer_exp_rd1[-1::-1]
-        rd1_wr_file_name, rd1_wo_file_name, _ = write_reads_for_cnt(
-            k_mer_cnt_rd1, coverage_rd1, k_mers_rd1, seq_rcds_rd1,
-            k_mer_cnt_rep, exp_cnt, "rd1")
-        rd2_wr_file_name, rd2_wo_file_name, _ = write_reads_for_cnt(
-            k_mer_cnt_rd2, coverage_rd2, k_mers_rd2, seq_rcds_rd2,
-            k_mer_cnt_rep, exp_cnt, "rd2")
+        (rd1_wr_file_name, rd1_wo_file_name,
+         rd2_wr_file_name, rd2_wo_file_name) = write_paired_reads_for_cnt(
+             k_mer_cnt_rd1, coverage_rd1, k_mers_rd1, seq_rcds_rd1,
+             k_mer_cnt_rd2, coverage_rd2, k_mers_rd2, seq_rcds_rd2,
+             k_mer_cnt_rep, exp_cnt)
         print("done in {0} s".format(time.time() - start_time), flush=True)
 
         # Assemble paired reads with repeats using SSAKE
@@ -242,7 +269,6 @@ if __name__ == "__main__":
                         do_run_verbose=0)    # -v
         print("done in {0} s".format(time.time() - start_time), flush=True)
 
-        """
         # Assemble paired reads without repeats and with trusted contigs
         # using SPAdes
         start_time = time.time()
@@ -252,6 +278,7 @@ if __name__ == "__main__":
         utilities.spades(rd1_wo_file_name,
                          rd2_wo_file_name,
                          spades_wc_out_dir,
+                         trusted_contigs_fNm=os.path.join(
+                             ssake_out_dir, ssake_out_dir + "_contigs.fa"),
                          phred_offset="33")
         print("done in {0} s".format(time.time() - start_time), flush=True)
-        """
