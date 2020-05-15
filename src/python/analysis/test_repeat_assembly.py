@@ -104,16 +104,19 @@ if __name__ == "__main__":
     parser.add_argument('-w', '--with-repeats',
                         action='store_true',
                         help="create a random sequence with repeats")
-    parser.add_argument('-r', '--reprocess',
+    parser.add_argument('-i', '--initialize',
                         action='store_true',
-                        help="reprocess alignments")
+                        help="create sequence and count k-mers")
+    parser.add_argument('-a', '--assemble',
+                        action='store_true',
+                        help="assemble paired reads")
     options = parser.parse_args()
 
     # Create and dump, or load results
     if options.with_repeats:
         base_file_name = "repetitive_seq"
     pickle_file_name = base_file_name + ".pickle"
-    if not os.path.exists(pickle_file_name) or options.reprocess:
+    if not os.path.exists(pickle_file_name) or options.initialize:
 
         # Create a random sequence with repeats, or if not, a random
         # sequence of the same length
@@ -213,14 +216,15 @@ if __name__ == "__main__":
         print("done in {0} s".format(time.time() - start_time), flush=True)
 
     # Assemble paired reads using SPAdes
-    start_time = time.time()
-    print("Assembling paired reads using SPAdes ...", end=" ", flush=True)
-    spades_wo_out_dir = base_file_name + "_spades_wo"
-    utilities.spades(rd1_file_name,
-                     rd2_file_name,
-                     spades_wo_out_dir,
-                     phred_offset="33")
-    print("done in {0} s".format(time.time() - start_time), flush=True)
+    if options.assemble:
+        start_time = time.time()
+        print("Assembling paired reads using SPAdes ...", end=" ", flush=True)
+        spades_wo_out_dir = base_file_name + "_spades_wo"
+        utilities.spades(rd1_file_name,
+                         rd2_file_name,
+                         spades_wo_out_dir,
+                         phred_offset="33")
+        print("done in {0} s".format(time.time() - start_time), flush=True)
 
     # Perform processing for repetitive sequences
     if options.with_repeats:
@@ -244,41 +248,44 @@ if __name__ == "__main__":
              k_mer_cnt_rep, exp_cnt)
         print("done in {0} s".format(time.time() - start_time), flush=True)
 
-        # Assemble paired reads with repeats using SSAKE
-        start_time = time.time()
-        print("Assembling paired reads with repeats using SSAKE ...",
-              end=" ", flush=True)
-        ssake_out_dir = base_file_name + "_ssake"
-        utilities.ssake(rd1_wr_file_name,
-                        rd2_wr_file_name,
-                        ssake_out_dir,
-                        fragment_len,
-                        phred_threshold=20,  # -x
-                        n_consec_bases=70,   # -n
-                        ascii_offset=33,     # -d
-                        min_coverage=5,      # -w
-                        n_ovrlap_bases=20,   # -m
-                        n_reads_to_call=2,   # -o
-                        base_ratio=0.7,      # -r
-                        n_bases_to_trim=0,   # -t
-                        contig_size=100,     # -z
-                        do_track_cvrg=0,     # -c
-                        do_ignore_mppng=0,   # -y
-                        do_ignore_headr=0,   # -k
-                        do_break_ties=0,     # -q
-                        do_run_verbose=0)    # -v
-        print("done in {0} s".format(time.time() - start_time), flush=True)
+        # Assemble paired reads using SSAKE and SPAdes
+        if options.assemble:
+            # Assemble paired reads with repeats using SSAKE
+            start_time = time.time()
+            print("Assembling paired reads with repeats using SSAKE ...",
+                  end=" ", flush=True)
+            ssake_out_dir = base_file_name + "_ssake"
+            utilities.ssake(rd1_wr_file_name,
+                            rd2_wr_file_name,
+                            ssake_out_dir,
+                            fragment_len,
+                            phred_threshold=20,  # -x
+                            n_consec_bases=70,   # -n
+                            ascii_offset=33,     # -d
+                            min_coverage=5,      # -w
+                            n_ovrlap_bases=20,   # -m
+                            n_reads_to_call=2,   # -o
+                            base_ratio=0.7,      # -r
+                            n_bases_to_trim=0,   # -t
+                            contig_size=100,     # -z
+                            do_track_cvrg=0,     # -c
+                            do_ignore_mppng=0,   # -y
+                            do_ignore_headr=0,   # -k
+                            do_break_ties=0,     # -q
+                            do_run_verbose=0)    # -v
+            print("done in {0} s".format(time.time() - start_time), flush=True)
 
-        # Assemble paired reads without repeats and with trusted contigs
-        # using SPAdes
-        start_time = time.time()
-        print("Assembling paired reads without repeats " +
-              "and with trusted contigs using SPAdes ...", end=" ", flush=True)
-        spades_wc_out_dir = base_file_name + "_spades_wc"
-        utilities.spades(rd1_wo_file_name,
-                         rd2_wo_file_name,
-                         spades_wc_out_dir,
-                         trusted_contigs_fNm=os.path.join(
-                             ssake_out_dir, ssake_out_dir + "_contigs.fa"),
-                         phred_offset="33")
-        print("done in {0} s".format(time.time() - start_time), flush=True)
+            # Assemble paired reads without repeats and with trusted
+            # contigs using SPAdes
+            start_time = time.time()
+            print("Assembling paired reads without repeats " +
+                  "and with trusted contigs using SPAdes ...", end=" ",
+                  flush=True)
+            spades_wc_out_dir = base_file_name + "_spades_wc"
+            utilities.spades(rd1_wo_file_name,
+                             rd2_wo_file_name,
+                             spades_wc_out_dir,
+                             trusted_contigs_fNm=os.path.join(
+                                 ssake_out_dir, ssake_out_dir + "_contigs.fa"),
+                             phred_offset="33")
+            print("done in {0} s".format(time.time() - start_time), flush=True)
