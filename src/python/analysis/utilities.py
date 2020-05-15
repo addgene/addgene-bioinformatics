@@ -71,7 +71,7 @@ def create_r_seq_w_rep(k_mer_len=25, k_mer_cnt=[2**(n+1) for n in range(8)]):
         the sequence and list of repeated k-mers
     """
     r_k_mers = []
-    r_seq = create_r_seq(k_mer_len)
+    r_seq = create_r_seq(0)
     for kMC in k_mer_cnt:
         r_k_mer = create_r_seq(k_mer_len)
         r_k_mers.append(r_k_mer)
