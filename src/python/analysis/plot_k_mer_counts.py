@@ -1,77 +1,13 @@
 from argparse import ArgumentParser
 import os
 import pickle
-import random
 import time
 
 from Bio import SeqIO
-from Bio.SeqRecord import SeqRecord
 import matplotlib.pyplot as plt
 import numpy as np
 
 import utilities
-
-
-# TODO: Add error rate, outer distance standard deviation, indel
-# fraction, indel extension probablility, and random seed:
-# error_rate=0.020, standard_deviation=50, indel_fraction=0.15,
-# indel_extended_prob=0.30, and random_seed=0, then move to utilities
-def simulate_paired_reads_clean(seq, seq_nm, number_pairs=25000,
-                                len_first_read=250, len_second_read=250,
-                                outer_distance=500):
-    rd1_seq_rcds = []
-    rd2_seq_rcds = []
-    seq_len = len(seq)
-    for iP in range(number_pairs):
-
-        i_rd1 = random.randint(0, seq_len - outer_distance)
-        rd1_seq_rcd = SeqRecord(
-            seq[i_rd1:i_rd1 + len_first_read],
-            id=str(iP), name="one", description="first read of read pair")
-        rd1_seq_rcd.letter_annotations["phred_quality"] = (
-            40 * np.ones(len_first_read, dtype=int)).tolist()
-        rd1_seq_rcds.append(rd1_seq_rcd)
-
-        i_rd2 = i_rd1 + outer_distance - len_second_read
-        rd2_seq_rcd = SeqRecord(
-            seq[i_rd2:i_rd2 + len_first_read],
-            id=str(iP), name="two", description="second read of read pair")
-        rd2_seq_rcd.letter_annotations["phred_quality"] = (
-            40 * np.ones(len_second_read, dtype=int)).tolist()
-        rd2_seq_rcds.append(rd2_seq_rcd)
-
-    rd1_fNm = seq_nm + "_r1.fastq"
-    rd2_fNm = seq_nm + "_r2.fastq"
-    SeqIO.write(rd1_seq_rcds, rd1_fNm, "fastq")
-    SeqIO.write(rd2_seq_rcds, rd2_fNm, "fastq")
-    return rd1_fNm, rd2_fNm
-
-
-# TODO: Complete in order to validate use of wgsim
-def simulate_paired_reads_wgsim(seq, seq_nm, number_pairs=25000,
-                                len_first_read=250, len_second_read=250,
-                                outer_distance=500):
-    seq_rcd = SeqRecord(seq, id="0", name="base", description="reference")
-    seq_fNm = seq_nm + ".fasta"
-    rd1_fNm = seq_nm + "_r1.fastq"
-    rd2_fNm = seq_nm + "_r2.fastq"
-    SeqIO.write(seq_rcd, seq_fNm, "fasta")
-    utilities.wgsim(seq_fNm,
-                    rd1_fNm,
-                    rd2_fNm,
-                    error_rate=0.0,
-                    outer_distance=outer_distance,
-                    standard_deviation=0,
-                    number_pairs=number_pairs,
-                    len_first_read=len_first_read,
-                    len_second_read=len_second_read,
-                    mutation_rate=0.0,
-                    indel_fraction=0.0,
-                    indel_extended_prob=0.0,
-                    random_seed=0,
-                    ambiguous_base_frac=0.0,
-                    haplotype_mode=True)
-    return rd1_fNm, rd2_fNm
 
 
 if __name__ == "__main__":
@@ -118,7 +54,7 @@ if __name__ == "__main__":
         start_time = time.time()
         print("Simulating paired reads from doubled sequence ...", end=" ",
               flush=True)
-        rd1_fNm, rd2_fNm = simulate_paired_reads_clean(
+        rd1_fNm, rd2_fNm = utilities.simulate_paired_reads_clean(
             r_seq + r_seq, base_file_name)
         print("done in {0} s".format(time.time() - start_time), flush=True)
 
