@@ -22,13 +22,13 @@ docker build --tag ralatsdio/bbtools:v38.73 BBTools/v38.73 \
        | tee BBTools/v38.73/build.log 2>&1
 docker build --tag ralatsdio/csc:v0.1.0 CSC/v0.1.0 \
        | tee CSC/v0.1.0/build.log 2>&1
-docker build --tag ralatsdio/kmc:v0.1.0 KMC/v3.1.1 \
+docker build --tag ralatsdio/kmc:v3.1.1 KMC/v3.1.1 \
        | tee KMC/v3.1.1/build.log 2>&1
 docker build --tag ralatsdio/repdenovo:v0.1.0 REPdenovo/v0.1.0 \
        | tee REPdenovo/v0.1.0/build.log 2>&1
 docker build --tag ralatsdio/spade:v0.1.0 SPADE/v0.1.0 \
        | tee SPADE/v0.1.0/build.log 2>&1
-docker build --tag ralatsdio/SSAKE:v0.1.0 SSAKE/v4.0.1 \
+docker build --tag ralatsdio/ssake:v4.0.1 SSAKE/v4.0.1 \
        | tee SSAKE/v4.0.1/build.log 2>&1
 docker build --tag ralatsdio/samtools:v0.1.0 Samtools/v0.1.0 \
        | tee Samtools/v0.1.0/build.log 2>&1
