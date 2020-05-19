@@ -3,3 +3,4 @@
 .mypy_cache/
 .vscode/
 dat/miscellaneous/A11967A_sW0154_FASTA/apc*
+.venv
