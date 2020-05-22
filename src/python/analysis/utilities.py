@@ -92,20 +92,29 @@ def simulate_paired_reads(seq, seq_nm, number_pairs=25000,
     seq_len = len(seq)
     for iP in range(number_pairs):
 
+        # Create a random rotation of the sequence
+        i_seq = random.randint(0, seq_len)
+        r_seq = seq[seq_len - i_seq:seq_len] + seq[0:seq_len - i_seq]
+
+        # Create the first read starting from a random index, and
+        # setting random PHRED quality scores
         i_rd1 = random.randint(0, seq_len - outer_distance - 1)
         rd1_seq_rcd = SeqRecord(
-            seq[i_rd1:i_rd1 + len_first_read],
+            r_seq[i_rd1:i_rd1 + len_first_read],
             id=str(iP), name="one", description="first read of read pair")
         rd1_seq_rcd.letter_annotations["phred_quality"] = (
             40 * np.ones(len_first_read, dtype=int)).tolist()
         rd1_seq_rcds.append(rd1_seq_rcd)
 
+        # Create the second read starting from an index giving the
+        # correct outer distance, and setting random PHRED quality
+        # scores
         i_rd2 = i_rd1 + outer_distance - len_second_read
         rd2_seq_rcd = SeqRecord(
-            seq[i_rd2 + len_second_read:i_rd2:-1],
+            r_seq[i_rd2 + len_second_read:i_rd2:-1],
             id=str(iP), name="two", description="second read of read pair")
         rd2_seq_rcd.letter_annotations["phred_quality"] = (
-            40 * np.ones(len_second_read, dtype=int)).tolist()
+            np.random.randint(30, 50, seq_len)).tolist()
         rd2_seq_rcds.append(rd2_seq_rcd)
 
     rd1_fNm = seq_nm + "_rd1.fastq"
