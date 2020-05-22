@@ -355,7 +355,7 @@ def rotate_seqs(a_seq, o_seq):
          "-l", block_length,
          "-P", blocks_refine,
          "-O", gap_open_penalty,
-         "-E", gap_extend_penalty
+         "-E", gap_extend_penalty,
         ]
     )
     hosting_dir = os.path.dirname(os.path.abspath(__file__))
@@ -1039,7 +1039,7 @@ def wgsim(inp_fa_fNm,
         [command,
          inp_fa_fNm,
          out_fq_one_fNm,
-         out_fq_two_fNm
+         out_fq_two_fNm,
          ]
     )
 
@@ -1331,7 +1331,7 @@ def spades(inp_fq_one_fNm,
     if trusted_contigs_fNm is not None:
         command = " ".join(
             [command,
-             "--trusted-contigs", trusted_contigs_fNm
+             "--trusted-contigs", trusted_contigs_fNm,
              ]
         )
     command = " ".join(
@@ -1344,7 +1344,7 @@ def spades(inp_fq_one_fNm,
     for arg in args:
         command = " ".join(
             [command,
-             arg
+             arg,
              ]
         )
     for key, val in kwargs.items():
