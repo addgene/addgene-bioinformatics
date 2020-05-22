@@ -1364,5 +1364,137 @@ def spades(inp_fq_one_fNm,
     )
 
 
+def unicycler(inp_fq_one_fNm,
+              inp_fq_two_fNm,
+              out_dir,
+              *args,
+              inp_fq_lng_fNm=None,
+              **kwargs):
+    """
+    Run Unicycler assembly pipeline v0.4.8 in a docker container.
+
+    usage: unicycler [-h] [--help_all] [--version]
+                     [-1 SHORT1] [-2 SHORT2] [-s UNPAIRED] [-l LONG] -o OUT
+                     [--verbosity VERBOSITY] [--min_fasta_length MIN_FASTA_LENGTH]
+                     [--keep KEEP] [-t THREADS] [--mode {conservative,normal,bold}]
+                     [--linear_seqs LINEAR_SEQS] [--vcf]
+
+           __
+           \ \___
+            \ ___\
+            //
+       ____//      _    _         _                     _
+     //_  //\\    | |  | |       |_|                   | |
+    //  \//  \\   | |  | | _ __   _   ___  _   _   ___ | |  ___  _ __
+    ||  (O)  ||   | |  | || '_ \ | | / __|| | | | / __|| | / _ \| '__|
+    \\    \_ //   | |__| || | | || || (__ | |_| || (__ | ||  __/| |
+     \\_____//     \____/ |_| |_||_| \___| \__, | \___||_| \___||_|
+                                            __/ |
+                                           |___/
+
+    Unicycler: an assembly pipeline for bacterial genomes
+
+    Help:
+      -h, --help                           Show this help message and exit
+      --help_all                           Show a help message with all
+                                             program options
+      --version                            Show Unicycler's version number
+
+    Input:
+      -1 SHORT1, --short1 SHORT1           FASTQ file of first short reads in
+                                             each pair (required)
+      -2 SHORT2, --short2 SHORT2           FASTQ file of second short reads in
+                                             each pair (required)
+      -s UNPAIRED, --unpaired UNPAIRED     FASTQ file of unpaired short reads
+                                             (optional)
+      -l LONG, --long LONG                 FASTQ or FASTA file of long reads
+                                             (optional)
+
+    Output:
+      -o OUT, --out OUT                    Output directory (required)
+      --verbosity VERBOSITY                Level of stdout and log file
+                                             information (default: 1)
+                                             0 = no stdout,
+                                             1 = basic progress indicators,
+                                             2 = extra info,
+                                             3 = debugging info
+      --min_fasta_length MIN_FASTA_LENGTH  Exclude contigs from the FASTA file
+                                             which are shorter than this
+                                             length (default: 100)
+      --keep KEEP                          Level of file retention (default: 1)
+                                             0 = only keep final files:
+                                                 assembly (FASTA, GFA and log),
+                                             1 = also save graphs at main
+                                                 checkpoints,
+                                             2 = also keep SAM (enables fast
+                                                 rerun in different mode),
+                                             3 = keep all temp files and save
+                                                 all graphs (for debugging)
+      --vcf                                Produce a VCF by mapping the short
+                                             reads to the final assembly
+                                             (experimental, default: do not
+                                              produce a vcf file)
+
+    Other:
+      -t THREADS, --threads THREADS        Number of threads used (default: 4)
+      --mode {conservative,normal,bold}    Bridging mode (default: normal)
+                                             conservative = smaller contigs,
+                                               lowest misassembly rate
+                                             normal = moderate contig size and
+                                               misassembly rate
+                                             bold = longest contigs, higher
+                                               misassembly rate
+      --linear_seqs LINEAR_SEQS            The expected number of linear
+                                             (i.e. non-circular) sequences in
+                                             the underlying sequence
+                                             (default: 0)
+    """
+    # Define image, and Docker run parameters
+    image = "ralatsdio/unicycler:v0.4.8"
+    hosting_dir = os.path.dirname(os.path.abspath(__file__))
+    working_dir = "/data"
+    volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
+
+    # Define Unicycler command
+    command = " ".join(
+        ["unicycler",
+         "-1", inp_fq_one_fNm,
+         "-2", inp_fq_two_fNm,
+         ]
+    )
+    if inp_fq_lng_fNm is not None:
+        command = " ".join(
+            [command,
+             "-l", inp_fq_lng_fNm,
+             ]
+        )
+    command = " ".join(
+        [command,
+         "-o", out_dir,
+         ]
+    )
+    for arg in args:
+        command = " ".join(
+            [command,
+             arg,
+             ]
+        )
+    for key, val in kwargs.items():
+        command = " ".join(
+            [command,
+             "--" + key,
+             ]
+        )
+
+    # Run the command in the Docker image
+    client = docker.from_env()
+    client.containers.run(
+        image,
+        command=command,
+        volumes=volumes,
+        working_dir=working_dir,
+    )
+
+
 if __name__ == "__main__":
     pass
