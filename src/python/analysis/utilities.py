@@ -103,7 +103,7 @@ def simulate_paired_reads(seq, seq_nm, number_pairs=25000,
             r_seq[i_rd1:i_rd1 + len_first_read],
             id=str(iP), name="one", description="first read of read pair")
         rd1_seq_rcd.letter_annotations["phred_quality"] = (
-            40 * np.ones(len_first_read, dtype=int)).tolist()
+            np.random.randint(20, 50, len_first_read)).tolist()
         rd1_seq_rcds.append(rd1_seq_rcd)
 
         # Create the second read starting from an index giving the
@@ -114,7 +114,7 @@ def simulate_paired_reads(seq, seq_nm, number_pairs=25000,
             r_seq[i_rd2 + len_second_read:i_rd2:-1],
             id=str(iP), name="two", description="second read of read pair")
         rd2_seq_rcd.letter_annotations["phred_quality"] = (
-            np.random.randint(30, 50, seq_len)).tolist()
+            np.random.randint(20, 50, len_second_read)).tolist()
         rd2_seq_rcds.append(rd2_seq_rcd)
 
     rd1_fNm = seq_nm + "_rd1.fastq"
