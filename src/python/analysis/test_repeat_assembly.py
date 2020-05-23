@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 import os
 import pickle
+import shutil
 import time
 
 from Bio import SeqIO
@@ -26,7 +27,7 @@ fragment_len = outer_distance
 
 def collect_k_mer_cnt(k_mers, seq_cnt=2):
     """Collect k-mer counts, assuming that we counted in a doubled
-    sequence.
+    sequence. Set sequence count otherwise.
     """
     return np.array(
         [val['cnt'] / seq_cnt for val in k_mers.values()]
@@ -101,12 +102,12 @@ if __name__ == "__main__":
 
     # Add and parser arguments
     parser = ArgumentParser()
-    parser.add_argument('-w', '--with-repeats',
-                        action='store_true',
-                        help="create a random sequence with repeats")
     parser.add_argument('-i', '--initialize',
                         action='store_true',
                         help="create sequence and count k-mers")
+    parser.add_argument('-w', '--with-repeats',
+                        action='store_true',
+                        help="create a random sequence with repeats")
     parser.add_argument('-a', '--assemble',
                         action='store_true',
                         help="assemble paired reads")
@@ -126,7 +127,9 @@ if __name__ == "__main__":
         if options.with_repeats:
             # Note that repeats need to occur in the interior of the
             # sequence in order to obtain the expected count since we
-            # are simapling in a linear sequence
+            # are simapling in a linear sequence. This issue may be
+            # resolved with the random rotation added to the paired
+            # read simulation
             a_seq = utilities.create_r_seq(
                 outer_distance
             )
@@ -150,13 +153,12 @@ if __name__ == "__main__":
         k_mers_seq = utilities.count_k_mers_in_seq(r_seq + r_seq)
         print("done in {0} s".format(time.time() - start_time), flush=True)
 
-        # Simulate paired reads of the random sequence, again doubled
-        # to represent circular DNA
+        # Simulate paired reads of the random sequence
         start_time = time.time()
-        print("Simulating paired reads from doubled sequence ...", end=" ",
+        print("Simulating paired reads from random sequence ...", end=" ",
               flush=True)
         rd1_file_name, rd2_file_name = utilities.simulate_paired_reads(
-            r_seq + r_seq,
+            r_seq,
             base_file_name,
             number_pairs=number_pairs,
             len_first_read=len_first_read,
@@ -220,19 +222,33 @@ if __name__ == "__main__":
         start_time = time.time()
         print("Assembling paired reads using SPAdes ...", end=" ", flush=True)
         spades_wo_out_dir = base_file_name + "_spades_wo"
+        if os.path.exists(spades_wo_out_dir):
+            shutil.rmtree(spades_wo_out_dir)
         utilities.spades(rd1_file_name,
                          rd2_file_name,
-                         spades_wo_out_dir,
-                         phred_offset="33")
+                         spades_wo_out_dir)
+        print("done in {0} s".format(time.time() - start_time), flush=True)
+
+    # Assemble paired reads using Unicycler
+    if options.assemble:
+        start_time = time.time()
+        print("Assembling paired reads using Unicycler ...", end=" ",
+              flush=True)
+        unicycler_wo_out_dir = base_file_name + "_unicycler_wo"
+        if os.path.exists(unicycler_wo_out_dir):
+            shutil.rmtree(unicycler_wo_out_dir)
+        utilities.unicycler(rd1_file_name,
+                            rd2_file_name,
+                            unicycler_wo_out_dir)
         print("done in {0} s".format(time.time() - start_time), flush=True)
 
     # Perform processing for repetitive sequences
     if options.with_repeats:
 
         # Collect k-mer counts, and compute coverage
-        k_mer_cnt_seq = collect_k_mer_cnt(k_mers_seq)
-        k_mer_cnt_rd1 = collect_k_mer_cnt(k_mers_rd1)
-        k_mer_cnt_rd2 = collect_k_mer_cnt(k_mers_rd2)
+        k_mer_cnt_seq = collect_k_mer_cnt(k_mers_seq, seq_cnt=2)
+        k_mer_cnt_rd1 = collect_k_mer_cnt(k_mers_rd1, seq_cnt=1)
+        k_mer_cnt_rd2 = collect_k_mer_cnt(k_mers_rd2, seq_cnt=1)
         coverage_rd1 = int(np.sum(k_mer_cnt_rd1) / np.sum(k_mer_cnt_seq))
         coverage_rd2 = int(np.sum(k_mer_cnt_rd2) / np.sum(k_mer_cnt_seq))
 
@@ -247,14 +263,18 @@ if __name__ == "__main__":
              k_mer_cnt_rd2, coverage_rd2, k_mers_rd2, seq_rcds_rd2,
              k_mer_cnt_rep, exp_cnt)
         print("done in {0} s".format(time.time() - start_time), flush=True)
+        print("r_k_mer_exp_rd1: {0}".format(r_k_mer_exp_rd1))
+        print("r_k_mer_exp_rd2: {0}".format(r_k_mer_exp_rd2))
 
-        # Assemble paired reads using SSAKE and SPAdes
+        # Assemble paired reads using SSAKE and SPAdes or Unicycler
         if options.assemble:
             # Assemble paired reads with repeats using SSAKE
             start_time = time.time()
             print("Assembling paired reads with repeats using SSAKE ...",
                   end=" ", flush=True)
             ssake_out_dir = base_file_name + "_ssake"
+            if os.path.exists(ssake_out_dir):
+                shutil.rmtree(ssake_out_dir)
             utilities.ssake(rd1_wr_file_name,
                             rd2_wr_file_name,
                             ssake_out_dir,
@@ -282,10 +302,28 @@ if __name__ == "__main__":
                   "and with trusted contigs using SPAdes ...", end=" ",
                   flush=True)
             spades_wc_out_dir = base_file_name + "_spades_wc"
+            if os.path.exists(spades_wc_out_dir):
+                shutil.rmtree(spades_wc_out_dir)
             utilities.spades(rd1_wo_file_name,
                              rd2_wo_file_name,
                              spades_wc_out_dir,
                              trusted_contigs_fNm=os.path.join(
-                                 ssake_out_dir, ssake_out_dir + "_contigs.fa"),
-                             phred_offset="33")
+                                 ssake_out_dir, ssake_out_dir + "_contigs.fa"))
+            print("done in {0} s".format(time.time() - start_time), flush=True)
+
+            # Assemble paired reads without repeats and with a long
+            # read (SSAKE assembly) using Unicycler
+            start_time = time.time()
+            print("Assembling paired reads without repeats " +
+                  "and with a long read using Unicycler ...", end=" ",
+                  flush=True)
+            unicycler_wc_out_dir = base_file_name + "_unicycler_wc"
+            if os.path.exists(unicycler_wc_out_dir):
+                shutil.rmtree(unicycler_wc_out_dir)
+            utilities.unicycler(rd1_wo_file_name,
+                                rd2_wo_file_name,
+                                unicycler_wc_out_dir,
+                                inp_fq_lng_fNm=os.path.join(
+                                    ssake_out_dir,
+                                    ssake_out_dir + "_contigs.fa"))
             print("done in {0} s".format(time.time() - start_time), flush=True)
