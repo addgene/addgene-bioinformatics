@@ -160,7 +160,7 @@ if __name__ == "__main__":
                         help="the well specification")
     parser.add_argument('-o', '--output-directory', default=None,
                         help="the directory containing all output files")
-    parser.add_argument("-m", "--mode", default=None, 
+    parser.add_argument("-m", "--mode", default="normal", type=str,
                         help='one of "conservative", "normal", or "bold"')
     parser.add_argument("--depth-filter", default=None, type=float,
                         help="filter out contigs lower than this fraction of depth")
