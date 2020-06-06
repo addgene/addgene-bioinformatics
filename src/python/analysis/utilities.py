@@ -143,9 +143,11 @@ def simulate_unpaired_reads(seq, seq_nm, number_pairs=25000, len_read=500):
             np.random.randint(20, 50, len_read)).tolist()
         rd_seq_rcds.append(rd_seq_rcd)
 
-    rd_fNm = seq_nm + "_rd.fastq"
-    SeqIO.write(rd_seq_rcds, rd_fNm, "fastq")
-    return rd_fNm
+    rd_fNmQ = seq_nm + "_rd.fastq"
+    SeqIO.write(rd_seq_rcds, rd_fNmQ, "fastq")
+    rd_fNmA = seq_nm + "_rd.fasta"
+    SeqIO.write(rd_seq_rcds, rd_fNmA, "fasta")
+    return rd_fNmQ, rd_fNmA
 
 
 def create_aligner(config):
