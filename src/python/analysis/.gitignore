@@ -1,3 +1,26 @@
 A11967A_*
 clean*
 kmc_input.txt
+
+# TODO: Clean up
+.rerun
+CA_dir.txt
+ESTIMATED_GENOME_SIZE.txt
+PLOIDY.txt
+assemble.*
+config*
+contig*
+create_mega-reads.err
+environment.sh
+guillaume*
+k_u_hash_0
+log_Toil.txt
+meanAndStdevByPrefix.pe.txt
+mr.*
+ont_25xlongest.fa
+pe*
+quorum*
+random_seq*
+repetitive_seq*
+super*
+work1*
