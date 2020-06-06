@@ -124,6 +124,30 @@ def simulate_paired_reads(seq, seq_nm, number_pairs=25000,
     return rd1_fNm, rd2_fNm
 
 
+def simulate_unpaired_reads(seq, seq_nm, number_pairs=25000, len_read=500):
+    rd_seq_rcds = []
+    seq_len = len(seq)
+    for iP in range(number_pairs):
+
+        # Create a random rotation of the sequence
+        i_seq = random.randint(0, seq_len)
+        r_seq = seq[seq_len - i_seq:seq_len] + seq[0:seq_len - i_seq]
+
+        # Create the read starting from a random index, and
+        # setting random PHRED quality scores
+        i_rd = random.randint(0, seq_len - len_read - 1)
+        rd_seq_rcd = SeqRecord(
+            r_seq[i_rd:i_rd + len_read],
+            id=str(iP), name="unpaired", description="unpaired read")
+        rd_seq_rcd.letter_annotations["phred_quality"] = (
+            np.random.randint(20, 50, len_read)).tolist()
+        rd_seq_rcds.append(rd_seq_rcd)
+
+    rd_fNm = seq_nm + "_rd.fastq"
+    SeqIO.write(rd_seq_rcds, rd_fNm, "fastq")
+    return rd_fNm
+
+
 def create_aligner(config):
     """Creates a pairwise aligner with the specified configuration.
 
