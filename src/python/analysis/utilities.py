@@ -1215,6 +1215,7 @@ def ssake(inp_fq_one_fNm,
         volumes=volumes,
         working_dir=working_dir,
     )
+    return command
 
 
 def spades(inp_fq_one_fNm,
@@ -1386,6 +1387,7 @@ def spades(inp_fq_one_fNm,
         volumes=volumes,
         working_dir=working_dir,
     )
+    return command
 
 
 def unicycler(inp_fq_one_fNm,
@@ -1518,6 +1520,7 @@ def unicycler(inp_fq_one_fNm,
         volumes=volumes,
         working_dir=working_dir,
     )
+    return command
 
 
 if __name__ == "__main__":
