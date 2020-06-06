@@ -316,8 +316,8 @@ if __name__ == "__main__":
                 ssake_out_base_name, ssake_out_base_name + "_scaffolds.fa")
             if os.path.exists(spades_wc_out_dir):
                 shutil.rmtree(spades_wc_out_dir)
-            command = utilities.spades(rd1_wo_file_name,
-                                       rd2_wo_file_name,
+            command = utilities.spades(rd1_file_name,
+                                       rd2_file_name,
                                        spades_wc_out_dir,
                                        trusted_contigs_fNm=trusted_contigs_fNm)
             print("done in {0} s".format(time.time() - start_time), flush=True)
@@ -351,8 +351,8 @@ if __name__ == "__main__":
             unicycler_wc_out_dir = BASE_FILE_NAME + "_unicycler_wc"
             if os.path.exists(unicycler_wc_out_dir):
                 shutil.rmtree(unicycler_wc_out_dir)
-            command = utilities.unicycler(rd1_wo_file_name,
-                                          rd2_wo_file_name,
+            command = utilities.unicycler(rd1_file_name,
+                                          rd2_file_name,
                                           unicycler_wc_out_dir,
                                           inp_fq_lng_fNm=rd_file_name)
             print("done in {0} s".format(time.time() - start_time), flush=True)
