@@ -2,7 +2,7 @@ import gzip
 import logging
 import math
 import os
-from random import choice
+import random
 import re
 
 from Bio import Align
@@ -10,8 +10,8 @@ from Bio import SeqIO
 from Bio.Alphabet import IUPAC
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-
 import docker
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ def create_r_seq_str(seq_len):
     """
     r_seq_str = ""
     for count in range(seq_len):
-        r_seq_str += choice("CGTA")
+        r_seq_str += random.choice("CGTA")
     return r_seq_str
 
 
@@ -71,13 +71,81 @@ def create_r_seq_w_rep(k_mer_len=25, k_mer_cnt=[2**(n+1) for n in range(8)]):
         the sequence and list of repeated k-mers
     """
     r_k_mers = []
-    r_seq = create_r_seq(k_mer_len)
+    r_seq = create_r_seq(0)
     for kMC in k_mer_cnt:
         r_k_mer = create_r_seq(k_mer_len)
         r_k_mers.append(r_k_mer)
         for iKM in range(kMC):
             r_seq += r_k_mer
     return r_seq, r_k_mers
+
+
+# TODO: Add error rate, outer distance standard deviation, indel
+# fraction, indel extension probablility, and random seed:
+# error_rate=0.020, standard_deviation=50, indel_fraction=0.15,
+# indel_extended_prob=0.30, and random_seed=0, then move to utilities
+def simulate_paired_reads(seq, seq_nm, number_pairs=25000,
+                          len_first_read=250, len_second_read=250,
+                          outer_distance=500):
+    rd1_seq_rcds = []
+    rd2_seq_rcds = []
+    seq_len = len(seq)
+    for iP in range(number_pairs):
+
+        # Create a random rotation of the sequence
+        i_seq = random.randint(0, seq_len)
+        r_seq = seq[seq_len - i_seq:seq_len] + seq[0:seq_len - i_seq]
+
+        # Create the first read starting from a random index, and
+        # setting random PHRED quality scores
+        i_rd1 = random.randint(0, seq_len - outer_distance - 1)
+        rd1_seq_rcd = SeqRecord(
+            r_seq[i_rd1:i_rd1 + len_first_read],
+            id=str(iP), name="one", description="first read of read pair")
+        rd1_seq_rcd.letter_annotations["phred_quality"] = (
+            np.random.randint(20, 50, len_first_read)).tolist()
+        rd1_seq_rcds.append(rd1_seq_rcd)
+
+        # Create the second read starting from an index giving the
+        # correct outer distance, and setting random PHRED quality
+        # scores
+        i_rd2 = i_rd1 + outer_distance - len_second_read
+        rd2_seq_rcd = SeqRecord(
+            r_seq[i_rd2 + len_second_read:i_rd2:-1],
+            id=str(iP), name="two", description="second read of read pair")
+        rd2_seq_rcd.letter_annotations["phred_quality"] = (
+            np.random.randint(20, 50, len_second_read)).tolist()
+        rd2_seq_rcds.append(rd2_seq_rcd)
+
+    rd1_fNm = seq_nm + "_rd1.fastq"
+    rd2_fNm = seq_nm + "_rd2.fastq"
+    SeqIO.write(rd1_seq_rcds, rd1_fNm, "fastq")
+    SeqIO.write(rd2_seq_rcds, rd2_fNm, "fastq")
+    return rd1_fNm, rd2_fNm
+
+
+def simulate_unpaired_reads(seq, seq_nm, number_pairs=25000, len_read=500):
+    rd_seq_rcds = []
+    seq_len = len(seq)
+    for iP in range(number_pairs):
+
+        # Create a random rotation of the sequence
+        i_seq = random.randint(0, seq_len)
+        r_seq = seq[seq_len - i_seq:seq_len] + seq[0:seq_len - i_seq]
+
+        # Create the read starting from a random index, and
+        # setting random PHRED quality scores
+        i_rd = random.randint(0, seq_len - len_read - 1)
+        rd_seq_rcd = SeqRecord(
+            r_seq[i_rd:i_rd + len_read],
+            id=str(iP), name="unpaired", description="unpaired read")
+        rd_seq_rcd.letter_annotations["phred_quality"] = (
+            np.random.randint(20, 50, len_read)).tolist()
+        rd_seq_rcds.append(rd_seq_rcd)
+
+    rd_fNm = seq_nm + "_rd.fastq"
+    SeqIO.write(rd_seq_rcds, rd_fNm, "fastq")
+    return rd_fNm
 
 
 def create_aligner(config):
@@ -111,98 +179,6 @@ def create_aligner(config):
     aligner.mode = config['mode']
 
     return aligner
-
-
-def rotate_seqs(a_seq, o_seq):
-    """Finds the cyclic rotation of a_seq (or an approximation of it)
-    that minimizes the blockwise q-gram distance from o_seq using
-    Docker image "ralatsdio/csc:v0.1.0".
-
-    Parameters
-    ----------
-    a_seq : Bio.Seq.Seq
-        thought of as the reference sequence
-    o_seq : Bio.Seq.Seq
-        thought of as the candidate sequence
-
-    Returns
-    -------
-    tpl
-        tuple containing the rotated reference and candidate sequences
-    """
-    # Define image, Docker run parameters, and CSC command
-    image = "ralatsdio/csc:v0.1.0"
-    # [-a] `DNA' or `RNA' for nucleotide sequences or `PROT' for
-    # protein sequences
-    alphabet = "DNA"
-    # [-m] `hCSC' for heuristic, `nCSC' for naive and `saCSC' for
-    # suffix-array algorithm
-    method = "saCSC"
-    # (Multi)FASTA input filename.
-    input_file = "csc_input.fasta"
-    # Output filename for the rotated sequences.
-    output_file = "csc_output.fasta"
-    # [-l] The length of each block
-    block_length = str(math.ceil(math.sqrt(len(a_seq))))
-    # [-q] The q-gram length
-    q_length = str(math.ceil(math.log(len(a_seq)) / math.log(4)))
-    # [-P] The number of blocks of length l to use to refine the
-    # results of saCSC by (e.g. 1.0)
-    blocks_refine = "1.0"
-    # [-O] The gap open penalty is the score taken away when a gap is
-    # created. The best value depends on the choice of comparison
-    # matrix.  The default value assumes you are using the EBLOSUM62
-    # matrix for protein sequences, and the EDNAFULL matrix for
-    # nucleotide sequences. Floating point number from 1.0 to
-    # 100.0. (default: 10.0)
-    gap_open_penalty = "10.0"
-    # [-E] The gap extension penalty is added to the standard gap
-    # penalty for each base or residue in the gap. This is how long
-    # gaps are penalized. Floating point number from 0.0 to 10.0.
-    # (default: 0.5)
-    gap_extend_penalty = "0.5"
-    command = " ".join(
-        ["csc",
-         "-m", method,
-         "-a", alphabet,
-         "-i", input_file,
-         "-o", output_file,
-         "-q", q_length,
-         "-l", block_length,
-         "-P", blocks_refine,
-         "-O", gap_open_penalty,
-         "-E", gap_extend_penalty
-        ]
-    )
-    hosting_dir = os.path.dirname(os.path.abspath(__file__))
-    working_dir = "/data"
-    volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
-
-    # Write the multi-FASTA input file
-    SeqIO.write(
-        [SeqRecord(a_seq, id="id_a", name="name_a", description="reference"),
-         SeqRecord(o_seq, id="id_o", name="name_o", description="offset")],
-        os.path.join(hosting_dir, input_file),
-        "fasta")
-
-    # Run the command in the Docker image
-    client = docker.from_env()
-    client.containers.run(
-        image,
-        command=command,
-        volumes=volumes,
-        working_dir=working_dir,
-    )
-
-    # Read the multi-FASTA output file
-    seq_rcds = [seq_record for seq_record in SeqIO.parse(
-        os.path.join(hosting_dir, output_file), "fasta")]
-
-    # Assign and return the rotated sequences
-    r_a_seq = seq_rcds[0].seq
-    r_o_seq = seq_rcds[1].seq
-
-    return (r_a_seq, r_o_seq)
 
 
 def count_k_mers_in_seq(seq, seq_id=0, k_mer_len=25, k_mers=None):
@@ -282,7 +258,7 @@ def count_k_mers_in_rds(rd_fNm, k_mer_len=25, k_mers=None, seq_rcds=None):
 
 
 def write_k_mer_counts_in_rds(k_mers_in_rd1, k_mers_in_rd2, k_mer_counts_fNm):
-    """Sum, then write the k-mer counts corresponding to paired reads.
+    """Write the k-mer counts corresponding to paired reads.
 
     Parameters
     ----------
@@ -298,12 +274,14 @@ def write_k_mer_counts_in_rds(k_mers_in_rd1, k_mers_in_rd2, k_mer_counts_fNm):
         k_mer_set_rd2 = set(k_mers_in_rd2.keys())
         k_mer_set = k_mer_set_rd1.union(k_mer_set_rd2)
         for k_mer in sorted(k_mer_set):
-            k_mer_cnt = 0
+            k_mer_cnt_rd1 = 0
             if k_mer in k_mer_set_rd1:
-                k_mer_cnt += k_mers_in_rd1[k_mer]['cnt']
+                k_mer_cnt_rd1 = k_mers_in_rd1[k_mer]['cnt']
+            k_mer_cnt_rd2 = 0
             if k_mer in k_mer_set_rd2:
-                k_mer_cnt += k_mers_in_rd2[k_mer]['cnt']
-            f.write("{0} {1:10d}\n".format(k_mer, int(k_mer_cnt / 2)))
+                k_mer_cnt_rd2 = k_mers_in_rd2[k_mer]['cnt']
+            f.write("{0} {1:10d} {1:10d}\n".format(
+                k_mer, int(k_mer_cnt_rd1), int(k_mer_cnt_rd2)))
 
 
 def read_k_mer_counts(k_mer_counts_fNm, seq_id=0, k_mers=None):
@@ -321,7 +299,7 @@ def read_k_mer_counts(k_mer_counts_fNm, seq_id=0, k_mers=None):
     Returns
     -------
     dct
-        dictionay containing k-mer keys and counts and source sequence
+        dictionay containing k-mer keys, and counts and source sequence
         identifiers values
     """
     if k_mers is None:
@@ -330,15 +308,136 @@ def read_k_mer_counts(k_mer_counts_fNm, seq_id=0, k_mers=None):
         for ln in f:
             flds = ln.split()
             k_mer = flds[0]
-            cnt = int(flds[1])
+            cnt_rd1 = int(flds[1])
+            cnt_rd2 = int(flds[2])
             if k_mer in k_mers:
                 print("Second occurance of k-mer: {0} unexpected".format(
                     k_mer))
             else:
                 k_mers[k_mer] = {}
                 k_mers[k_mer]["src"] = set([seq_id])
-                k_mers[k_mer]["cnt"] = cnt
+                k_mers[k_mer]["rd1"] = cnt_rd1
+                k_mers[k_mer]["rd2"] = cnt_rd2
     return k_mers
+
+
+def rotate_seqs(a_seq, o_seq):
+    """Finds the cyclic rotation of a_seq (or an approximation of it)
+    that minimizes the blockwise q-gram distance from o_seq using
+    Docker image "ralatsdio/csc:v0.1.0".
+
+    Parameters
+    ----------
+    a_seq : Bio.Seq.Seq
+        thought of as the reference sequence
+    o_seq : Bio.Seq.Seq
+        thought of as the candidate sequence
+
+    Returns
+    -------
+    tpl
+        tuple containing the rotated reference and candidate sequences
+    """
+    # Define image, Docker run parameters, and CSC command
+    image = "ralatsdio/csc:v0.1.0"
+    # [-a] `DNA' or `RNA' for nucleotide sequences or `PROT' for
+    # protein sequences
+    alphabet = "DNA"
+    # [-m] `hCSC' for heuristic, `nCSC' for naive and `saCSC' for
+    # suffix-array algorithm
+    method = "saCSC"
+    # (Multi)FASTA input filename.
+    input_file = "csc_input.fasta"
+    # Output filename for the rotated sequences.
+    output_file = "csc_output.fasta"
+    # [-l] The length of each block
+    block_length = str(math.ceil(math.sqrt(len(a_seq))))
+    # [-q] The q-gram length
+    q_length = str(math.ceil(math.log(len(a_seq)) / math.log(4)))
+    # [-P] The number of blocks of length l to use to refine the
+    # results of saCSC by (e.g. 1.0)
+    blocks_refine = "1.0"
+    # [-O] The gap open penalty is the score taken away when a gap is
+    # created. The best value depends on the choice of comparison
+    # matrix.  The default value assumes you are using the EBLOSUM62
+    # matrix for protein sequences, and the EDNAFULL matrix for
+    # nucleotide sequences. Floating point number from 1.0 to
+    # 100.0. (default: 10.0)
+    gap_open_penalty = "10.0"
+    # [-E] The gap extension penalty is added to the standard gap
+    # penalty for each base or residue in the gap. This is how long
+    # gaps are penalized. Floating point number from 0.0 to 10.0.
+    # (default: 0.5)
+    gap_extend_penalty = "0.5"
+    command = " ".join(
+        ["csc",
+         "-m", method,
+         "-a", alphabet,
+         "-i", input_file,
+         "-o", output_file,
+         "-q", q_length,
+         "-l", block_length,
+         "-P", blocks_refine,
+         "-O", gap_open_penalty,
+         "-E", gap_extend_penalty,
+        ]
+    )
+    hosting_dir = os.path.dirname(os.path.abspath(__file__))
+    working_dir = "/data"
+    volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
+
+    # Write the multi-FASTA input file
+    SeqIO.write(
+        [SeqRecord(a_seq, id="id_a", name="name_a", description="reference"),
+         SeqRecord(o_seq, id="id_o", name="name_o", description="offset")],
+        os.path.join(hosting_dir, input_file),
+        "fasta")
+
+    # Run the command in the Docker image
+    client = docker.from_env()
+    client.containers.run(
+        image,
+        command=command,
+        volumes=volumes,
+        working_dir=working_dir,
+    )
+
+    # Read the multi-FASTA output file
+    seq_rcds = [seq_record for seq_record in SeqIO.parse(
+        os.path.join(hosting_dir, output_file), "fasta")]
+
+    # Assign and return the rotated sequences
+    r_a_seq = seq_rcds[0].seq
+    r_o_seq = seq_rcds[1].seq
+
+    return (r_a_seq, r_o_seq)
+
+
+# TODO: Complete in order to validate use of wgsim
+def simulate_paired_reads_wgsim(seq, seq_nm, number_pairs=25000,
+                                len_first_read=250, len_second_read=250,
+                                outer_distance=500):
+    seq_rcd = SeqRecord(seq, id="0", name="base", description="reference")
+    seq_fNm = seq_nm + ".fasta"
+    rd1_fNm = seq_nm + "_rd1.fastq"
+    rd2_fNm = seq_nm + "_rd2.fastq"
+    SeqIO.write(seq_rcd, seq_fNm, "fasta")
+    wgsim(seq_fNm,
+          rd1_fNm,
+          rd2_fNm,
+          error_rate=0.0,
+          outer_distance=outer_distance,
+          standard_deviation=0,
+          number_pairs=number_pairs,
+          len_first_read=len_first_read,
+          len_second_read=len_second_read,
+          mutation_rate=0.0,
+          indel_fraction=0.0,
+          indel_extended_prob=0.0,
+          random_seed=0,
+          ambiguous_base_frac=0.0,
+          haplotype_mode=True)
+    return rd1_fNm, rd2_fNm
 
 
 def kmc(read_file_names, database_file_name,
@@ -964,7 +1063,7 @@ def wgsim(inp_fa_fNm,
         [command,
          inp_fa_fNm,
          out_fq_one_fNm,
-         out_fq_two_fNm
+         out_fq_two_fNm,
          ]
     )
 
@@ -978,38 +1077,451 @@ def wgsim(inp_fa_fNm,
     )
 
 
+def ssake(inp_fq_one_fNm,
+          inp_fq_two_fNm,
+          out_base_fNm,
+          fragment_len,
+          phred_threshold=20,  # -x
+          n_consec_bases=70,   # -n
+          ascii_offset=33,     # -d
+          min_coverage=5,      # -w
+          n_ovrlap_bases=20,   # -m
+          n_reads_to_call=2,   # -o
+          base_ratio=0.7,      # -r
+          n_bases_to_trim=0,   # -t
+          contig_size=100,     # -z
+          do_track_cvrg=0,     # -c
+          do_ignore_mppng=0,   # -y
+          do_ignore_headr=0,   # -k
+          do_break_ties=0,     # -q
+          do_run_verbose=0):   # -v
+    """
+    Run a simple pipeline using SSAKE to assemble reads in a docker
+    container.  SSAKE is a genomics application for de novo assembly
+    of millions of very short DNA sequences. It is an easy-to-use,
+    robust, reliable and tractable assembly algorithm for short
+    sequence reads, such as those generated by Illumina Ltd. See:
+    https://github.com/ralatsdc/SSAKE/blob/master/readme.md.
+
+    Documentation for SSAKE version 4.0
+
+    Usage: runSSAKE.sh read1.fq read2.fq libraryFragmentLength basename
+
+    OPTIONS for TQSfastq
+    -f   File of filenames corresponding to fasta/fastq files with reads to
+         interrogate
+              ! Implicitly used in this script
+    -q   Phred quality score threshold (bases less than -q XX will be
+         clipped, default -q 10, optional)
+              ! Use -x for this script
+    -n   Number of consecutive -q 10 bases (default -n 30, optional)
+         TODO: Check that -n should read -e below
+    -e   ASCII offset (33=standard 64=illumina, default -n 33, optional)
+              ! Use -d for this script
+    -v   Runs in verbose mode (-v 1 = yes, default = no, optional)
+
+    OPTIONS for SSAKE
+    -f File containing all the [paired (-p 1)] reads (required)
+              ! Implicitly used in this script
+              With -p 1:
+                   ! Target insert size must be indicated at the end of
+                     the header line (e.g. :400 for a 400bp
+                     fragment/insert size)
+                   ! Paired reads must be separated by ":"
+                        >header:400 (or >header_barcode:400)
+                        ACGACACTATGCATAAGCAGACGAGCAGCGACGCAGCACG:GCGCACGACGCAGCACAGCAGCAGACGAC
+                   Scaffolding options considered with -p 1:
+                        -e Error (%) allowed on mean distance e.g. -e 0.75
+                           == distance +/- 75% (default -e 0.75, optional)
+                        -l Minimum number of links (read pairs) to compute
+                           scaffold (default -k 5, optional)
+                        -a Maximum link ratio between two best contig
+                           pairs *higher values lead to least accurate
+                           scaffolding* (default -a 0.3, optional)
+    -g   Fasta file containing unpaired sequence reads (optional)
+              ! Implicitly used in this script
+    -w   Minimum depth of coverage allowed for contigs (e.g. -w 1 = process
+         all reads [v3.7 behavior], required, recommended -w 5)
+              ! The assembly will stop when 50+ contigs with coverage < -w have been seen.
+    -s   Fasta file containing sequences to use as seeds exclusively
+         (specify only if different from read set, optional)
+              ! Ignored by this script
+              TODO: Understand if these options are used only when -s is used
+              -i Independent (de novo) assembly i.e Targets used to
+                 recruit reads for de novo assembly, not guide/seed
+                 reference-based assemblies (-i 1 = yes (default), 0 = no,
+                 optional)
+              -j Target sequence word size to hash (default -j 15)
+              -u Apply read space restriction to seeds while -s option in
+                 use (-u 1 = yes, default = no, optional)
+    -m   Minimum number of overlapping bases with the seed/contig during
+         overhang consensus build up (default -m 20)
+    -o   Minimum number of reads needed to call a base during an extension
+         (default -o 2)
+    -r   Minimum base ratio used to accept a overhang consensus base
+         (default -r 0.7)
+    -t   Trim up to -t base(s) on the contig end when all possibilities have
+         been exhausted for an extension (default -t 0, optional)
+    -c   Track base coverage and read position for each contig (default -c 0, optional)
+    -y   Ignore read mapping to consensus (-y 1 = yes, default = no, optional)
+    -h   Ignore read name/header *will use less RAM if set to -h 1* (-h 1 = yes, default = no,
+         optional)
+              ! Use -k for this script
+    -b   Base name for your output files (optional)
+              ! Implicitly used in this script
+    -z   Minimum contig size to track base coverage and read position
+         (default -z 100, optional)
+    -q   Break tie when no consensus base at position, pick random base
+         (-q 1 = yes, default = no, optional)
+    -p   Paired-end reads used? (-p 1 = yes, default = no, optional)
+              ! Implicitly used in this script
+    -v   Runs in verbose mode (-v 1 = yes, default = no, optional)
+    """
+    # Define image, and Docker run parameters
+    image = "ralatsdio/ssake:v4.0.1"
+    hosting_dir = os.path.dirname(os.path.abspath(__file__))
+    working_dir = "/data"
+    volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
+
+    # Define SSAKE command
+    command = " ".join(
+        ["runSSAKE.sh",
+         "-x", str(phred_threshold),
+         "-n", str(n_consec_bases),
+         "-d", str(ascii_offset),
+         "-w", str(min_coverage),
+         "-m", str(n_ovrlap_bases),
+         "-o", str(n_reads_to_call),
+         "-r", str(base_ratio),
+         "-t", str(n_bases_to_trim),
+         "-z", str(contig_size),
+         "-c", str(do_track_cvrg),
+         "-y", str(do_ignore_mppng),
+         "-k", str(do_ignore_headr),
+         "-q", str(do_break_ties),
+         "-v", str(do_run_verbose),
+         inp_fq_one_fNm,
+         inp_fq_two_fNm,
+         str(fragment_len),
+         out_base_fNm,
+         ]
+    )
+
+    # Run the command in the Docker image
+    client = docker.from_env()
+    client.containers.run(
+        image,
+        command=command,
+        volumes=volumes,
+        working_dir=working_dir,
+    )
+    return command
+
+
+def spades(inp_fq_one_fNm,
+           inp_fq_two_fNm,
+           out_dir,
+           *args,
+           trusted_contigs_fNm=None,
+           cov_cutoff="off",
+           phred_offset="auto",
+           **kwargs):
+    """
+    Run SPAdes genome assembler v3.13.1 in a docker container.
+
+    Usage: /home/biodocker/bin/spades.py [options] -o <output_dir>
+
+    Basic options:
+    -o <output_dir>                directory to store all the resulting files
+                                       (required)
+    --sc                           this flag is required for MDA (single-cell)
+                                       data
+    --meta                         this flag is required for metagenomic
+                                       sample data
+    --rna                          this flag is required for RNA-Seq
+                                       data 
+    --plasmid                      runs plasmidSPAdes pipeline for plasmid
+                                       detection
+    --iontorrent                   this flag is required for IonTorrent data
+    --test                         runs SPAdes on toy dataset
+    -h/--help                      prints this usage message
+    -v/--version                   prints version
+
+    Input data:
+    --12 <filename>                file with interlaced forward and reverse
+                                       paired-end reads
+    -1 <filename>                  file with forward paired-end reads
+    -2 <filename>                  file with reverse paired-end reads
+    -s <filename>                  file with unpaired reads
+    --merged <filename>            file with merged forward and reverse
+                                       paired-end reads
+    --pe<#>-12 <filename>          file with interlaced reads for paired-end
+                                       library number <#> (<#> = 1,2,...,9)
+    --pe<#>-1 <filename>           file with forward reads for paired-end
+                                       library number <#> (<#> = 1,2,...,9)
+    --pe<#>-2 <filename>           file with reverse reads for paired-end
+                                       library number <#> (<#> = 1,2,...,9)
+    --pe<#>-s <filename>           file with unpaired reads for paired-end
+                                       library number <#> (<#> = 1,2,...,9)
+    --pe<#>-m <filename>           file with merged reads for paired-end
+                                       library number <#> (<#> = 1,2,...,9)
+    --pe<#>-<or>                   orientation of reads for paired-end library
+                                       number <#> (<#> = 1,2,...,9;
+                                       <or> = fr, rf, ff)
+    --s<#> <filename>              file with unpaired reads for single reads
+                                       library number <#> (<#> = 1,2,...,9)
+    --mp<#>-12 <filename>          file with interlaced reads for mate-pair
+                                       library number <#> (<#> = 1,2,..,9)
+    --mp<#>-1 <filename>           file with forward reads for mate-pair
+                                       library number <#> (<#> = 1,2,..,9)
+    --mp<#>-2 <filename>           file with reverse reads for mate-pair
+                                       library number <#> (<#> = 1,2,..,9)
+    --mp<#>-s <filename>           file with unpaired reads for mate-pair
+                                       library number <#> (<#> = 1,2,..,9)
+    --mp<#>-<or>                   orientation of reads for mate-pair library
+                                       number <#> (<#> = 1,2,..,9;
+                                       <or> = fr, rf, ff)
+    --hqmp<#>-12 <filename>        file with interlaced reads for high-quality
+                                       mate-pair library number <#>
+                                       (<#> = 1,2,..,9)
+    --hqmp<#>-1 <filename>         file with forward reads for high-quality
+                                       mate-pair library number <#>
+                                       (<#> = 1,2,..,9)
+    --hqmp<#>-2 <filename>         file with reverse reads for high-quality
+                                       mate-pair library number <#>
+                                       (<#> = 1,2,..,9)
+    --hqmp<#>-s <filename>         file with unpaired reads for high-quality
+                                       mate-pair library number <#>
+                                       (<#> = 1,2,..,9)
+    --hqmp<#>-<or>                 orientation of reads for high-quality
+                                       mate-pair library number <#>
+                                       (<#> = 1,2,..,9; <or> = fr, rf, ff)
+    --nxmate<#>-1 <filename>       file with forward reads for Lucigen NxMate
+                                       library number <#> (<#> = 1,2,..,9)
+    --nxmate<#>-2 <filename>       file with reverse reads for Lucigen NxMate
+                                       library number <#> (<#> = 1,2,..,9)
+    --sanger <filename>            file with Sanger reads
+    --pacbio <filename>            file with PacBio reads
+    --nanopore <filename>          file with Nanopore reads
+    --tslr <filename>              file with TSLR-contigs
+    --trusted-contigs <filename>   file with trusted contigs
+    --untrusted-contigs <filename> file with untrusted contigs
+
+    Pipeline options:
+    --only-error-correction        runs only read error correction (without
+                                       assembling)
+    --only-assembler               runs only assembling (without read error
+                                       correction)
+    --careful                      tries to reduce number of mismatches and
+                                       short indels
+    --continue                     continue run from the last available
+                                       check-point
+    --restart-from <cp>            restart run with updated options and from
+                                       the specified check-point
+                                       ('ec', 'as', 'k<int>', 'mc', 'last')
+    --disable-gzip-output          forces error correction not to compress the
+                                       corrected reads
+    --disable-rr                   disables repeat resolution stage of
+                                       assembling
+
+    Advanced options:
+    --dataset <filename>           file with dataset description in YAML format
+    -t/--threads <int>             number of threads [default: 16]
+    -m/--memory <int>              RAM limit for SPAdes in Gb (terminates
+                                       if exceeded) [default: 250]
+    --tmp-dir <dirname>            directory for temporary files
+                                       [default: <output_dir>/tmp]
+    -k <int,int,...>               comma-separated list of k-mer sizes
+                                       (must be odd and less than 128)
+                                       [default: 'auto']
+    --cov-cutoff <float>           coverage cutoff value (a positive float
+                                       number, or 'auto', or 'off')
+                                       [default: 'off']
+    --phred-offset <33 or 64>      PHRED quality offset in the input reads
+                                       (33 or 64) [default: auto]
+    """
+    # Define image, and Docker run parameters
+    image = "ralatsdio/spades:v3.13.1"
+    hosting_dir = os.path.dirname(os.path.abspath(__file__))
+    working_dir = "/data"
+    volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
+
+    # Define SPAdes command
+    command = " ".join(
+        ["spades.py",
+         "-1", inp_fq_one_fNm,
+         "-2", inp_fq_two_fNm,
+         ]
+    )
+    if trusted_contigs_fNm is not None:
+        command = " ".join(
+            [command,
+             "--trusted-contigs", trusted_contigs_fNm,
+             ]
+        )
+    command = " ".join(
+        [command,
+         "-o", out_dir,
+         "--cov-cutoff", cov_cutoff,
+         "--phred-offset", phred_offset,
+         ]
+    )
+    for arg in args:
+        command = " ".join(
+            [command,
+             arg,
+             ]
+        )
+    for key, val in kwargs.items():
+        command = " ".join(
+            [command,
+             "--" + key.replace("_", "-"), val,
+             ]
+        )
+
+    # Run the command in the Docker image
+    client = docker.from_env()
+    client.containers.run(
+        image,
+        command=command,
+        volumes=volumes,
+        working_dir=working_dir,
+    )
+    return command
+
+
+def unicycler(inp_fq_one_fNm,
+              inp_fq_two_fNm,
+              out_dir,
+              *args,
+              inp_fq_lng_fNm=None,
+              **kwargs):
+    """
+    Run Unicycler assembly pipeline v0.4.8 in a docker container.
+
+    usage: unicycler [-h] [--help_all] [--version]
+                     [-1 SHORT1] [-2 SHORT2] [-s UNPAIRED] [-l LONG] -o OUT
+                     [--verbosity VERBOSITY] [--min_fasta_length MIN_FASTA_LENGTH]
+                     [--keep KEEP] [-t THREADS] [--mode {conservative,normal,bold}]
+                     [--linear_seqs LINEAR_SEQS] [--vcf]
+
+           __
+           \ \___
+            \ ___\
+            //
+       ____//      _    _         _                     _
+     //_  //\\    | |  | |       |_|                   | |
+    //  \//  \\   | |  | | _ __   _   ___  _   _   ___ | |  ___  _ __
+    ||  (O)  ||   | |  | || '_ \ | | / __|| | | | / __|| | / _ \| '__|
+    \\    \_ //   | |__| || | | || || (__ | |_| || (__ | ||  __/| |
+     \\_____//     \____/ |_| |_||_| \___| \__, | \___||_| \___||_|
+                                            __/ |
+                                           |___/
+
+    Unicycler: an assembly pipeline for bacterial genomes
+
+    Help:
+      -h, --help                           Show this help message and exit
+      --help_all                           Show a help message with all
+                                             program options
+      --version                            Show Unicycler's version number
+
+    Input:
+      -1 SHORT1, --short1 SHORT1           FASTQ file of first short reads in
+                                             each pair (required)
+      -2 SHORT2, --short2 SHORT2           FASTQ file of second short reads in
+                                             each pair (required)
+      -s UNPAIRED, --unpaired UNPAIRED     FASTQ file of unpaired short reads
+                                             (optional)
+      -l LONG, --long LONG                 FASTQ or FASTA file of long reads
+                                             (optional)
+
+    Output:
+      -o OUT, --out OUT                    Output directory (required)
+      --verbosity VERBOSITY                Level of stdout and log file
+                                             information (default: 1)
+                                             0 = no stdout,
+                                             1 = basic progress indicators,
+                                             2 = extra info,
+                                             3 = debugging info
+      --min_fasta_length MIN_FASTA_LENGTH  Exclude contigs from the FASTA file
+                                             which are shorter than this
+                                             length (default: 100)
+      --keep KEEP                          Level of file retention (default: 1)
+                                             0 = only keep final files:
+                                                 assembly (FASTA, GFA and log),
+                                             1 = also save graphs at main
+                                                 checkpoints,
+                                             2 = also keep SAM (enables fast
+                                                 rerun in different mode),
+                                             3 = keep all temp files and save
+                                                 all graphs (for debugging)
+      --vcf                                Produce a VCF by mapping the short
+                                             reads to the final assembly
+                                             (experimental, default: do not
+                                              produce a vcf file)
+
+    Other:
+      -t THREADS, --threads THREADS        Number of threads used (default: 4)
+      --mode {conservative,normal,bold}    Bridging mode (default: normal)
+                                             conservative = smaller contigs,
+                                               lowest misassembly rate
+                                             normal = moderate contig size and
+                                               misassembly rate
+                                             bold = longest contigs, higher
+                                               misassembly rate
+      --linear_seqs LINEAR_SEQS            The expected number of linear
+                                             (i.e. non-circular) sequences in
+                                             the underlying sequence
+                                             (default: 0)
+    """
+    # Define image, and Docker run parameters
+    image = "ralatsdio/unicycler:v0.4.8"
+    hosting_dir = os.path.dirname(os.path.abspath(__file__))
+    working_dir = "/data"
+    volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
+
+    # Define Unicycler command
+    command = " ".join(
+        ["unicycler",
+         "-1", inp_fq_one_fNm,
+         "-2", inp_fq_two_fNm,
+         ]
+    )
+    if inp_fq_lng_fNm is not None:
+        command = " ".join(
+            [command,
+             "-l", inp_fq_lng_fNm,
+             ]
+        )
+    command = " ".join(
+        [command,
+         "-o", out_dir,
+         ]
+    )
+    for arg in args:
+        command = " ".join(
+            [command,
+             arg,
+             ]
+        )
+    for key, val in kwargs.items():
+        command = " ".join(
+            [command,
+             "--" + key,
+             ]
+        )
+
+    # Run the command in the Docker image
+    client = docker.from_env()
+    client.containers.run(
+        image,
+        command=command,
+        volumes=volumes,
+        working_dir=working_dir,
+    )
+    return command
+
+
 if __name__ == "__main__":
-
-    # R1
-    kmc(["A11967A_sW0154_A01_R1_001.fastq.gz"],
-        "A11967A_sW0154_A01_R1_001")
-
-    kmc_transform("A11967A_sW0154_A01_R1_001",
-                  "dump",
-                  "A11967A_sW0154_A01_R1_001.txt")
-
-    kmc_filter("A11967A_sW0154_A01_R1_001",
-               "A11967A_sW0154_A01_R1_001.fastq.gz",
-               "A11967A_sW0154_A01_R1_001_f.fastq")
-
-    # R2
-    kmc(["A11967A_sW0154_A01_R2_001.fastq.gz"],
-        "A11967A_sW0154_A01_R2_001")
-
-    kmc_transform("A11967A_sW0154_A01_R2_001",
-                  "dump",
-                  "A11967A_sW0154_A01_R2_001.txt")
-
-    kmc_filter("A11967A_sW0154_A01_R2_001",
-               "A11967A_sW0154_A01_R2_001.fastq.gz",
-               "A11967A_sW0154_A01_R2_001_f.fastq")
-
-    # R1 intersect R2
-    kmc_simple("A11967A_sW0154_A01_R1_001",
-               "intersect",
-               "A11967A_sW0154_A01_R2_001",
-               "A11967A_sW0154_A01_R1_R2_001")
-
-    kmc_transform("A11967A_sW0154_A01_R1_R2_001",
-                  "dump",
-                  "A11967A_sW0154_A01_R1_R2_001_f")
+    pass
