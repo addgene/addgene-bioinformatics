@@ -12,17 +12,18 @@ import utilities
 
 
 # Set processing parameters
-base_file_name = "random_seq"
-seq_len = 10000
-k_mer_len = 25
-exp_cnt = 16
-k_mer_cnt_rep = [exp_cnt]
-number_pairs = 25000
-len_first_read = 250
-len_second_read = 250
-outer_distance = 500
-
-fragment_len = outer_distance
+BASE_FILE_NAME = "random_seq"
+SEQ_LEN = 10000
+K_MER_LEN = 25
+EXP_CNT = 16
+K_MER_CNT_REP = [EXP_CNT]
+NUMBER_PAIRS = 25000
+LEN_FIRST_READ = 250
+LEN_SECOND_READ = 250
+OUTER_DISTANCE = 500
+FRAGMENT_LEN = OUTER_DISTANCE
+LEN_UNPAIRED_READ = 500
+NUMBER_READS = 250
 
 
 def collect_k_mer_cnt(k_mers, seq_cnt=2):
@@ -37,7 +38,7 @@ def collect_k_mer_cnt(k_mers, seq_cnt=2):
 def write_paired_reads_for_cnt(
         k_mer_cnt_rd1, coverage_rd1, k_mers_rd1, seq_rcds_rd1,
         k_mer_cnt_rd2, coverage_rd2, k_mers_rd2, seq_rcds_rd2,
-        k_mer_cnt_rep, exp_cnt):
+        K_MER_CNT_REP, EXP_CNT):
 
     if len(seq_rcds_rd1) != len(seq_rcds_rd2):
         raise(Exception("Number of sequence records for each pair must agree"))
@@ -62,13 +63,13 @@ def find_seq_rcds_for_cnt(k_mer_cnt_rds, coverage, k_mers):
     with the expected count.
     """
     # Cluster counts in the expected number of clusters
-    kmeans = KMeans(n_clusters=len(k_mer_cnt_rep) + 1, random_state=0).fit(
+    kmeans = KMeans(n_clusters=len(K_MER_CNT_REP) + 1, random_state=0).fit(
         (k_mer_cnt_rds / coverage).reshape(-1, 1)
     )
 
     # Identify the cluster and sequence records (reads) corresponding
     # to the expected count
-    label = kmeans.predict(np.array([exp_cnt]).reshape(-1, 1))[0]
+    label = kmeans.predict(np.array([EXP_CNT]).reshape(-1, 1))[0]
     i_rcds = set()
     keys = np.array(list(k_mers.keys()))
     for key in keys[kmeans.labels_ == label]:
@@ -84,15 +85,15 @@ def write_reads_for_cnt(i_rcds, seq_rcds, case):
     """
     # Write a FASTQ file containing the specified sequence records
     # (reads)
-    read_wr_file_name = base_file_name + "_wr_" + case + ".fastq"
+    read_wr_file_name = BASE_FILE_NAME + "_wr_" + case + ".fastq"
     with open(read_wr_file_name, "w") as f:
         for i_rcd in i_rcds:
             SeqIO.write(seq_rcds[i_rcd], f, "fastq")
 
     # Write a FASTQ file containing all other sequence records (reads)
-    read_wo_file_name = base_file_name + "_wo_" + case + ".fastq"
+    read_wo_file_name = BASE_FILE_NAME + "_wo_" + case + ".fastq"
     with open(read_wo_file_name, "w") as f:
-        for i_rcd in set(range(number_pairs)).difference(i_rcds):
+        for i_rcd in set(range(NUMBER_PAIRS)).difference(i_rcds):
             SeqIO.write(seq_rcds[i_rcd], f, "fastq")
 
     return read_wr_file_name, read_wo_file_name
@@ -115,8 +116,8 @@ if __name__ == "__main__":
 
     # Create and dump, or load results
     if options.with_repeats:
-        base_file_name = "repetitive_seq"
-    pickle_file_name = base_file_name + ".pickle"
+        BASE_FILE_NAME = "repetitive_seq"
+    pickle_file_name = BASE_FILE_NAME + ".pickle"
     if not os.path.exists(pickle_file_name) or options.initialize:
 
         # Create a random sequence with repeats, or if not, a random
@@ -131,17 +132,19 @@ if __name__ == "__main__":
             # resolved with the random rotation added to the paired
             # read simulation
             a_seq = utilities.create_r_seq(
-                outer_distance
+                OUTER_DISTANCE
             )
             b_seq, r_k_mers = utilities.create_r_seq_w_rep(
-                k_mer_len=k_mer_len, k_mer_cnt=k_mer_cnt_rep
+                k_mer_len=K_MER_LEN, k_mer_cnt=K_MER_CNT_REP
             )
             c_seq = utilities.create_r_seq(
-                seq_len - outer_distance - sum(k_mer_cnt_rep) * k_mer_len
+                SEQ_LEN - OUTER_DISTANCE - sum(K_MER_CNT_REP) * K_MER_LEN
             )
             r_seq = a_seq + b_seq + c_seq
         else:
-            r_seq = utilities.create_r_seq(seq_len)
+            print("Creating random sequence without repeats ...", end=" ",
+                  flush=True)
+            r_seq = utilities.create_r_seq(SEQ_LEN)
             r_k_mers = []
         print("done in {0} s".format(time.time() - start_time), flush=True)
         print("Random sequence length: {0}".format(len(r_seq)))
@@ -159,11 +162,11 @@ if __name__ == "__main__":
               flush=True)
         rd1_file_name, rd2_file_name = utilities.simulate_paired_reads(
             r_seq,
-            base_file_name,
-            number_pairs=number_pairs,
-            len_first_read=len_first_read,
-            len_second_read=len_second_read,
-            outer_distance=outer_distance)
+            BASE_FILE_NAME,
+            number_pairs=NUMBER_PAIRS,
+            len_first_read=LEN_FIRST_READ,
+            len_second_read=LEN_SECOND_READ,
+            outer_distance=OUTER_DISTANCE)
         print("done in {0} s".format(time.time() - start_time), flush=True)
 
         # Count k-mers in the paired reads, and write the result to a
@@ -178,7 +181,7 @@ if __name__ == "__main__":
         start_time = time.time()
         print("Writing k_mers and counts in reads ...", end=" ", flush=True)
         utilities.write_k_mer_counts_in_rds(
-            k_mers_rd1, k_mers_rd2, base_file_name + "_cnt.txt")
+            k_mers_rd1, k_mers_rd2, BASE_FILE_NAME + "_cnt.txt")
         print("done in {0} s".format(time.time() - start_time), flush=True)
 
         # Create the results dictionary, and dump to a pickle file
@@ -255,13 +258,13 @@ if __name__ == "__main__":
         # Separate reads into those containing a k-mer with the
         # expected count, and all others
         print("Writing reads based on read count ...", end=" ", flush=True)
-        r_k_mer_exp_rd1 = str(r_k_mers[k_mer_cnt_rep.index(exp_cnt)])
+        r_k_mer_exp_rd1 = str(r_k_mers[K_MER_CNT_REP.index(EXP_CNT)])
         r_k_mer_exp_rd2 = r_k_mer_exp_rd1[-1::-1]
         (rd1_wr_file_name, rd1_wo_file_name,
          rd2_wr_file_name, rd2_wo_file_name) = write_paired_reads_for_cnt(
              k_mer_cnt_rd1, coverage_rd1, k_mers_rd1, seq_rcds_rd1,
              k_mer_cnt_rd2, coverage_rd2, k_mers_rd2, seq_rcds_rd2,
-             k_mer_cnt_rep, exp_cnt)
+             K_MER_CNT_REP, EXP_CNT)
         print("done in {0} s".format(time.time() - start_time), flush=True)
         print("r_k_mer_exp_rd1: {0}".format(r_k_mer_exp_rd1))
         print("r_k_mer_exp_rd2: {0}".format(r_k_mer_exp_rd2))
@@ -301,14 +304,35 @@ if __name__ == "__main__":
             print("Assembling paired reads without repeats " +
                   "and with trusted contigs using SPAdes ...", end=" ",
                   flush=True)
-            spades_wc_out_dir = base_file_name + "_spades_wc"
+            spades_wc_out_dir = BASE_FILE_NAME + "_spades_wc"
+            trusted_contigs_fNm = os.path.join(
+                ssake_out_base_name, ssake_out_base_name + "_scaffolds.fa")
             if os.path.exists(spades_wc_out_dir):
                 shutil.rmtree(spades_wc_out_dir)
-            utilities.spades(rd1_wo_file_name,
-                             rd2_wo_file_name,
-                             spades_wc_out_dir,
-                             trusted_contigs_fNm=os.path.join(
-                                 ssake_out_dir, ssake_out_dir + "_contigs.fa"))
+            command = utilities.spades(rd1_wo_file_name,
+                                       rd2_wo_file_name,
+                                       spades_wc_out_dir,
+                                       trusted_contigs_fNm=trusted_contigs_fNm)
+            print("done in {0} s".format(time.time() - start_time), flush=True)
+            print("Command: {0}".format(command), flush=True)
+
+        # Assemble paired reads and with long reads using Unicycler
+        if options.assemble_using_unicycler:
+
+            # Read the multi-FASTA SSAKE output file
+            seq_rcds = [seq_record for seq_record in SeqIO.parse(
+                os.path.join(ssake_out_base_name,
+                             ssake_out_base_name + "_scaffolds.fa"), "fasta")]
+
+            # Simulate unpaired reads of the longest sequence`
+            start_time = time.time()
+            print("Simulating unpaired reads from longest sequence ...",
+                  end=" ", flush=True)
+            rd_file_name = utilities.simulate_unpaired_reads(
+                seq_rcds[0].seq,
+                BASE_FILE_NAME,
+                number_pairs=NUMBER_READS,
+                len_read=LEN_UNPAIRED_READ)
             print("done in {0} s".format(time.time() - start_time), flush=True)
 
             # Assemble paired reads without repeats and with a long
@@ -317,7 +341,7 @@ if __name__ == "__main__":
             print("Assembling paired reads without repeats " +
                   "and with a long read using Unicycler ...", end=" ",
                   flush=True)
-            unicycler_wc_out_dir = base_file_name + "_unicycler_wc"
+            unicycler_wc_out_dir = BASE_FILE_NAME + "_unicycler_wc"
             if os.path.exists(unicycler_wc_out_dir):
                 shutil.rmtree(unicycler_wc_out_dir)
             utilities.unicycler(rd1_wo_file_name,
