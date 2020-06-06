@@ -206,7 +206,7 @@ if __name__ == "__main__":
 
     else:
 
-        # Load a picle file, and extract values from the results
+        # Load a pickle file, and extract values from the results
         # dictionary
         start_time = time.time()
         print("Loading results ...", end=" ", flush=True)
