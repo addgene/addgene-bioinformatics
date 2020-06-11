@@ -1,5 +1,6 @@
 import logging
 import os
+from configparser import ConfigParser
 
 logger = logging.getLogger(__name__)
 
@@ -241,3 +242,32 @@ def exportWellAssemblyFiles(toil, assembler, output_directory, well_specs,
             # Export all apc output files from the file store
             exportFiles(toil, well_output_directory,
                         well_assembly_rvs[iW]['apc_rv'])
+
+
+def parseConfigFile(config_file_path):
+    """
+    Given a .ini file with args to pass to the assembler, create a list of args add to the apiDockerCall.
+
+    If a config arg's value is True, it will be treated as a boolean switch and only the key will be passed.
+
+    Parameters
+    ----------
+    config_file_path : str
+        the location of the .ini file
+
+    Returns
+    -------
+    list[str]
+        the parsed CLI args
+    """
+    cfg = ConfigParser()
+    cfg.read(config_file_path)
+
+    result = []
+    for section_name, section_obj in cfg.items():
+        for arg_name, arg_value in section_obj.items():
+            result.append(arg_name)
+            if arg_value.lower() != "true":
+                result.append(arg_value)
+    logger.info("Parsed " + config_file_path + ". Got args: " + str(result))
+    return result

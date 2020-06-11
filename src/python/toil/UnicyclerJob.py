@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 import logging
 import os
+from pathlib import Path
 
 from toil.job import Job
 from toil.common import Toil
@@ -20,7 +21,7 @@ class UnicyclerJob(Job):
                  read_one_file_name="R1.fastq.gz",
                  read_two_file_name="R2.fastq.gz",
                  mode=None,
-                 depth_filter=None,
+                 config_file_path=None,
                  *args, **kwargs):
         """
         Parameters
@@ -35,11 +36,8 @@ class UnicyclerJob(Job):
             name of directory for output
         parent_rv : dict
             dictionary of return values from the parent job
-        mode : Optional[str]
-            one of "conservative", "normal", or "bold".
-        depth_filter : Optional[float]
-            filter out contigs lower than this fraction of the chromosomal
-            depth, if doing so does not result in graph dead ends
+        config_file_path : Optional[str]
+            a path to a .ini file containing arguments to be passed to the CLI call
         """
         super(UnicyclerJob, self).__init__(*args, **kwargs)
         self.read_one_file_id = read_one_file_id
@@ -49,7 +47,7 @@ class UnicyclerJob(Job):
         self.output_directory = output_directory
         self.parent_rv = parent_rv
         self.mode = mode
-        self.depth_filter = depth_filter
+        self.config_file_path = config_file_path
 
     def run(self, fileStore):
         """
@@ -86,11 +84,11 @@ class UnicyclerJob(Job):
                           "--out",
                           os.path.join(working_dir, self.output_directory),
                          ]
-            # add in optional args
-            if self.mode is not None:
-                parameters.extend(["--mode", self.mode])
-            if self.depth_filter is not None:
-                parameters.extend(["--depth_filter", str(self.depth_filter)])
+
+            if self.config_file_path is not None:
+                parsed_params = utilities.parseConfigFile(self.config_file_path)
+                parameters.extend(parsed_params)
+                logger.info("Adding parsed params to CLI call: " + str(parsed_params))
 
             apiDockerCall(
                 self,
@@ -160,10 +158,9 @@ if __name__ == "__main__":
                         help="the well specification")
     parser.add_argument('-o', '--output-directory', default=None,
                         help="the directory containing all output files")
-    parser.add_argument("-m", "--mode", default="normal", type=str,
-                        help='one of "conservative", "normal", or "bold"')
-    parser.add_argument("--depth-filter", default=None, type=float,
-                        help="filter out contigs lower than this fraction of depth")
+    parser.add_argument("-c", "--config", default=None,
+                        help="a .ini file with args to be passed to Unicycler")
+
     options = parser.parse_args()
     if options.output_directory is None:
         options.output_directory = options.plate_spec + "_" + options.well_spec
@@ -184,8 +181,7 @@ if __name__ == "__main__":
                 read_one_file_ids[0],
                 read_two_file_ids[0],
                 options.output_directory,
-                mode=options.mode,
-                depth_filter=options.depth_filter
+                config_file_path=str(Path(options.config).absolute()) if options.config is not None else None,
                 )
             unicycler_rv = toil.start(unicycler_job)
 
