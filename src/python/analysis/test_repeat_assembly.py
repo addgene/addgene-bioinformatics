@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+from configparser import ConfigParser
 import os
 import pickle
 import shutil
@@ -117,6 +118,18 @@ if __name__ == "__main__":
                         help="assemble paired reads using Unicycler")
     options = parser.parse_args()
 
+    # Read and parse aligner configuration file
+    home_dir = os.path.join(
+        os.sep, *os.path.abspath(__file__).split(os.sep)[0:-4])
+    aligner_config_dir = os.path.join(home_dir, "resources")
+    aligner_config_file = "pairwise-rl-01.cfg"
+    aligner_config = ConfigParser()
+    aligner_config.read(os.path.join(aligner_config_dir, aligner_config_file))
+    aligner_config['aligner']['file'] = aligner_config_file
+
+    # Create a pairwise aligner with the specified configuration
+    aligner = utilities.create_aligner(aligner_config['aligner'])
+
     # Create and dump, or load results
     if options.with_repeats:
         BASE_FILE_NAME = "repetitive_seq"
@@ -227,11 +240,11 @@ if __name__ == "__main__":
     if not options.with_repeats:
 
         # Assemble paired reads using SPAdes
+        spades_wo_out_dir = BASE_FILE_NAME + "_spades_wo"
         if options.assemble_using_spades:
             start_time = time.time()
             print("Assembling paired reads using SPAdes ...", end=" ",
                   flush=True)
-            spades_wo_out_dir = BASE_FILE_NAME + "_spades_wo"
             if os.path.exists(spades_wo_out_dir):
                 shutil.rmtree(spades_wo_out_dir)
             command = utilities.spades(rd1_file_name,
@@ -240,12 +253,21 @@ if __name__ == "__main__":
             print("done in {0} s".format(time.time() - start_time), flush=True)
             print("Command: {0}".format(command), flush=True)
 
+        # Read the multi-FASTA SPAdes output file, and align to the
+        # doubled random sequence
+        if os.path.exists(spades_wo_out_dir):
+            spades_seq_rcds = [seq_record for seq_record in SeqIO.parse(
+                os.path.join(spades_wo_out_dir,
+                             "contigs.fasta"), "fasta")]
+            print("SPAdes score: {0}".format(
+                aligner.score(r_seq + r_seq, spades_seq_rcds[0].seq)))
+
         # Assemble paired reads using Unicycler
+        unicycler_wo_out_dir = BASE_FILE_NAME + "_unicycler_wo"
         if options.assemble_using_unicycler:
             start_time = time.time()
             print("Assembling paired reads using Unicycler ...", end=" ",
                   flush=True)
-            unicycler_wo_out_dir = BASE_FILE_NAME + "_unicycler_wo"
             if os.path.exists(unicycler_wo_out_dir):
                 shutil.rmtree(unicycler_wo_out_dir)
             command = utilities.unicycler(rd1_file_name,
@@ -253,6 +275,17 @@ if __name__ == "__main__":
                                           unicycler_wo_out_dir)
             print("done in {0} s".format(time.time() - start_time), flush=True)
             print("Command: {0}".format(command), flush=True)
+
+        # Read the multi-FASTA Unicycler output file, and align to the
+        # doubled random sequence
+        if os.path.exists(unicycler_wo_out_dir):
+            unicycler_seq_rcds = [seq_record for seq_record in SeqIO.parse(
+                os.path.join(unicycler_wo_out_dir,
+                             "assembly.fasta"), "fasta")]
+            print("Unicycler score: {0}".format(
+                aligner.score(r_seq + r_seq, unicycler_seq_rcds[0].seq)))
+
+        pass
 
     # Perform processing for repetitive sequences
     else:
