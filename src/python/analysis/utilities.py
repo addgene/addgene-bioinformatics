@@ -418,7 +418,7 @@ def rotate_seqs(a_seq, o_seq):
 # TODO: Complete in order to validate use of wgsim
 def simulate_paired_reads_wgsim(seq, seq_nm, number_pairs=25000,
                                 len_first_read=250, len_second_read=250,
-                                outer_distance=500):
+                                outer_distance=750):
     seq_rcd = SeqRecord(seq, id="0", name="base", description="reference")
     seq_fNm = seq_nm + ".fasta"
     rd1_fNm = seq_nm + "_rd1.fastq"
@@ -427,18 +427,18 @@ def simulate_paired_reads_wgsim(seq, seq_nm, number_pairs=25000,
     wgsim(seq_fNm,
           rd1_fNm,
           rd2_fNm,
-          error_rate=0.0,
+          error_rate=0.020,
           outer_distance=outer_distance,
-          standard_deviation=0,
+          standard_deviation=50,
           number_pairs=number_pairs,
           len_first_read=len_first_read,
           len_second_read=len_second_read,
-          mutation_rate=0.0,
-          indel_fraction=0.0,
-          indel_extended_prob=0.0,
+          mutation_rate=0.0010,
+          indel_fraction=0.15,
+          indel_extended_prob=0.30,
           random_seed=0,
-          ambiguous_base_frac=0.0,
-          haplotype_mode=True)
+          ambiguous_base_frac=0.05,
+          haplotype_mode=False)
     return rd1_fNm, rd2_fNm
 
 
