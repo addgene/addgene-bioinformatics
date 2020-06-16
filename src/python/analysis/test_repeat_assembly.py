@@ -100,6 +100,27 @@ def write_reads_for_cnt(i_rcds, seq_rcds, case):
     return read_wr_file_name, read_wo_file_name
 
 
+"""
+Simulates initial proposed pipeline.
+
+Creates a random sequence with, or without, repeats
+Counts k-mers in the random sequence
+Simulates paired reads of the random sequence
+Counts k-mers in the paired reads
+
+Without repeats:
+  - Assembles paired reads using SPAdes and aligns
+  - Assembles paired reads using Unicycler and aligns
+
+With repeats:
+  - Collects k-mer counts, and computes coverage
+  - Separates reads into those containing a k-mer with the
+    expected count, and all others
+  - Assembles paired reads with repeats using SSAKE
+  - Assembles paired reads with trusted contigs using SPAdes
+  - Assembles paired reads and with long reads using Unicycler
+
+"""
 if __name__ == "__main__":
 
     # Add and parser arguments
