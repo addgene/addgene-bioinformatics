@@ -176,7 +176,18 @@ if __name__ == "__main__":
         start_time = time.time()
         print("Simulating paired reads from random sequence ...", end=" ",
               flush=True)
+        # TODO: Restore
+        """
         rd1_file_name, rd2_file_name = utilities.simulate_paired_reads(
+            r_seq,
+            BASE_FILE_NAME,
+            number_pairs=NUMBER_PAIRS,
+            len_first_read=LEN_FIRST_READ,
+            len_second_read=LEN_SECOND_READ,
+            outer_distance=OUTER_DISTANCE)
+        """
+        # TODO: Remove
+        rd1_file_name, rd2_file_name = utilities.simulate_paired_reads_wgsim(
             r_seq,
             BASE_FILE_NAME,
             number_pairs=NUMBER_PAIRS,
