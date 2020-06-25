@@ -1,14 +1,14 @@
 import itertools
 import subprocess
-import json
+import configparser
 from pathlib import Path
 
 OPTIONS = {
     "spades": {"-c": ["auto", "off", "100"], "--careful": [True, False]},
-    # "unicycler": {
-    #     "--depth-filter": ["0.1", False],
-    #     "‑m": ["normal", "bold", "conservative"],
-    # },
+    "unicycler": {
+        "--depth-filter": ["0.1", False],
+        "‑m": ["normal", "bold", "conservative"],
+    },
 }
 
 for assembler in OPTIONS.keys():
@@ -23,14 +23,14 @@ for assembler in OPTIONS.keys():
     for perm in permutations_dicts:
 
         # hold the args we'll use to call the assembly job
-        args = []
+        args = {}
 
         # add the arguments to the list if the key is truthy
         for key, value in perm.items():
             if type(value) == bool and value:
-                args.append(key)
+                args[key] = "true"
             elif type(value) != bool and value:
-                args.append((key + "=" + value))
+                args[key] = value
 
         # create the output path
         output_path = "results/" + assembler + "/" + str(i) + "/"
@@ -51,11 +51,13 @@ for assembler in OPTIONS.keys():
         print(command)
 
         # here's where the execution of the command happens
-        subprocess.run(command, shell=True)
+        # subprocess.run(command, shell=True)
 
         # store the args in a parse-friendly way
-        with open(output_path + "params.json", "w+") as f:
-            json.dump(perm, f)
+        config = configparser.ConfigParser()
+        config[assembler] = args
+        with open(output_path + f"{assembler}.ini", "w+") as f:
+            config.write(f)
 
         # increase the counter
         i += 1
