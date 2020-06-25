@@ -12,7 +12,7 @@ import utilities
 
 
 # Set processing parameters
-BASE_FILE_NAME = "hybrid"
+BASE_FILE_NAME = "abc"
 
 SEQ_LEN = 10000
 

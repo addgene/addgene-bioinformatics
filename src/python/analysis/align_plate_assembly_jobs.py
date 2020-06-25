@@ -3,8 +3,7 @@ from configparser import ConfigParser
 import csv
 import os
 import pickle
-
-import utilities
+import sys
 
 from Bio import SeqIO
 from Bio.Alphabet import IUPAC
@@ -12,6 +11,15 @@ from Bio.Seq import Seq
 
 from matplotlib import pyplot as plt
 import numpy as np
+
+sys.path.append(
+    os.path.join(
+        os.sep, *os.path.abspath(__file__).split(os.sep)[0:-2]
+    )
+)
+
+import utilities
+from jobs.utilities import ASSEMBLERS_REQUIRING_APC
 
 
 def to_int(a_str):
@@ -268,7 +276,7 @@ def align_cp_to_qc_sequences(assembler,
             apc_sequence_score = 0
             apc_reverse_complement_score = 0
 
-            if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
+            if assembler in ASSEMBLERS_REQUIRING_APC:
                 try:
                     apc_sequence = next(SeqIO.parse(
                         os.path.join(assembler_data_dir,
@@ -376,7 +384,7 @@ def accumulate_alignment_scores(assembler,
                 [sequences[assembler]['sequence_score'],
                  sequences[assembler]['reverse_complement_score']]))
 
-            if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
+            if assembler in ASSEMBLERS_REQUIRING_APC:
                 circularizer_sequence_len.append(
                     len(sequences['apc']['sequence']))
 
@@ -399,7 +407,7 @@ def accumulate_alignment_scores(assembler,
     assembler_valid_index = (assembler_sequence_len > 0)
     assembler_valid_score[assembler_valid_index] = (
         assembler_maximum_score[assembler_valid_index])
-    if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
+    if assembler in ASSEMBLERS_REQUIRING_APC:
         circularizer_valid_index = (circularizer_sequence_len > 0)
         circularizer_valid_score[circularizer_valid_index] = (
             circularizer_maximum_score[circularizer_valid_index])
@@ -453,7 +461,7 @@ def plot_alignment_scores(assembler, cp_sequences):
            width=2.0, align='center', color='b')
 
     # Compute and plot circularizer score
-    if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
+    if assembler in ASSEMBLERS_REQUIRING_APC:
         circularizer_valid_index = cp_sequences['circularizer_valid_index']
         circularizer_valid_score = (
             100.0 * (1 +
@@ -488,9 +496,9 @@ if __name__ == "__main__":
     # Add and parse arguments
     parser = ArgumentParser()
     base_dir = os.path.join(
-        os.sep, *os.path.abspath(__file__).split(os.sep)[0:-4])
+        os.sep, *os.path.abspath(__file__).split(os.sep)[0:-5])
     home_dir = os.path.join(
-        os.sep, *os.path.abspath(__file__).split(os.sep)[0:-3])
+        os.sep, *os.path.abspath(__file__).split(os.sep)[0:-4])
     parser.add_argument(
         '-d', '--assembler-data-directory',
         default=os.path.join(
@@ -592,7 +600,7 @@ if __name__ == "__main__":
         print("    Assembled (nonzero length): {:.1f}%".format(
             100 * sum(cp_sequences['assembler_sequence_len'] > 0)
             / len(cp_sequences['assembler_sequence_len'])))
-        if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
+        if assembler in ASSEMBLERS_REQUIRING_APC:
             print("    Circularized (nonzero length): {:.1f}%".format(
                 100 * sum(cp_sequences['circularizer_sequence_len'] > 0)
                 / sum(cp_sequences['assembler_sequence_len'] > 0)))
@@ -606,7 +614,7 @@ if __name__ == "__main__":
                 (cp_sequences['assembler_valid_score'][qc_valid_index] <=
                  cp_sequences['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned)))
             / len(cp_sequences['assembler_sequence_len'][qc_valid_index])))
-        if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
+        if assembler in ASSEMBLERS_REQUIRING_APC:
             print("    Circularized assembly aligned (within {:.1f}%): {:.1f}%".format(
                 100 * fraction_aligned,
                 100 * sum(

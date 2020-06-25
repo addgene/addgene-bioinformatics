@@ -91,7 +91,7 @@ def simulate_paired_reads(seq, seq_nm, number_pairs=25000,
     rd2_seq_rcds = []
     seq_len = len(seq)
     for iP in range(number_pairs):
-
+ 
         # Create a random rotation of the sequence
         i_seq = random.randint(0, seq_len)
         r_seq = seq[seq_len - i_seq:seq_len] + seq[0:seq_len - i_seq]
@@ -1224,10 +1224,13 @@ def spades(inp_fq_one_fNm,
            inp_fq_two_fNm,
            out_dir,
            *args,
-           trusted_contigs_fNm=None,
-           cov_cutoff="off",
-           phred_offset="auto",
            **kwargs):
+    # TODO: Resolve
+    """
+    trusted_contigs_fNm=None,
+    cov_cutoff="off",
+    phred_offset="auto",
+    """
     """
     Run SPAdes genome assembler v3.13.1 in a docker container.
 
@@ -1344,7 +1347,7 @@ def spades(inp_fq_one_fNm,
     """
     # Define image, and Docker run parameters
     image = "ralatsdio/spades:v3.13.1"
-    hosting_dir = os.path.dirname(os.path.abspath(__file__))
+    hosting_dir = os.getcwd()
     working_dir = "/data"
     volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
 
@@ -1355,17 +1358,18 @@ def spades(inp_fq_one_fNm,
          "-2", inp_fq_two_fNm,
          ]
     )
+    # TODO: Resolve
+    """
     if trusted_contigs_fNm is not None:
         command = " ".join(
             [command,
              "--trusted-contigs", trusted_contigs_fNm,
              ]
         )
+    """
     command = " ".join(
         [command,
          "-o", out_dir,
-         "--cov-cutoff", cov_cutoff,
-         "--phred-offset", phred_offset,
          ]
     )
     for arg in args:
@@ -1377,7 +1381,7 @@ def spades(inp_fq_one_fNm,
     for key, val in kwargs.items():
         command = " ".join(
             [command,
-             "--" + key.replace("_", "-"), val,
+             "--" + key.replace("_", "-"), str(val),
              ]
         )
 
