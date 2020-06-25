@@ -20,7 +20,6 @@ class UnicyclerJob(Job):
                  output_directory, parent_rv={},
                  read_one_file_name="R1.fastq.gz",
                  read_two_file_name="R2.fastq.gz",
-                 mode=None,
                  config_file_path=None,
                  *args, **kwargs):
         """
@@ -46,7 +45,6 @@ class UnicyclerJob(Job):
         self.read_two_file_name = read_two_file_name
         self.output_directory = output_directory
         self.parent_rv = parent_rv
-        self.mode = mode
         self.config_file_path = config_file_path
 
     def run(self, fileStore):
