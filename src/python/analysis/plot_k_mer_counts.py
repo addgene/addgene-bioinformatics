@@ -1,77 +1,13 @@
 from argparse import ArgumentParser
 import os
 import pickle
-import random
 import time
 
 from Bio import SeqIO
-from Bio.SeqRecord import SeqRecord
 import matplotlib.pyplot as plt
 import numpy as np
 
 import utilities
-
-
-# TODO: Add error rate, outer distance standard deviation, indel
-# fraction, indel extension probablility, and random seed:
-# error_rate=0.020, standard_deviation=50, indel_fraction=0.15,
-# indel_extended_prob=0.30, and random_seed=0, then move to utilities
-def simulate_paired_reads_clean(seq, seq_nm, number_pairs=25000,
-                                len_first_read=250, len_second_read=250,
-                                outer_distance=500):
-    rd1_seq_rcds = []
-    rd2_seq_rcds = []
-    seq_len = len(seq)
-    for iP in range(number_pairs):
-
-        i_rd1 = random.randint(0, seq_len - outer_distance)
-        rd1_seq_rcd = SeqRecord(
-            seq[i_rd1:i_rd1 + len_first_read],
-            id=str(iP), name="one", description="first read of read pair")
-        rd1_seq_rcd.letter_annotations["phred_quality"] = (
-            40 * np.ones(len_first_read, dtype=int)).tolist()
-        rd1_seq_rcds.append(rd1_seq_rcd)
-
-        i_rd2 = i_rd1 + outer_distance - len_second_read
-        rd2_seq_rcd = SeqRecord(
-            seq[i_rd2:i_rd2 + len_first_read],
-            id=str(iP), name="two", description="second read of read pair")
-        rd2_seq_rcd.letter_annotations["phred_quality"] = (
-            40 * np.ones(len_second_read, dtype=int)).tolist()
-        rd2_seq_rcds.append(rd2_seq_rcd)
-
-    rd1_fNm = seq_nm + "_r1.fastq"
-    rd2_fNm = seq_nm + "_r2.fastq"
-    SeqIO.write(rd1_seq_rcds, rd1_fNm, "fastq")
-    SeqIO.write(rd2_seq_rcds, rd2_fNm, "fastq")
-    return rd1_fNm, rd2_fNm
-
-
-# TODO: Complete in order to validate use of wgsim
-def simulate_paired_reads_wgsim(seq, seq_nm, number_pairs=25000,
-                                len_first_read=250, len_second_read=250,
-                                outer_distance=500):
-    seq_rcd = SeqRecord(seq, id="0", name="base", description="reference")
-    seq_fNm = seq_nm + ".fasta"
-    rd1_fNm = seq_nm + "_r1.fastq"
-    rd2_fNm = seq_nm + "_r2.fastq"
-    SeqIO.write(seq_rcd, seq_fNm, "fasta")
-    utilities.wgsim(seq_fNm,
-                    rd1_fNm,
-                    rd2_fNm,
-                    error_rate=0.0,
-                    outer_distance=outer_distance,
-                    standard_deviation=0,
-                    number_pairs=number_pairs,
-                    len_first_read=len_first_read,
-                    len_second_read=len_second_read,
-                    mutation_rate=0.0,
-                    indel_fraction=0.0,
-                    indel_extended_prob=0.0,
-                    random_seed=0,
-                    ambiguous_base_frac=0.0,
-                    haplotype_mode=True)
-    return rd1_fNm, rd2_fNm
 
 
 if __name__ == "__main__":
@@ -106,6 +42,7 @@ if __name__ == "__main__":
                 k_mer_len=k_mer_len, k_mer_cnt=k_mer_cnt)
         else:
             r_seq = utilities.create_r_seq(sum(k_mer_cnt) * k_mer_len)
+            r_k_mers = []
         print("done in {0} s".format(time.time() - start_time), flush=True)
         print("Random sequence length: {0}".format(len(r_seq)))
 
@@ -117,7 +54,7 @@ if __name__ == "__main__":
         start_time = time.time()
         print("Simulating paired reads from doubled sequence ...", end=" ",
               flush=True)
-        rd1_fNm, rd2_fNm = simulate_paired_reads_clean(
+        rd1_fNm, rd2_fNm = utilities.simulate_paired_reads_clean(
             r_seq + r_seq, base_file_name)
         print("done in {0} s".format(time.time() - start_time), flush=True)
 
@@ -210,37 +147,55 @@ if __name__ == "__main__":
         inp_database_file_name = counts['inp_database_file_name']
         print("done in {0} s".format(time.time() - start_time), flush=True)
 
-    # Write reads corresponding to the k_mer with a specified actual
-    # rd1 count
-    count_exp = 16
-    r_k_mer_exp = str(r_k_mers[k_mer_cnt.index(count_exp)])
-    r_k_mers_act = list(k_mers_in_rd1_c.keys())
-    r_k_mer_act = r_k_mers_act[np.where(
-        np.round(
-            cn_in_rds_c / coverage_rds / 2
-        ).astype(int) == count_exp
-    )[0][0]]
-    out_read_file_name = base_file_name + "_act_r1.fastq"
-    with open(out_read_file_name, "w") as f:
-        for i_seq in k_mers_in_rd1_c[r_k_mer_act]['src']:
-            SeqIO.write(seq_rcds_rd1_c[i_seq], f, "fastq")
+    # Write reads corresponding to the k_mer with a specified actual ...
+    if options.with_repeats:
 
-    # Write reads corresponding to the k_mer with the observed actual
-    # kmc count
-    count_kmc = 12
-    count_stp = 2
-    inp_db_count_min = (count_kmc - 2) * coverage_kmc  # 2
-    inp_db_count_max = (count_kmc + 2) * coverage_kmc  # 1e9
-    inp_rd_count_min = 2
-    inp_rd_count_max = 1e9
-    out_read_file_name = base_file_name + "_flt_r1.fastq"
-    utilities.kmc_filter(inp_database_file_name,
-                         inp_read_file_names[0],
-                         out_read_file_name,
-                         inp_db_count_min=inp_db_count_min,
-                         inp_db_count_max=inp_db_count_max,
-                         inp_rd_count_min=inp_rd_count_min,
-                         inp_rd_count_max=inp_rd_count_max)
+        # ... rd1 and rd2 count
+        count_exp = 16
+        r_k_mer_exp = str(r_k_mers[k_mer_cnt.index(count_exp)])
+        r_k_mers_act = list(k_mers_in_rd1_c.keys())
+        r_k_mer_act = r_k_mers_act[np.where(
+            np.round(
+                cn_in_rds_c / coverage_rds / 2
+            ).astype(int) == count_exp
+        )[0][0]]
+        start_time = time.time()
+        print("Writing reads based on read count ...", end=" ", flush=True)
+        rd1_read_file_name = base_file_name + "_act_rd1.fastq"
+        rd2_read_file_name = base_file_name + "_act_rd2.fastq"
+        with open(rd1_read_file_name, "w") as f1:
+            with open(rd2_read_file_name, "w") as f2:
+                for i_seq in k_mers_in_rd1_c[r_k_mer_act]['src']:
+                    SeqIO.write(seq_rcds_rd1_c[i_seq], f1, "fastq")
+                    SeqIO.write(seq_rcds_rd2_c[i_seq], f2, "fastq")
+        print("done in {0} s".format(time.time() - start_time), flush=True)
+
+        # ... kmc count
+        count_kmc = 12
+        count_stp = 2
+        inp_db_count_min = (count_kmc - 2) * coverage_kmc  # 2
+        inp_db_count_max = (count_kmc + 2) * coverage_kmc  # 1e9
+        inp_rd_count_min = 2
+        inp_rd_count_max = 1e9
+        start_time = time.time()
+        print("Writing reads based on kmc count ...", end=" ", flush=True)
+        out_read_file_name = base_file_name + "_flt_rd1.fastq"
+        utilities.kmc_filter(inp_database_file_name,
+                             inp_read_file_names[0],
+                             out_read_file_name,
+                             inp_db_count_min=inp_db_count_min,
+                             inp_db_count_max=inp_db_count_max,
+                             inp_rd_count_min=inp_rd_count_min,
+                             inp_rd_count_max=inp_rd_count_max)
+        out_read_file_name = base_file_name + "_flt_rd2.fastq"
+        utilities.kmc_filter(inp_database_file_name,
+                             inp_read_file_names[1],
+                             out_read_file_name,
+                             inp_db_count_min=inp_db_count_min,
+                             inp_db_count_max=inp_db_count_max,
+                             inp_rd_count_min=inp_rd_count_min,
+                             inp_rd_count_max=inp_rd_count_max)
+        print("done in {0} s".format(time.time() - start_time), flush=True)
 
     # Print sequence it's double, and counts
     for k_mer in k_mers_in_seq.keys():
@@ -261,8 +216,9 @@ if __name__ == "__main__":
         print(ln)
     print("r_seq: ", r_seq)
     print("r_seq + r_seq: ", r_seq + r_seq)
-    print("count: {0} - r_k_mer_exp: {1}".format(count_exp, r_k_mer_exp))
-    print("count: {0} - r_k_mer_act: {1}".format(count_exp, r_k_mer_act))
+    if options.with_repeats:
+        print("count: {0} - r_k_mer_exp: {1}".format(count_exp, r_k_mer_exp))
+        print("count: {0} - r_k_mer_act: {1}".format(count_exp, r_k_mer_act))
 
     # Plot histogram of scaled copy number, or not
     if options.plot_histogram:
