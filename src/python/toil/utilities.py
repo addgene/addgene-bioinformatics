@@ -232,7 +232,7 @@ def exportWellAssemblyFiles(toil, assembler, output_directory, well_specs,
     for iW in range(nW):
         well_output_directory = os.path.join(output_directory, well_specs[iW])
         if not os.path.exists(well_output_directory):
-            os.mkdir(well_output_directory)
+            os.makedirs(well_output_directory)
 
         # Export all assembler output files from the file store
         exportFiles(toil, well_output_directory,
