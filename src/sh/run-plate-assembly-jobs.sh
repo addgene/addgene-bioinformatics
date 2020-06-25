@@ -72,7 +72,7 @@ set -e
 BASE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd | sed s%/src/sh%% )"
 
 # Activate the virtual environment
-source $HOME/.virtualenvs/addgene-bioinformatics/bin/activate
+# source $HOME/.virtualenvs/addgene-bioinformatics/bin/activate
 
 # Work in the specified directory, or if a directory is not specified,
 # in a directory with the same name as the assembler
@@ -130,7 +130,7 @@ for PLATE in $PLATES; do
     rm -rf pajfs
 
     # Run the plate assembly job
-    python ${BASE}/src/python/PlateAssemblyJob.py \
+    python ${BASE}/src/python/toil/PlateAssemblyJob.py \
 	   -s s3 -d addgene-sequencing-data/2018/FASTQ \
 	   -p $PLATE \
 	   -a $ASSEMBLER \
@@ -142,7 +142,7 @@ for PLATE in $PLATES; do
 done
 
 # Deactivate the virtual environment
-deactivate
+# deactivate
 
 # Return to the original working directory
 if [ -n "$OUTPUT_DIRECTORY" ]; then
