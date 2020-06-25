@@ -4,7 +4,7 @@ import configparser
 from pathlib import Path
 
 OPTIONS = {
-    "spades": {"-c": ["auto", "off", "100"], "--careful": [True, False]},
+    "spades": {"--cov-cutoff": ["auto", "off", "100"], "--careful": [True, False]},
     "unicycler": {
         "--depth-filter": ["0.1", False],
         "‑m": ["normal", "bold", "conservative"],
