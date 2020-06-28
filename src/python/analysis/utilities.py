@@ -384,7 +384,7 @@ def rotate_seqs(a_seq, o_seq):
          "-E", gap_extend_penalty,
         ]
     )
-    hosting_dir = os.path.dirname(os.path.abspath(__file__))
+    hosting_dir = os.getcwd()
     working_dir = "/data"
     volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
 
@@ -505,7 +505,7 @@ def kmc(read_file_names, database_file_name,
 
     # Define image, and Docker run parameters
     image = "ralatsdio/kmc:v3.1.1"
-    hosting_dir = os.path.dirname(os.path.abspath(__file__))
+    hosting_dir = os.getcwd()
     working_dir = "/data"
     volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
 
@@ -602,7 +602,7 @@ def kmc_transform(inp_database_file_name, operation, out_database_file_name,
 
     # Define image, and Docker run parameters
     image = "ralatsdio/kmc:v3.1.1"
-    hosting_dir = os.path.dirname(os.path.abspath(__file__))
+    hosting_dir = os.getcwd()
     working_dir = "/data"
     volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
 
@@ -716,7 +716,7 @@ def kmc_simple(inp_database_file_name_a, operation, inp_database_file_name_b,
 
     # Define image, and Docker run parameters
     image = "ralatsdio/kmc:v3.1.1"
-    hosting_dir = os.path.dirname(os.path.abspath(__file__))
+    hosting_dir = os.getcwd()
     working_dir = "/data"
     volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
 
@@ -874,7 +874,7 @@ def kmc_filter(inp_database_file_name, inp_read_file_name, out_read_file_name,
 
     # Define image, and Docker run parameters
     image = "ralatsdio/kmc:v3.1.1"
-    hosting_dir = os.path.dirname(os.path.abspath(__file__))
+    hosting_dir = os.getcwd()
     working_dir = "/data"
     volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
 
@@ -1039,7 +1039,7 @@ def wgsim(inp_fa_fNm,
     """
     # Define image, and Docker run parameters
     image = "ralatsdio/samtools:v1.10"
-    hosting_dir = os.path.dirname(os.path.abspath(__file__))
+    hosting_dir = os.getcwd()
     working_dir = "/data"
     volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
 
@@ -1181,7 +1181,7 @@ def ssake(inp_fq_one_fNm,
     """
     # Define image, and Docker run parameters
     image = "ralatsdio/ssake:v4.0.1"
-    hosting_dir = os.path.dirname(os.path.abspath(__file__))
+    hosting_dir = os.getcwd()
     working_dir = "/data"
     volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
 
@@ -1483,7 +1483,7 @@ def unicycler(inp_fq_one_fNm,
     """
     # Define image, and Docker run parameters
     image = "ralatsdio/unicycler:v0.4.8"
-    hosting_dir = os.path.dirname(os.path.abspath(__file__))
+    hosting_dir = os.getcwd()
     working_dir = "/data"
     volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
 
