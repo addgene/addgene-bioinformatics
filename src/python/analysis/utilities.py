@@ -1396,6 +1396,55 @@ def spades(inp_fq_one_fNm,
     return command
 
 
+def apc(base_file_name, contigs_file_name):
+    """
+    Run apc.pl script v0.1.0 in a docker container.
+
+    usage: /home/biodocker/bin/apc.pl [options] <fasta>
+
+    Have you assembled [a] [p]erfect [c]ircle (e.g. plasmid, bacterial
+    chromosome)? This script tests each sequence in the supplied fasta
+    file for self-overlap. If overlap is found, the 5' copy of the
+    overlapping sequence is trimmed, the ends joined, and the join
+    moved ("permuted") to the middle of the output sequence. Join
+    location is appended to the sequence header, to allow
+    confirmation. If a multi-fasta file is provided, each sequence is
+    tested for circularity and output separately. If reads are
+    provided (e.g. PacBio corrected.fastq), BWA MEM is used to align
+    reads to spliced sequence, for validation.
+
+    The binaries 'lastdb', 'lastal', and (with -r) 'bwa' and
+    'samtools' must be in your PATH.
+
+    -b <text>   basename for output files (alphanumeric and underscore
+                characters)
+    -r <fastq>	high accuracy long reads to use for validation
+    """
+    # Define image, and Docker run parameters
+    image = "ralatsdio/apc:v0.1.0"
+    hosting_dir = os.getcwd()
+    working_dir = "/data"
+    volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
+
+    # Define apc command
+    command = " ".join(
+        ["apc.pl",
+         "-b", base_file_name,
+         contigs_file_name,
+         ]
+    )
+
+    # Run the command in the Docker image
+    client = docker.from_env()
+    client.containers.run(
+        image,
+        command=command,
+        volumes=volumes,
+        working_dir=working_dir,
+    )
+    return command
+
+
 def unicycler(inp_fq_one_fNm,
               inp_fq_two_fNm,
               out_dir,
