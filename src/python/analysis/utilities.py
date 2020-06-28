@@ -1576,7 +1576,3 @@ def unicycler(inp_fq_one_fNm,
         working_dir=working_dir,
     )
     return command
-
-
-if __name__ == "__main__":
-    pass
