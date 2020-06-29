@@ -79,12 +79,12 @@ def copy_actual_reads(plate, well, working_dir):
     return rd_fnms
 
 
-def assemble_using_spades(case_dir, rd1_fnm, rd2_fnm):
+def assemble_using_spades(case_dir, rd1_fnm, rd2_fnm, force=False):
     """Assemble reads using SPAdes, then circularize using apc.
     """
     # Assemble only if the output directory does not exist
     spades_dir = os.path.join(case_dir, SPADES_OUTPUT_DIR)
-    if not os.path.exists(spades_dir):
+    if not os.path.exists(spades_dir) or force:
         with pushd(case_dir):
 
             # if os.path.exists(SPADES_OUTPUT_DIR):
