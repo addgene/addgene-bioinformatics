@@ -4,9 +4,7 @@ import os
 import pickle
 import time
 
-from test_spades_assembly import align_assembly_output
-from test_spades_assembly import assemble_using_spades
-from test_spades_assembly import pushd
+import test_spades_assembly
 import utilities
 
 
@@ -28,7 +26,7 @@ WGSIM_BASE_FNM = "wgsim"
 WGSIM_OUTPUT_FNM = WGSIM_BASE_FNM + ".fasta"
 
 MAX_DIFFERENCE = 0.10
-MAX_ATTEMPTS = 8
+MAX_ATTEMPTS = 16
 
 
 if __name__ == "__main__":
@@ -89,49 +87,23 @@ if __name__ == "__main__":
 
     # Print header to a file, and stdout
     output_file = open(__file__.replace(".py", ".csv"), 'w', buffering=1)
-    result = ""
-    result += "{:>12s},".format("plate")
-    result += "{:>12s},".format("well")
-    result += "{:>12s},".format("seq_len")
-    result += "{:>12s},".format("exp_seq_scr")
-    result += "{:>12s},".format("exp_seq_scr")
-    result += "{:>12s},".format("sim_spd_scr")
-    result += "{:>12s},".format("sim_apc_scr")
-    result += "{:>14s}".format("num_attempts")
-    output_file.write(result + '\n')
+    header = ""
+    header += "{:>12s},".format("plate")
+    header += "{:>12s},".format("well")
+    header += "{:>12s},".format("seq_len")
+    header += "{:>12s},".format("exp_seq_scr")
+    header += "{:>12s},".format("exp_seq_scr")
+    header += "{:>12s},".format("sim_spd_scr")
+    header += "{:>12s},".format("sim_apc_scr")
+    header += "{:>14s}".format("num_attempts")
+    output_file.write(header + '\n')
 
-    # Load assemblies, if the exist, and print, or initialize
-    assemblies = []
-    completed = {}
+    # Load alignments, if they exist
+    alignments = {}
     pickle_fnm = __file__.replace(".py", ".pickle")
     if os.path.exists(pickle_fnm):
         with open(pickle_fnm, 'rb') as pickle_file:
-            assemblies = pickle.load(pickle_file)
-            for assembly in assemblies:
-                result = ""
-                result += "{:>12s},".format(assembly['plate'])
-                result += "{:>12s},".format(assembly['well'])
-                result += "{:>12d},".format(assembly['seq_len'])
-                result += "{:>12.1f},".format(assembly['exp_spd_scr'])
-                result += "{:>12.1f},".format(assembly['exp_apc_scr'])
-                result += "{:>12.1f},".format(assembly['sim_spd_scr'])
-                result += "{:>12.1f},".format(assembly['sim_apc_scr'])
-                result += "{:>14d}".format(assembly['num_attempts'])
-                output_file.write(result + '\n')
-
-                # Collect completed plates and wells
-                plate = assembly['plate']
-                if plate not in completed:
-                    completed[plate] = {}
-                well = assembly['well']
-                seq_len = assembly['seq_len']
-                sim_apc_scr = assembly['sim_apc_scr']
-                num_attempts = assembly['num_attempts']
-                if (abs(sim_apc_scr - seq_len) / seq_len <= MAX_DIFFERENCE
-                    or num_attempts == MAX_ATTEMPTS):
-                    completed[plate][well] = True
-                else:
-                    completed[plate][well] = False
+            alignments = pickle.load(pickle_file)
 
     # Consider each plate and well
     plates = list(results.keys())
@@ -140,46 +112,66 @@ if __name__ == "__main__":
     for plate in [plates[1]]:
         for well in wells:
 
-            # Skip result if well found in assemblies
-            if (plate in completed
-                and well in completed[plate]
-                and completed[plate][well]):
-                print("> Plate {0} well {1} done".format(plate, well))
-                continue
-
             # Skip result if well not found in plate
             if well not in results[plate]:
                 continue
-            assembly = results[plate][well]
-            assembly['plate'] = plate
-            assembly['well'] = well
-            result = ""
-            result += "{:>12s},".format(plate)
-            result += "{:>12s},".format(well)
+            result = results[plate][well]
 
-            # Skip result if no valid QC assembly found
-            if 'qc' not in assembly:
+            # Skip result if no valid QC sequence found
+            if 'qc' not in result:
                 continue
-            seq = assembly['qc']['sequence']
+            seq = result['qc']['sequence']
             seq_len = len(seq)
-            assembly['seq_len'] = seq_len
+
+            # Skip result if QC sequence has zero length
             if seq_len == 0:
                 continue
-            result += "{:>12d},".format(seq_len)
 
             # Skip result if no circularized assembly found
-            if 'apc' not in assembly:
+            if 'apc' not in result:
                 continue
-            exp_spd_scr = assembly['spades']['sequence_score']
-            exp_apc_scr = assembly['apc']['sequence_score']
-            assembly['exp_spd_scr'] = exp_spd_scr
-            assembly['exp_apc_scr'] = exp_apc_scr
-            result += "{:>12.1f},".format(exp_spd_scr)
-            result += "{:>12.1f},".format(exp_apc_scr)
 
-            # Skip result if sequence score does not equal sequence length
+            # Skip result if circuarlized sequence score does not
+            # equal sequence length
+            exp_spd_scr = result['spades']['sequence_score']
+            exp_apc_scr = result['apc']['sequence_score']
             if (exp_apc_scr != seq_len):
                 continue
+
+            # Skip result if alignment processing complete
+            if 'results' not in alignments:
+                alignments['results'] = []
+            if (result in alignments['results']
+                and plate in alignments
+                and well in alignments[plate]):
+                sim_apc_scr = alignments[plate][well]['sim_apc_scr']
+                num_attempts = alignments[plate][well]['num_attempts']
+                if (abs(sim_apc_scr - seq_len) / seq_len <= MAX_DIFFERENCE
+                    or num_attempts == MAX_ATTEMPTS):
+
+                    # Format alignments for output
+                    seq_len = alignments[plate][well]['seq_len']
+                    exp_spd_scr = alignments[plate][well]['exp_spd_scr']
+                    exp_apc_scr = alignments[plate][well]['exp_apc_scr']
+                    sim_spd_scr = alignments[plate][well]['sim_spd_scr']
+                    sim_apc_scr = alignments[plate][well]['sim_apc_scr']
+                    num_attempts = alignments[plate][well]['num_attempts']
+                    data = ""
+                    data += "{:>12s},".format(plate)
+                    data += "{:>12s},".format(well)
+                    data += "{:>12d},".format(seq_len)
+                    data += "{:>12.1f},".format(exp_spd_scr)
+                    data += "{:>12.1f},".format(exp_apc_scr)
+                    data += "{:>12.1f},".format(sim_spd_scr)
+                    data += "{:>12.1f},".format(sim_apc_scr)
+                    data += "{:>14d}".format(num_attempts)
+                    output_file.write(data + '\n')
+
+                    # If we get here, note processing done
+                    print("> Plate {0} well {1} done".format(plate, well))
+                    continue
+
+            # If we get here, note processing started
             print("> Plate {0} well {1}:".format(plate, well))
 
             # Make working directory for well of plate
@@ -190,9 +182,21 @@ if __name__ == "__main__":
             case_dir = os.path.join(working_dir, "wgsim")
             os.makedirs(case_dir, exist_ok=True)
 
+            # Read data file, if present
+            trial_pth = os.path.join(case_dir, "trial.txt")
+            if os.path.exists(trial_pth):
+                with open(trial_pth, 'r') as f:
+                    lines = f.readline().replace('\n', '')
+                    fields = lines.split(',')
+                    sim_spd_scr = float(fields[5])
+                    sim_apc_scr = float(fields[6])
+                    num_attempts = int(fields[7])
+            else:
+                sim_spd_scr = 0.0
+                sim_apc_scr = 0.0
+                num_attempts = 0
+
             # Attempt to draw simulated reads which assemble correctly
-            sim_spd_scr, sim_apc_scr = 0, 0
-            num_attempts = 0
             while (abs(sim_apc_scr - seq_len) / seq_len > MAX_DIFFERENCE
                    and num_attempts < MAX_ATTEMPTS):
                 num_attempts += 1
@@ -200,7 +204,7 @@ if __name__ == "__main__":
                 
                 # Simulate paired reads of the QC sequence using wgsim,
                 # assemble using SPAdes (and apc), and align
-                with pushd(case_dir):
+                with test_spades_assembly.pushd(case_dir):
                     start_time = time.time()
                     print(
                         "Simulating paired reads from QC sequence using wgsim ...",
@@ -214,26 +218,46 @@ if __name__ == "__main__":
                         outer_distance=OUTER_DISTANCE)
                     print("done in {0} s".format(time.time() - start_time),
                           flush=True)
-                sim_spd_scr, sim_apc_scr = 0, 0
                 try:
-                    assemble_using_spades(case_dir, rd1_fnm, rd2_fnm, force=True)
-                    sim_spd_scr, sim_apc_scr = align_assembly_output(aligner, case_dir, seq)
+                    test_spades_assembly.assemble_using_spades(
+                        case_dir, rd1_fnm, rd2_fnm, force=True)
+                    sim_spd_scr, sim_apc_scr = test_spades_assembly.align_assembly_output(
+                        aligner, case_dir, seq)
                 except Exception as e:
                     print("failed: {0}".format(str(e)), flush=True)
 
-            # Collect results for restarting, and write to output file
-            assembly['sim_spd_scr'] = sim_spd_scr
-            assembly['sim_apc_scr'] = sim_apc_scr
-            assembly['num_attempts'] = num_attempts
-            result += "{:>12.1f},".format(sim_spd_scr)
-            result += "{:>12.1f},".format(sim_apc_scr)
-            result += "{:>14d}".format(num_attempts)
-            output_file.write(result + '\n')
+            # Format alignments for output
+            data = ""
+            data += "{:>12s},".format(plate)
+            data += "{:>12s},".format(well)
+            data += "{:>12d},".format(seq_len)
+            data += "{:>12.1f},".format(exp_spd_scr)
+            data += "{:>12.1f},".format(exp_apc_scr)
+            data += "{:>12.1f},".format(sim_spd_scr)
+            data += "{:>12.1f},".format(sim_apc_scr)
+            data += "{:>14d}".format(num_attempts)
+            output_file.write(data + '\n')
 
-            # Append current assembly, and dump assemblies for restart
-            assemblies.append(assembly)
+            # Write data file
+            with open(trial_pth, 'w') as f:
+                f.write(data + '\n')
+
+            # Collect results and alignments, and dump for restarting
+            alignments['results'].append(result)
+            if plate not in alignments:
+                alignments[plate] = {}
+            if well not in alignments[plate]:
+                alignments[plate][well] = {}
+            alignments[plate][well]['seq'] = seq
+            alignments[plate][well]['seq_len'] = seq_len
+            alignments[plate][well]['exp_spd_scr'] = exp_spd_scr
+            alignments[plate][well]['exp_apc_scr'] = exp_apc_scr
+            alignments[plate][well]['sim_spd_scr'] = sim_spd_scr
+            alignments[plate][well]['sim_apc_scr'] = sim_apc_scr
+            alignments[plate][well]['num_attempts'] = num_attempts
             with open(pickle_fnm, 'wb') as pickle_file:
-                pickle.dump(assemblies, pickle_file)
+                pickle.dump(alignments, pickle_file)
+            print("Done")
 
             # break
 
