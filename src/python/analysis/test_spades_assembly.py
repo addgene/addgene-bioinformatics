@@ -123,8 +123,9 @@ def align_assembly_output(aligner, case_dir, seq):
     print("Aligning {0} assemblies ...".format(case), end=" ", flush=True)
     output_pth = os.path.join(
         case_dir, SPADES_OUTPUT_DIR, SPADES_OUTPUT_FNM)
-    spd_scr = 0
+    spd_scr = -1.0
     if os.path.exists(output_pth):
+        spd_scr = 0.0
         seq_rcds = [seq_rcd for seq_rcd in SeqIO.parse(
             output_pth, "fasta")]
         if len(seq_rcds) > 0:
@@ -132,8 +133,9 @@ def align_assembly_output(aligner, case_dir, seq):
 
     # Read the FASTA apc output file, and align
     output_pth = os.path.join(case_dir, APC_OUTPUT_FNM)
-    apc_scr = 0
+    apc_scr = -1.0
     if os.path.exists(output_pth):
+        apc_scr = 0.0
         seq_rcds = [seq_rcd for seq_rcd in SeqIO.parse(
             output_pth, "fasta")]
         if len(seq_rcds) > 0:
