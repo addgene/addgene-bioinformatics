@@ -112,9 +112,10 @@ def assemble_using_spades(case_dir, rd1_fnm, rd2_fnm, force=False):
             print("done in {0} s".format(time.time() - start_time),
                   flush=True)
             print("Command: {0}".format(command), flush=True)
+            print("Directory: {0}".format(os.getcwd()))
 
 
-def align_assembly_output(case_dir, seq):
+def align_assembly_output(aligner, case_dir, seq):
 
     # Read the multi-FASTA SPAdes output file, and align
     start_time = time.time()
@@ -299,7 +300,7 @@ if __name__ == "__main__":
             # apc), and align
             rd1_fnm, rd2_fnm = copy_actual_reads(plate, well, case_dir)
             assemble_using_spades(case_dir, rd1_fnm, rd2_fnm)
-            act_spd_scr, act_apc_scr = align_assembly_output(case_dir, seq)
+            act_spd_scr, act_apc_scr = align_assembly_output(aligner, case_dir, seq)
             result += "{:>12.1f},".format(act_spd_scr)
             result += "{:>12.1f},".format(act_apc_scr)
             assembly['act_spd_scr'] = act_spd_scr
@@ -334,7 +335,7 @@ if __name__ == "__main__":
                 rd1_fnm = WGSIM_BASE_FNM + "_rd1.fastq"
                 rd2_fnm = WGSIM_BASE_FNM + "_rd2.fastq"
             assemble_using_spades(case_dir, rd1_fnm, rd2_fnm)
-            sim_spd_scr, sim_apc_scr = align_assembly_output(case_dir, seq)
+            sim_spd_scr, sim_apc_scr = align_assembly_output(aligner, case_dir, seq)
             result += "{:>12.1f},".format(sim_spd_scr)
             result += "{:>12.1f}".format(sim_apc_scr)
             assembly['sim_spd_scr'] = sim_spd_scr
