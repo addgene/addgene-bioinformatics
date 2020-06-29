@@ -1,6 +1,9 @@
 A11967A_*
 clean*
 kmc_input.txt
+test_spades_assembly.csv
+trial_spades_assembly.csv
+trial_spades_assembly.tar.gz
 
 # TODO: Clean up
 .rerun
@@ -25,3 +28,7 @@ random_seq*
 repetitive_seq*
 super*
 work1*
+scratch/
+test/
+test_spades_assembly/
+trial_spades_assembly/
