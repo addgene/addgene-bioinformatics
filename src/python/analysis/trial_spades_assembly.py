@@ -90,7 +90,12 @@ if __name__ == "__main__":
         os.mkdir(RESULTS_DIR)
 
     # Print header to a file, and stdout
-    output_file = open(__file__.replace(".py", ".csv"), 'w', buffering=1)
+    if OPTIONS.use_invalid:
+        output_file = open(
+            __file__.replace(".py", "-invalid.csv"), 'w', buffering=1)
+    else:
+        output_file = open(
+            __file__.replace(".py", "-valid.csv"), 'w', buffering=1)
     header = ""
     header += "{:>12s},".format("plate")
     header += "{:>12s},".format("well")
