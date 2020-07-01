@@ -58,6 +58,10 @@ if __name__ == "__main__":
     #     '-f', '--force-case', type=int,
     #     default=0,
     #     help="force processing of case")
+    parser.add_argument(
+        '-i', '--use-invalid',
+        action='store_true',
+        help="use invalid cases (no or unaligned circular sequence)")
 
     OPTIONS = parser.parse_args()
 
@@ -127,15 +131,24 @@ if __name__ == "__main__":
             if seq_len == 0:
                 continue
 
-            # Skip result if no circularized assembly found
-            if 'apc' not in result:
+            # Identify valid cases, those for witch an aligned
+            # circular sequence exists
+            is_valid = False
+            exp_spd_scr = 0.0
+            exp_apc_scr = 0.0
+            if 'apc' in result:
+                exp_spd_scr = result['spades']['sequence_score']
+                exp_apc_scr = result['apc']['sequence_score']
+                if (exp_apc_scr == seq_len):
+                    is_valid = True
+
+            # Skip cases not selected
+            if OPTIONS.use_invalid and is_valid:
+                # Using invalid cases, skip valid cases
                 continue
 
-            # Skip result if circuarlized sequence score does not
-            # equal sequence length
-            exp_spd_scr = result['spades']['sequence_score']
-            exp_apc_scr = result['apc']['sequence_score']
-            if (exp_apc_scr != seq_len):
+            elif not OPTIONS.use_invalid and not is_valid:
+                # Using valid cases, skip invalid cases
                 continue
 
             # Skip result if alignment processing complete
