@@ -1,11 +1,9 @@
+# TODO: Clean up
 A11967A_*
 clean*
 kmc_input.txt
-test_spades_assembly.csv
-trial_spades_assembly.csv
-trial_spades_assembly.tar.gz
-
-# TODO: Clean up
+*.csv
+*.tar.gz
 .rerun
 CA_dir.txt
 ESTIMATED_GENOME_SIZE.txt
