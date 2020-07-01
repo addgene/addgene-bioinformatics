@@ -11,7 +11,6 @@ from Bio import SeqIO
 
 import utilities
 
-
 RESULTS_DIR = __file__.replace(".py", "")
 
 NUMBER_PAIRS = 25000
@@ -42,7 +41,7 @@ def pushd(new_dir):
         os.chdir(previous_dir)
 
 
-def copy_actual_reads(plate, well, working_dir):
+def copy_actual_reads(plate, well, working_dir, sequencing_data_dir):
     """Copy actual read files for a given plate and well to a working
     directory, if they don't already exist there.
     """
@@ -51,7 +50,7 @@ def copy_actual_reads(plate, well, working_dir):
     plate_dir = os.path.basename(
         glob.glob(
             os.path.join(
-                OPTIONS.sequencing_data_dir,
+                sequencing_data_dir,
                 plate + "*"
             )
         )[0]
@@ -66,7 +65,7 @@ def copy_actual_reads(plate, well, working_dir):
     rd_fnms = (rd1_fnm, rd2_fnm)
     for rd_fnm in rd_fnms:
         rd_file_path = os.path.join(
-            OPTIONS.sequencing_data_dir,
+            sequencing_data_dir,
             plate_dir,
             rd_fnm
         )
@@ -300,7 +299,9 @@ if __name__ == "__main__":
 
             # Copy actual reads into place, assemble using SPAdes (and
             # apc), and align
-            rd1_fnm, rd2_fnm = copy_actual_reads(plate, well, case_dir)
+            rd1_fnm, rd2_fnm = copy_actual_reads(
+                plate, well, case_dir, OPTIONS.sequencing_data_dir)
+
             assemble_using_spades(case_dir, rd1_fnm, rd2_fnm)
             act_spd_scr, act_apc_scr = align_assembly_output(aligner, case_dir, seq)
             result += "{:>12.1f},".format(act_spd_scr)
