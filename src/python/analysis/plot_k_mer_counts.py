@@ -14,20 +14,26 @@ if __name__ == "__main__":
 
     # Add and parse arguments
     parser = ArgumentParser()
-    parser.add_argument('-w', '--with-repeats',
-                        action='store_true',
-                        help="create a random sequence with repeats")
-    parser.add_argument('-p', '--plot-histogram',
-                        action='store_true',
-                        help="plot histogram of k-mer counts")
-    parser.add_argument('-r', '--reprocess',
-                        action='store_true',
-                        help="reprocess alignments")
+    parser.add_argument(
+        "-w",
+        "--with-repeats",
+        action="store_true",
+        help="create a random sequence with repeats",
+    )
+    parser.add_argument(
+        "-p",
+        "--plot-histogram",
+        action="store_true",
+        help="plot histogram of k-mer counts",
+    )
+    parser.add_argument(
+        "-r", "--reprocess", action="store_true", help="reprocess alignments"
+    )
     options = parser.parse_args()
 
     # Create and dump, or load results
     k_mer_len = 25
-    k_mer_cnt = [2**(n+1) for n in range(8)]
+    k_mer_cnt = [2 ** (n + 1) for n in range(8)]
     base_file_name = "clean"
     if options.with_repeats:
         base_file_name += "_with_repeats"
@@ -35,11 +41,11 @@ if __name__ == "__main__":
     if not os.path.exists(pickle_file_name) or options.reprocess:
 
         start_time = time.time()
-        print("Creating random sequence with repeats, or not ...", end=" ",
-              flush=True)
+        print("Creating random sequence with repeats, or not ...", end=" ", flush=True)
         if options.with_repeats:
             r_seq, r_k_mers = utilities.create_r_seq_w_rep(
-                k_mer_len=k_mer_len, k_mer_cnt=k_mer_cnt)
+                k_mer_len=k_mer_len, k_mer_cnt=k_mer_cnt
+            )
         else:
             r_seq = utilities.create_r_seq(sum(k_mer_cnt) * k_mer_len)
             r_k_mers = []
@@ -52,24 +58,23 @@ if __name__ == "__main__":
         print("done in {0} s".format(time.time() - start_time), flush=True)
 
         start_time = time.time()
-        print("Simulating paired reads from doubled sequence ...", end=" ",
-              flush=True)
+        print("Simulating paired reads from doubled sequence ...", end=" ", flush=True)
         rd1_fNm, rd2_fNm = utilities.simulate_paired_reads_clean(
-            r_seq + r_seq, base_file_name)
+            r_seq + r_seq, base_file_name
+        )
         print("done in {0} s".format(time.time() - start_time), flush=True)
 
         start_time = time.time()
         print("Counting k_mers in reads ...", end=" ", flush=True)
-        k_mers_in_rd1_c, seq_rcds_rd1_c = utilities.count_k_mers_in_rds(
-            rd1_fNm)
-        k_mers_in_rd2_c, seq_rcds_rd2_c = utilities.count_k_mers_in_rds(
-            rd2_fNm)
+        k_mers_in_rd1_c, seq_rcds_rd1_c = utilities.count_k_mers_in_rds(rd1_fNm)
+        k_mers_in_rd2_c, seq_rcds_rd2_c = utilities.count_k_mers_in_rds(rd2_fNm)
         print("done in {0} s".format(time.time() - start_time), flush=True)
 
         start_time = time.time()
         print("Writing k_mers and counts in reads ...", end=" ", flush=True)
         utilities.write_k_mer_counts_in_rds(
-            k_mers_in_rd1_c, k_mers_in_rd2_c, base_file_name + "_cnt.txt")
+            k_mers_in_rd1_c, k_mers_in_rd2_c, base_file_name + "_cnt.txt"
+        )
         print("done in {0} s".format(time.time() - start_time), flush=True)
 
         start_time = time.time()
@@ -77,10 +82,14 @@ if __name__ == "__main__":
         inp_read_file_names = [rd1_fNm, rd2_fNm]
         inp_database_file_name = base_file_name
         out_database_file_name = base_file_name + "_kmc.txt"
-        utilities.kmc(inp_read_file_names, inp_database_file_name,
-                      count_min=0, max_count=1e9, canonical_form=False)
-        utilities.kmc_transform(inp_database_file_name, "dump",
-                                out_database_file_name)
+        utilities.kmc(
+            inp_read_file_names,
+            inp_database_file_name,
+            count_min=0,
+            max_count=1e9,
+            canonical_form=False,
+        )
+        utilities.kmc_transform(inp_database_file_name, "dump", out_database_file_name)
         print("done in {0} s".format(time.time() - start_time), flush=True)
 
         start_time = time.time()
@@ -89,38 +98,36 @@ if __name__ == "__main__":
         print("done in {0} s".format(time.time() - start_time), flush=True)
 
         # Collect copy numbers, and compute coverage
-        cn_in_seq = np.array(
-            [val['cnt'] for val in k_mers_in_seq.values()]
-        )
+        cn_in_seq = np.array([val["cnt"] for val in k_mers_in_seq.values()])
         cn_in_rds_c = np.array(
-            [(k_mers_in_rd1_c[key]['cnt'] + k_mers_in_rd2_c[key]['cnt'])
-             for key in k_mers_in_rd1_c.keys()]
+            [
+                (k_mers_in_rd1_c[key]["cnt"] + k_mers_in_rd2_c[key]["cnt"])
+                for key in k_mers_in_rd1_c.keys()
+            ]
         )
-        cn_by_kmc_c = np.array(
-            [val['cnt'] for val in k_mers_by_kmc_c.values()]
-        )
+        cn_by_kmc_c = np.array([val["cnt"] for val in k_mers_by_kmc_c.values()])
         coverage_rds = int(np.sum(cn_in_rds_c) / np.sum(cn_in_seq))
         coverage_kmc = int(np.sum(cn_by_kmc_c) / np.sum(cn_in_seq))
 
         start_time = time.time()
         print("Dumping results ...", end=" ", flush=True)
         counts = {}
-        counts['r_seq'] = r_seq
-        counts['r_k_mers'] = r_k_mers
-        counts['k_mers_in_seq'] = k_mers_in_seq
-        counts['k_mers_in_rd1_c'] = k_mers_in_rd1_c
-        counts['seq_rcds_rd1_c'] = seq_rcds_rd1_c
-        counts['k_mers_in_rd2_c'] = k_mers_in_rd2_c
-        counts['seq_rcds_rd2_c'] = seq_rcds_rd2_c
-        counts['k_mers_by_kmc_c'] = k_mers_by_kmc_c
-        counts['cn_in_seq'] = cn_in_seq
-        counts['cn_in_rds_c'] = cn_in_rds_c
-        counts['cn_by_kmc_c'] = cn_by_kmc_c
-        counts['coverage_rds'] = coverage_rds
-        counts['coverage_kmc'] = coverage_kmc
-        counts['inp_read_file_names'] = inp_read_file_names
-        counts['inp_database_file_name'] = inp_database_file_name
-        with open(pickle_file_name, 'wb') as pickle_file:
+        counts["r_seq"] = r_seq
+        counts["r_k_mers"] = r_k_mers
+        counts["k_mers_in_seq"] = k_mers_in_seq
+        counts["k_mers_in_rd1_c"] = k_mers_in_rd1_c
+        counts["seq_rcds_rd1_c"] = seq_rcds_rd1_c
+        counts["k_mers_in_rd2_c"] = k_mers_in_rd2_c
+        counts["seq_rcds_rd2_c"] = seq_rcds_rd2_c
+        counts["k_mers_by_kmc_c"] = k_mers_by_kmc_c
+        counts["cn_in_seq"] = cn_in_seq
+        counts["cn_in_rds_c"] = cn_in_rds_c
+        counts["cn_by_kmc_c"] = cn_by_kmc_c
+        counts["coverage_rds"] = coverage_rds
+        counts["coverage_kmc"] = coverage_kmc
+        counts["inp_read_file_names"] = inp_read_file_names
+        counts["inp_database_file_name"] = inp_database_file_name
+        with open(pickle_file_name, "wb") as pickle_file:
             pickle.dump(counts, pickle_file)
         print("done in {0} s".format(time.time() - start_time), flush=True)
 
@@ -128,23 +135,23 @@ if __name__ == "__main__":
 
         start_time = time.time()
         print("Loading results ...", end=" ", flush=True)
-        with open(pickle_file_name, 'rb') as pickle_file:
+        with open(pickle_file_name, "rb") as pickle_file:
             counts = pickle.load(pickle_file)
-        r_seq = counts['r_seq']
-        r_k_mers = counts['r_k_mers']
-        k_mers_in_seq = counts['k_mers_in_seq']
-        k_mers_in_rd1_c = counts['k_mers_in_rd1_c']
-        seq_rcds_rd1_c = counts['seq_rcds_rd1_c']
-        k_mers_in_rd2_c = counts['k_mers_in_rd2_c']
-        seq_rcds_rd2_c = counts['seq_rcds_rd2_c']
-        k_mers_by_kmc_c = counts['k_mers_by_kmc_c']
-        cn_in_seq = counts['cn_in_seq']
-        cn_in_rds_c = counts['cn_in_rds_c']
-        cn_by_kmc_c = counts['cn_by_kmc_c']
-        coverage_rds = counts['coverage_rds']
-        coverage_kmc = counts['coverage_kmc']
-        inp_read_file_names = counts['inp_read_file_names']
-        inp_database_file_name = counts['inp_database_file_name']
+        r_seq = counts["r_seq"]
+        r_k_mers = counts["r_k_mers"]
+        k_mers_in_seq = counts["k_mers_in_seq"]
+        k_mers_in_rd1_c = counts["k_mers_in_rd1_c"]
+        seq_rcds_rd1_c = counts["seq_rcds_rd1_c"]
+        k_mers_in_rd2_c = counts["k_mers_in_rd2_c"]
+        seq_rcds_rd2_c = counts["seq_rcds_rd2_c"]
+        k_mers_by_kmc_c = counts["k_mers_by_kmc_c"]
+        cn_in_seq = counts["cn_in_seq"]
+        cn_in_rds_c = counts["cn_in_rds_c"]
+        cn_by_kmc_c = counts["cn_by_kmc_c"]
+        coverage_rds = counts["coverage_rds"]
+        coverage_kmc = counts["coverage_kmc"]
+        inp_read_file_names = counts["inp_read_file_names"]
+        inp_database_file_name = counts["inp_database_file_name"]
         print("done in {0} s".format(time.time() - start_time), flush=True)
 
     # Write reads corresponding to the k_mer with a specified actual ...
@@ -154,18 +161,18 @@ if __name__ == "__main__":
         count_exp = 16
         r_k_mer_exp = str(r_k_mers[k_mer_cnt.index(count_exp)])
         r_k_mers_act = list(k_mers_in_rd1_c.keys())
-        r_k_mer_act = r_k_mers_act[np.where(
-            np.round(
-                cn_in_rds_c / coverage_rds / 2
-            ).astype(int) == count_exp
-        )[0][0]]
+        r_k_mer_act = r_k_mers_act[
+            np.where(np.round(cn_in_rds_c / coverage_rds / 2).astype(int) == count_exp)[
+                0
+            ][0]
+        ]
         start_time = time.time()
         print("Writing reads based on read count ...", end=" ", flush=True)
         rd1_read_file_name = base_file_name + "_act_rd1.fastq"
         rd2_read_file_name = base_file_name + "_act_rd2.fastq"
         with open(rd1_read_file_name, "w") as f1:
             with open(rd2_read_file_name, "w") as f2:
-                for i_seq in k_mers_in_rd1_c[r_k_mer_act]['src']:
+                for i_seq in k_mers_in_rd1_c[r_k_mer_act]["src"]:
                     SeqIO.write(seq_rcds_rd1_c[i_seq], f1, "fastq")
                     SeqIO.write(seq_rcds_rd2_c[i_seq], f2, "fastq")
         print("done in {0} s".format(time.time() - start_time), flush=True)
@@ -180,27 +187,30 @@ if __name__ == "__main__":
         start_time = time.time()
         print("Writing reads based on kmc count ...", end=" ", flush=True)
         out_read_file_name = base_file_name + "_flt_rd1.fastq"
-        utilities.kmc_filter(inp_database_file_name,
-                             inp_read_file_names[0],
-                             out_read_file_name,
-                             inp_db_count_min=inp_db_count_min,
-                             inp_db_count_max=inp_db_count_max,
-                             inp_rd_count_min=inp_rd_count_min,
-                             inp_rd_count_max=inp_rd_count_max)
+        utilities.kmc_filter(
+            inp_database_file_name,
+            inp_read_file_names[0],
+            out_read_file_name,
+            inp_db_count_min=inp_db_count_min,
+            inp_db_count_max=inp_db_count_max,
+            inp_rd_count_min=inp_rd_count_min,
+            inp_rd_count_max=inp_rd_count_max,
+        )
         out_read_file_name = base_file_name + "_flt_rd2.fastq"
-        utilities.kmc_filter(inp_database_file_name,
-                             inp_read_file_names[1],
-                             out_read_file_name,
-                             inp_db_count_min=inp_db_count_min,
-                             inp_db_count_max=inp_db_count_max,
-                             inp_rd_count_min=inp_rd_count_min,
-                             inp_rd_count_max=inp_rd_count_max)
+        utilities.kmc_filter(
+            inp_database_file_name,
+            inp_read_file_names[1],
+            out_read_file_name,
+            inp_db_count_min=inp_db_count_min,
+            inp_db_count_max=inp_db_count_max,
+            inp_rd_count_min=inp_rd_count_min,
+            inp_rd_count_max=inp_rd_count_max,
+        )
         print("done in {0} s".format(time.time() - start_time), flush=True)
 
     # Print sequence it's double, and counts
     for k_mer in k_mers_in_seq.keys():
-        ln = "k_mer: {0} in_seq: {1:6d}".format(
-            k_mer, k_mers_in_seq[k_mer]["cnt"])
+        ln = "k_mer: {0} in_seq: {1:6d}".format(k_mer, k_mers_in_seq[k_mer]["cnt"])
         if k_mer in k_mers_in_rd1_c.keys():
             ln += ", in_rd1_c: {0:6d}".format(k_mers_in_rd1_c[k_mer]["cnt"])
         else:
@@ -227,12 +237,14 @@ if __name__ == "__main__":
         cn_by_kmc_p = cn_by_kmc_c / coverage_kmc
 
         bin_stp = 1.0
-        bin_min = min(
-            np.min(cn_in_seq), np.min(cn_in_rds_p), np.min(cn_by_kmc_p)
-        ) - bin_stp / 2
-        bin_max = max(
-            np.max(cn_in_seq), np.max(cn_in_rds_p), np.max(cn_by_kmc_p)
-        ) + bin_stp / 2
+        bin_min = (
+            min(np.min(cn_in_seq), np.min(cn_in_rds_p), np.min(cn_by_kmc_p))
+            - bin_stp / 2
+        )
+        bin_max = (
+            max(np.max(cn_in_seq), np.max(cn_in_rds_p), np.max(cn_by_kmc_p))
+            + bin_stp / 2
+        )
 
         bin_edges = np.arange(bin_min, bin_max, bin_stp)
 
@@ -244,14 +256,27 @@ if __name__ == "__main__":
 
             fig, ax = plt.subplots()
 
-            ax.bar(bin_edges[:-1] + bin_stp / 2 + 1 * bin_stp / 6, cn_in_seq_hist,
-                   width=0.3, align='center', color='r')
-            ax.bar(bin_edges[:-1] + bin_stp / 2 + 3 * bin_stp / 6,
-                   cn_in_rds_p_hist,
-                   width=0.3, align='center', color='g')
-            ax.bar(bin_edges[:-1] + bin_stp / 2 + 5 * bin_stp / 6,
-                   cn_by_kmc_p_hist,
-                   width=0.3, align='center', color='b')
+            ax.bar(
+                bin_edges[:-1] + bin_stp / 2 + 1 * bin_stp / 6,
+                cn_in_seq_hist,
+                width=0.3,
+                align="center",
+                color="r",
+            )
+            ax.bar(
+                bin_edges[:-1] + bin_stp / 2 + 3 * bin_stp / 6,
+                cn_in_rds_p_hist,
+                width=0.3,
+                align="center",
+                color="g",
+            )
+            ax.bar(
+                bin_edges[:-1] + bin_stp / 2 + 5 * bin_stp / 6,
+                cn_by_kmc_p_hist,
+                width=0.3,
+                align="center",
+                color="b",
+            )
 
             ax.set_title("Random sequence with repeats")
             ax.set_xlabel("k-mer counts")
@@ -262,13 +287,20 @@ if __name__ == "__main__":
             y1, y2 = ax.get_ylim()
             yW = y2 - y1
 
-            ax.text(x1 + 0.03 * xW, y2 - 0.05 * yW,
-                    "Coverage (Reads): {}".format(coverage_rds))
-            ax.text(x1 + 0.03 * xW, y2 - 0.10 * yW,
-                    "Coverage (KMC): {}".format(coverage_kmc))
+            ax.text(
+                x1 + 0.03 * xW,
+                y2 - 0.05 * yW,
+                "Coverage (Reads): {}".format(coverage_rds),
+            )
+            ax.text(
+                x1 + 0.03 * xW,
+                y2 - 0.10 * yW,
+                "Coverage (KMC): {}".format(coverage_kmc),
+            )
             if options.with_repeats:
-                ax.text(x1 + 0.03 * xW, y2 - 0.15 * yW,
-                        "Copy numbers: {}".format(k_mer_cnt))
+                ax.text(
+                    x1 + 0.03 * xW, y2 - 0.15 * yW, "Copy numbers: {}".format(k_mer_cnt)
+                )
 
             if case == 0:
                 ax.set_ylim((0, 128))

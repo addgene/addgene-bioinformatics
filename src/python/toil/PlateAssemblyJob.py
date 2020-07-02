@@ -20,9 +20,18 @@ class PlateAssemblyJob(Job):
     Runs a WellAssemblyJob for each well of a plate for which both
     FASTQ read files were found.
     """
-    def __init__(self, well_specs, read_one_file_ids, read_two_file_ids,
-                 plate_spec, assembler, coverage_cutoff,
-                 *args, **kwargs):
+
+    def __init__(
+        self,
+        well_specs,
+        read_one_file_ids,
+        read_two_file_ids,
+        plate_spec,
+        assembler,
+        coverage_cutoff,
+        *args,
+        **kwargs
+    ):
         """
         Parameters
         ----------
@@ -62,8 +71,11 @@ class PlateAssemblyJob(Job):
         well_assembly_rvs = []
         nW = len(self.well_specs)
         for iW in range(nW):
-            logger.info("Creating well assembly job {0}".format(
-                self.plate_spec + "_" + self.well_specs[iW]))
+            logger.info(
+                "Creating well assembly job {0}".format(
+                    self.plate_spec + "_" + self.well_specs[iW]
+                )
+            )
             # Note that exceptions are caught in the well assembly job
             well_assembly_rvs.append(
                 self.addChild(
@@ -73,7 +85,9 @@ class PlateAssemblyJob(Job):
                         self.assembler,
                         self.coverage_cutoff,
                         self.plate_spec + "_" + self.well_specs[iW],
-                        )).rv())
+                    )
+                ).rv()
+            )
         return well_assembly_rvs
 
 
@@ -88,21 +102,34 @@ if __name__ == "__main__":
     Job.Runner.addToilOptions(parser)
     cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-4]
     cmps.extend(["dat", "miscellaneous"])
-    parser.add_argument('-d', '--data-path',
-                        default=os.sep + os.path.join(*cmps),
-                        help="path containing plate and well FASTQ source")
-    parser.add_argument('-s', '--source-scheme',
-                        default="file",
-                        help="scheme used for the source URL")
-    parser.add_argument('-p', '--plate-spec', default="A11967B_sW0154",
-                        help="the plate specification")
-    parser.add_argument('-a', '--assembler', default="spades",
-                        choices=utilities.ASSEMBLERS_TO_RUN,
-                        help="name of the assembler to run")
-    parser.add_argument('-c', '--coverage-cutoff', default="100",
-                        help="the coverage cutoff")
-    parser.add_argument('-o', '--output-directory', default=None,
-                        help="the directory containing all output files")
+    parser.add_argument(
+        "-d",
+        "--data-path",
+        default=os.sep + os.path.join(*cmps),
+        help="path containing plate and well FASTQ source",
+    )
+    parser.add_argument(
+        "-s", "--source-scheme", default="file", help="scheme used for the source URL"
+    )
+    parser.add_argument(
+        "-p", "--plate-spec", default="A11967B_sW0154", help="the plate specification"
+    )
+    parser.add_argument(
+        "-a",
+        "--assembler",
+        default="spades",
+        choices=utilities.ASSEMBLERS_TO_RUN,
+        help="name of the assembler to run",
+    )
+    parser.add_argument(
+        "-c", "--coverage-cutoff", default="100", help="the coverage cutoff"
+    )
+    parser.add_argument(
+        "-o",
+        "--output-directory",
+        default=None,
+        help="the directory containing all output files",
+    )
 
     # Define and make the output directory, if needed
     options = parser.parse_args()
@@ -120,19 +147,25 @@ if __name__ == "__main__":
             well_specs = []
             read_one_file_ids = []
             read_two_file_ids = []
-            if options.source_scheme == 'file':
+            if options.source_scheme == "file":
 
                 # Find read one and two files
-                read_one_files = glob(os.path.join(
-                    options.data_path,
-                    "{0}_FASTQ".format(options.plate_spec),
-                    "{0}_*_R1_001.fastq.gz".format(options.plate_spec)))
-                read_two_files = glob(os.path.join(
-                    options.data_path,
-                    "{0}_FASTQ".format(options.plate_spec),
-                    "{0}_*_R2_001.fastq.gz".format(options.plate_spec)))
+                read_one_files = glob(
+                    os.path.join(
+                        options.data_path,
+                        "{0}_FASTQ".format(options.plate_spec),
+                        "{0}_*_R1_001.fastq.gz".format(options.plate_spec),
+                    )
+                )
+                read_two_files = glob(
+                    os.path.join(
+                        options.data_path,
+                        "{0}_FASTQ".format(options.plate_spec),
+                        "{0}_*_R2_001.fastq.gz".format(options.plate_spec),
+                    )
+                )
 
-            elif options.source_scheme == 's3':
+            elif options.source_scheme == "s3":
 
                 # Find the bucket name and path to the data source
                 cmps = options.data_path.split(os.sep)
@@ -144,10 +177,12 @@ if __name__ == "__main__":
                 # Find read one and two files
                 s3 = boto.connect_s3()
                 bucket = s3.get_bucket(bucket_name)
-                read_one_files = [f.name for f in bucket.list(bucket_path)
-                                  if re.search('R1', f.name)]
-                read_two_files = [f.name for f in bucket.list(bucket_path)
-                                  if re.search('R2', f.name)]
+                read_one_files = [
+                    f.name for f in bucket.list(bucket_path) if re.search("R1", f.name)
+                ]
+                read_two_files = [
+                    f.name for f in bucket.list(bucket_path) if re.search("R2", f.name)
+                ]
 
             # Ensure a read two file exists for each read one file
             for read_one_file in read_one_files:
@@ -156,8 +191,12 @@ if __name__ == "__main__":
                     well_specs.append(p.search(read_one_file).group(1))
 
             read_one_file_ids, read_two_file_ids = utilities.importReadFiles(
-                toil, options.data_path, options.plate_spec, well_specs,
-                options.source_scheme)
+                toil,
+                options.data_path,
+                options.plate_spec,
+                well_specs,
+                options.source_scheme,
+            )
 
             # Construct and start the plate assembly job
             plate_assembly_job = PlateAssemblyJob(
@@ -167,7 +206,7 @@ if __name__ == "__main__":
                 options.plate_spec,
                 options.assembler,
                 options.coverage_cutoff,
-                )
+            )
             well_assembly_rvs = toil.start(plate_assembly_job)
 
         else:
@@ -178,6 +217,5 @@ if __name__ == "__main__":
         # Export all assembler output files, and apc output files, if
         # apc is required by the asembler, from the file store
         utilities.exportWellAssemblyFiles(
-            toil, options.assembler, options.plate_spec, well_specs,
-            well_assembly_rvs
+            toil, options.assembler, options.plate_spec, well_specs, well_assembly_rvs
         )

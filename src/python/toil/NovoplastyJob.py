@@ -16,6 +16,7 @@ class NovoplastyJob(Job):
     """
     Accepts paired-end Illumina reads for assembly using NOVOPlasty.
     """
+
     def __init__(
         self,
         read_one_file_id,
@@ -56,8 +57,7 @@ class NovoplastyJob(Job):
         # Expected output file names
         project_name = "Toil"
         log_file_name = "log_{0}.txt".format(project_name)
-        contigs_file_name = "Circularized_assembly_1_{0}.fasta".format(
-            project_name)
+        contigs_file_name = "Circularized_assembly_1_{0}.fasta".format(project_name)
 
         try:
             # Read the read files from the file store into the local
@@ -73,8 +73,8 @@ class NovoplastyJob(Job):
             # into the local temporary directory
             working_dir = fileStore.localTempDir
             seed_file_path = os.path.join(working_dir, "Seed.fasta")
-            with open(seed_file_path, 'w+') as f:
-                with gzip.open(read_one_file_path, 'rt') as g:
+            with open(seed_file_path, "w+") as f:
+                with gzip.open(read_one_file_path, "rt") as g:
                     do_write = False
                     for line in g:
                         if line[0] == "@":
@@ -87,9 +87,8 @@ class NovoplastyJob(Job):
             # Write the NOVOPlasty config file into the local temporary
             # directory
             config_file_name = "config.txt"
-            logger.info("Handling configuration file {0}".format(
-                config_file_name))
-            with open(os.path.join(working_dir, config_file_name), 'w+') as f:
+            logger.info("Handling configuration file {0}".format(config_file_name))
+            with open(os.path.join(working_dir, config_file_name), "w+") as f:
                 config = """Project:
 -----------------------
 Project name          = {project_name}
@@ -127,10 +126,10 @@ Insert Range          = 1.9
 Insert Range strict   = 1.3,
 Use Quality Scores    = no
                  """.format(
-                     project_name=project_name,
-                     seed_file_path=seed_file_path,
-                     read_one_file_path=read_one_file_path,
-                     read_two_file_path=read_two_file_path,
+                    project_name=project_name,
+                    seed_file_path=seed_file_path,
+                    read_one_file_path=read_one_file_path,
+                    read_two_file_path=read_two_file_path,
                 )
                 f.write(config)
 
@@ -143,7 +142,7 @@ Use Quality Scores    = no
             apiDockerCall(
                 self,
                 image=image,
-                volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
+                volumes={working_dir: {"bind": working_dir, "mode": "rw"}},
                 working_dir=working_dir,
                 parameters=[
                     "perl",
@@ -155,10 +154,8 @@ Use Quality Scores    = no
 
             # Write the log, and contigs FASTA files from the local temporary
             # directory into the file store
-            log_file_id = utilities.writeGlobalFile(
-                fileStore, log_file_name)
-            contigs_file_id = utilities.writeGlobalFile(
-                fileStore, contigs_file_name)
+            log_file_id = utilities.writeGlobalFile(fileStore, log_file_name)
+            contigs_file_id = utilities.writeGlobalFile(fileStore, contigs_file_name)
 
         except Exception as exc:
             # Ensure expectred return values on exceptions
@@ -168,15 +165,9 @@ Use Quality Scores    = no
 
         # Return file ids and names for export
         novoplasty_rv = {
-            'novoplasty_rv': {
-                'log_file': {
-                    'id': log_file_id,
-                    'name': log_file_name,
-                },
-                'contigs_file': {
-                    'id': contigs_file_id,
-                    'name': contigs_file_name,
-                },
+            "novoplasty_rv": {
+                "log_file": {"id": log_file_id, "name": log_file_name,},
+                "contigs_file": {"id": contigs_file_id, "name": contigs_file_name,},
             }
         }
         novoplasty_rv.update(self.parent_rv)
@@ -195,21 +186,26 @@ if __name__ == "__main__":
     cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-4]
     cmps.extend(["dat", "miscellaneous"])
     parser.add_argument(
-        '-d', '--data-path',
+        "-d",
+        "--data-path",
         default=os.sep + os.path.join(*cmps),
-        help="path containing plate and well FASTQ source")
+        help="path containing plate and well FASTQ source",
+    )
     parser.add_argument(
-        '-s', '--source-scheme',
-        default="file", help="scheme used for the source URL")
+        "-s", "--source-scheme", default="file", help="scheme used for the source URL"
+    )
     parser.add_argument(
-        '-p', '--plate-spec',
-        default="A11967A_sW0154", help="the plate specification")
+        "-p", "--plate-spec", default="A11967A_sW0154", help="the plate specification"
+    )
     parser.add_argument(
-        '-w', '--well-spec',
-        default="A01", help="the well specification")
+        "-w", "--well-spec", default="A01", help="the well specification"
+    )
     parser.add_argument(
-        '-o', '--output-directory',
-        default=None, help="the directory containing all output files")
+        "-o",
+        "--output-directory",
+        default=None,
+        help="the directory containing all output files",
+    )
     options = parser.parse_args()
     if options.output_directory is None:
         options.output_directory = options.plate_spec + "_" + options.well_spec
@@ -231,9 +227,7 @@ if __name__ == "__main__":
             )
 
             # Construct and start the NOVOPlasty job
-            novoplasty_job = NovoplastyJob(
-                read_one_file_ids[0], read_two_file_ids[0]
-            )
+            novoplasty_job = NovoplastyJob(read_one_file_ids[0], read_two_file_ids[0])
             novoplasty_rv = toil.start(novoplasty_job)
 
         else:
@@ -243,5 +237,5 @@ if __name__ == "__main__":
 
         # Export all NOVOPlasty output files from the file store
         utilities.exportFiles(
-            toil, options.output_directory, novoplasty_rv['novoplasty_rv']
+            toil, options.output_directory, novoplasty_rv["novoplasty_rv"]
         )

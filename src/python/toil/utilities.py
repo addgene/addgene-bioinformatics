@@ -3,21 +3,8 @@ import os
 
 logger = logging.getLogger(__name__)
 
-ASSEMBLERS_TO_RUN = [
-    'masurca',
-    'novoplasty',
-    'shovill',
-    'skesa',
-    'spades',
-    'unicycler'
-]
-ASSEMBLERS_REQUIRING_APC = [
-    'masurca',
-    'shovill',
-    'skesa',
-    'spades',
-    'unicycler'
-]
+ASSEMBLERS_TO_RUN = ["masurca", "novoplasty", "shovill", "skesa", "spades", "unicycler"]
+ASSEMBLERS_REQUIRING_APC = ["masurca", "shovill", "skesa", "spades", "unicycler"]
 
 
 def importFile(toil, source_path, scheme="file"):
@@ -45,8 +32,7 @@ def importFile(toil, source_path, scheme="file"):
         file_id = toil.importFile(file_path)
 
     except Exception as exc:
-        logger.info("Importing file {0} failed: {1}".format(
-            file_path, exc))
+        logger.info("Importing file {0} failed: {1}".format(file_path, exc))
         file_id = None
 
     return file_id
@@ -81,17 +67,29 @@ def importReadFiles(toil, data_path, plate_spec, well_specs, scheme="file"):
 
     for well_spec in well_specs:
 
-        read_one_file_ids.append(importFile(
-            toil, os.path.join(
-                data_path, "{0}_FASTQ".format(plate_spec),
-                "{0}_{1}_R1_001.fastq.gz".format(plate_spec, well_spec)),
-            scheme))
+        read_one_file_ids.append(
+            importFile(
+                toil,
+                os.path.join(
+                    data_path,
+                    "{0}_FASTQ".format(plate_spec),
+                    "{0}_{1}_R1_001.fastq.gz".format(plate_spec, well_spec),
+                ),
+                scheme,
+            )
+        )
 
-        read_two_file_ids.append(importFile(
-            toil, os.path.join(
-                data_path, "{0}_FASTQ".format(plate_spec),
-                "{0}_{1}_R2_001.fastq.gz".format(plate_spec, well_spec)),
-            scheme))
+        read_two_file_ids.append(
+            importFile(
+                toil,
+                os.path.join(
+                    data_path,
+                    "{0}_FASTQ".format(plate_spec),
+                    "{0}_{1}_R2_001.fastq.gz".format(plate_spec, well_spec),
+                ),
+                scheme,
+            )
+        )
 
     return read_one_file_ids, read_two_file_ids
 
@@ -113,8 +111,7 @@ def importContigsFile(toil, data_path, scheme="file"):
     str
         id of the imported contigs file in the file store
     """
-    contigs_file_id = importFile(
-        toil, os.path.join(data_path, "contigs.fasta"), scheme)
+    contigs_file_id = importFile(toil, os.path.join(data_path, "contigs.fasta"), scheme)
     return contigs_file_id
 
 
@@ -145,8 +142,7 @@ def readGlobalFile(fileStore, file_id, *cmps):
         fileStore.readGlobalFile(file_id, userPath=file_path)
 
     except Exception as exc:
-        logger.info("Reading global file {0} failed: {1}".format(
-            file_path, exc))
+        logger.info("Reading global file {0} failed: {1}".format(file_path, exc))
         file_path = None
 
     return file_path
@@ -175,8 +171,7 @@ def writeGlobalFile(fileStore, *cmps):
         file_id = fileStore.writeGlobalFile(file_path)
 
     except Exception as exc:
-        logger.info("Writing global file {0} failed {1}".format(
-            file_path, exc))
+        logger.info("Writing global file {0} failed {1}".format(file_path, exc))
         file_id = None
 
     return file_id
@@ -197,19 +192,22 @@ def exportFiles(toil, output_directory, job_rv):
         name, id, and file name of files to export
     """
     for name, spec in job_rv.items():
-        if spec['id'] is not None:
+        if spec["id"] is not None:
             try:
-                logger.info("Exporting file {0}".format(spec['name']))
-                toil.exportFile(spec['id'], "file://" + os.path.abspath(
-                    os.path.join(output_directory, spec['name'])))
+                logger.info("Exporting file {0}".format(spec["name"]))
+                toil.exportFile(
+                    spec["id"],
+                    "file://"
+                    + os.path.abspath(os.path.join(output_directory, spec["name"])),
+                )
 
             except Exception as exc:
-                logger.info("Exporting file {0} failed: {1}".format(
-                    spec['name'], exc))
+                logger.info("Exporting file {0} failed: {1}".format(spec["name"], exc))
 
 
-def exportWellAssemblyFiles(toil, assembler, output_directory, well_specs,
-                            well_assembly_rvs):
+def exportWellAssemblyFiles(
+    toil, assembler, output_directory, well_specs, well_assembly_rvs
+):
     """
     Export the assembler output files, and the apc output files, if
     apc required by the assembler.
@@ -234,10 +232,10 @@ def exportWellAssemblyFiles(toil, assembler, output_directory, well_specs,
             os.mkdir(well_output_directory)
 
         # Export all assembler output files from the file store
-        exportFiles(toil, well_output_directory,
-                    well_assembly_rvs[iW][assembler + "_rv"])
+        exportFiles(
+            toil, well_output_directory, well_assembly_rvs[iW][assembler + "_rv"]
+        )
 
         if assembler in ASSEMBLERS_REQUIRING_APC:
             # Export all apc output files from the file store
-            exportFiles(toil, well_output_directory,
-                        well_assembly_rvs[iW]['apc_rv'])
+            exportFiles(toil, well_output_directory, well_assembly_rvs[iW]["apc_rv"])
