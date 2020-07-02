@@ -124,12 +124,12 @@ class ShovillJob(Job):
         # Return file ids and names for export
         shovill_rv = {
             "shovill_rv": {
-                "log_file": {"id": log_file_id, "name": log_file_name,},
+                "log_file": {"id": log_file_id, "name": log_file_name},
                 "corrections_file": {
                     "id": corrections_file_id,
                     "name": corrections_file_name,
                 },
-                "contigs_file": {"id": contigs_file_id, "name": contigs_file_name,},
+                "contigs_file": {"id": contigs_file_id, "name": contigs_file_name},
             }
         }
         shovill_rv.update(self.parent_rv)

@@ -567,7 +567,7 @@ def kmc(
     if not canonical_form:
         command = " ".join([command, "-b"])
     command = " ".join(
-        [command, read_format, input_str, database_file_name, working_dir,]
+        [command, read_format, input_str, database_file_name, working_dir]
     )
 
     # Run the command in the Docker image
@@ -1122,7 +1122,7 @@ def wgsim(
     )
     if haplotype_mode:
         command = " ".join([command, "-h"])
-    command = " ".join([command, inp_fa_fNm, out_fq_one_fNm, out_fq_two_fNm,])
+    command = " ".join([command, inp_fa_fNm, out_fq_one_fNm, out_fq_two_fNm])
 
     # Run the command in the Docker image
     client = docker.from_env()
@@ -1417,9 +1417,9 @@ def spades(
     volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
 
     # Define SPAdes command
-    command = " ".join(["spades.py", "-1", inp_fq_one_fNm, "-2", inp_fq_two_fNm,])
+    command = " ".join(["spades.py", "-1", inp_fq_one_fNm, "-2", inp_fq_two_fNm])
     if trusted_contigs_fNm is not None:
-        command = " ".join([command, "--trusted-contigs", trusted_contigs_fNm,])
+        command = " ".join([command, "--trusted-contigs", trusted_contigs_fNm])
     command = " ".join(
         [
             command,
@@ -1432,9 +1432,9 @@ def spades(
         ]
     )
     for arg in args:
-        command = " ".join([command, arg,])
+        command = " ".join([command, arg])
     for key, val in kwargs.items():
-        command = " ".join([command, "--" + key.replace("_", "-"), val,])
+        command = " ".join([command, "--" + key.replace("_", "-"), val])
 
     # Run the command in the Docker image
     client = docker.from_env()
@@ -1533,14 +1533,14 @@ def unicycler(
     volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
 
     # Define Unicycler command
-    command = " ".join(["unicycler", "-1", inp_fq_one_fNm, "-2", inp_fq_two_fNm,])
+    command = " ".join(["unicycler", "-1", inp_fq_one_fNm, "-2", inp_fq_two_fNm])
     if inp_fq_lng_fNm is not None:
-        command = " ".join([command, "-l", inp_fq_lng_fNm,])
-    command = " ".join([command, "-o", out_dir,])
+        command = " ".join([command, "-l", inp_fq_lng_fNm])
+    command = " ".join([command, "-o", out_dir])
     for arg in args:
-        command = " ".join([command, arg,])
+        command = " ".join([command, arg])
     for key, val in kwargs.items():
-        command = " ".join([command, "--" + key,])
+        command = " ".join([command, "--" + key])
 
     # Run the command in the Docker image
     client = docker.from_env()

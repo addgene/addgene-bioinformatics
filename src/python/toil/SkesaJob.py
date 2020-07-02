@@ -112,7 +112,7 @@ class SkesaJob(Job):
                 #     'id': log_file_id,
                 #     'name': log_file_name,
                 # },
-                "contigs_file": {"id": contigs_file_id, "name": contigs_file_name,},
+                "contigs_file": {"id": contigs_file_id, "name": contigs_file_name},
             }
         }
         skesa_rv.update(self.parent_rv)

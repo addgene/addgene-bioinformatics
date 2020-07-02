@@ -375,7 +375,7 @@ if __name__ == "__main__":
     )
 
     testSuites = unittest.TestSuite(
-        [jobsTestSuite, wellAssemblyJobTestSuite, plateAssemblyJobTestSuite,]
+        [jobsTestSuite, wellAssemblyJobTestSuite, plateAssemblyJobTestSuite]
     )
 
     unittest.TextTestRunner(verbosity=2).run(testSuites)

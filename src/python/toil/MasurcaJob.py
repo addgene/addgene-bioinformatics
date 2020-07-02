@@ -189,7 +189,7 @@ END
                 image=image,
                 volumes={working_dir: {"bind": working_dir, "mode": "rw"}},
                 working_dir=working_dir,
-                parameters=["masurca.sh", self.config_file_name,],
+                parameters=["masurca.sh", self.config_file_name],
             )
 
             # Write the CABOG stdout, super read code stderr, and
@@ -215,11 +215,11 @@ END
         # Return file ids and names for export
         masurca_rv = {
             "masurca_rv": {
-                "ca0_file": {"id": ca0_file_id, "name": ca0_file_name,},
-                "ca1_file": {"id": ca1_file_id, "name": ca1_file_name,},
-                "ca2_file": {"id": ca2_file_id, "name": ca2_file_name,},
-                "sr1_file": {"id": sr1_file_id, "name": sr1_file_name,},
-                "contigs_file": {"id": contigs_file_id, "name": contigs_file_name,},
+                "ca0_file": {"id": ca0_file_id, "name": ca0_file_name},
+                "ca1_file": {"id": ca1_file_id, "name": ca1_file_name},
+                "ca2_file": {"id": ca2_file_id, "name": ca2_file_name},
+                "sr1_file": {"id": sr1_file_id, "name": sr1_file_name},
+                "contigs_file": {"id": contigs_file_id, "name": contigs_file_name},
             }
         }
         masurca_rv.update(self.parent_rv)
