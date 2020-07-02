@@ -102,7 +102,7 @@ if __name__ == "__main__":
                         help="a .ini file with args to be passed to the assembler")  
     parser.add_argument('-o', '--output-directory', default=None,
                         help="the directory containing all output files")
-                        
+
     # Define and make the output directory, if needed
     options = parser.parse_args()
     if options.output_directory is None:
@@ -177,6 +177,6 @@ if __name__ == "__main__":
         # Export all assembler output files, and apc output files, if
         # apc is required by the asembler, from the file store
         utilities.exportWellAssemblyFiles(
-            toil, options.assembler, options.plate_spec, well_specs,
+            toil, options.assembler, options.output_directory, well_specs,
             well_assembly_rvs
         )
