@@ -100,7 +100,9 @@ if __name__ == "__main__":
                         help="name of the assembler to run")
     parser.add_argument("-c", "--config", default=None,
                         help="a .ini file with args to be passed to the assembler")  
-
+    parser.add_argument('-o', '--output-directory', default=None,
+                        help="the directory containing all output files")
+                        
     # Define and make the output directory, if needed
     options = parser.parse_args()
     if options.output_directory is None:
