@@ -29,4 +29,5 @@ work1*
 scratch/
 test/
 test_spades_assembly/
-trial_spades_assembly/
+trial_wgsim_assembly/
+trial_seqwell_assembly/
