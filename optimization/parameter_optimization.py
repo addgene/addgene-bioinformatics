@@ -10,6 +10,7 @@ OPTIONS = {
         "‑m": ["normal", "bold", "conservative"],
     },
 }
+PLATE = "A11967B_sW0154"
 
 for assembler in OPTIONS.keys():
     i = 0
@@ -33,31 +34,32 @@ for assembler in OPTIONS.keys():
                 args[key] = value
 
         # create the output path
-        output_path = "results/" + assembler + "/" + str(i) + "/"
-        if not Path(output_path).exists():
-            Path(output_path).mkdir(parents=True)
+        output_path = Path("results/" + assembler + "/" + str(i) + "/")
+        if not output_path.exists():
+            output_path.mkdir(parents=True)
 
         command = " ".join(
             [
                 "python",
-                "../src/python/toil/" + assembler.capitalize() + "Job.py",
-                *args,
-                "-o=" + output_path,
-                "jobstore" + str(i),
+                "../src/python/toil/PlateAssemblyJob.py",
+                f"-o {output_path / PLATE}",
+                f"-c {output_path / 'spades.ini'}",
+                f"-p {PLATE}",
+                f"jobstore {str(i)}",
             ]
         )
 
         # for keeping track while running
         print(command)
 
-        # here's where the execution of the command happens
-        # subprocess.run(command, shell=True)
-
         # store the args in a parse-friendly way
         config = configparser.ConfigParser()
         config[assembler] = args
-        with open(output_path + f"{assembler}.ini", "w+") as f:
+        with open(output_path / f"{assembler}.ini", "w+") as f:
             config.write(f)
+
+        # here's where the execution of the command happens
+        # subprocess.run(command, shell=True)
 
         # increase the counter
         i += 1
