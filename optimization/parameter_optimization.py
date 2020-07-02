@@ -43,9 +43,10 @@ for assembler in OPTIONS.keys():
                 "python",
                 "../src/python/toil/PlateAssemblyJob.py",
                 f"-o {output_path / PLATE}",
-                f"-c {output_path / 'spades.ini'}",
+                f"-a {assembler}",
+                f"-c {output_path / (assembler + '.ini')}",
                 f"-p {PLATE}",
-                f"jobstore {str(i)}",
+                f"jobstore{str(i)}",
             ]
         )
 
