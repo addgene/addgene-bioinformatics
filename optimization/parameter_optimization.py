@@ -2,6 +2,7 @@ import itertools
 import subprocess
 import configparser
 from pathlib import Path
+from sys import executable
 
 OPTIONS = {
     "spades": {"--cov-cutoff": ["auto", "off", "100"], "--careful": [True, False]},
@@ -52,7 +53,7 @@ for assembler in OPTIONS.keys():
 
             command = " ".join(
                 [
-                    "python",
+                    executable,
                     "../src/python/toil/PlateAssemblyJob.py",
                     f"-o {output_path / plate}",
                     f"-a {assembler}",
