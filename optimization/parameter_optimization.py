@@ -34,7 +34,7 @@ for assembler in OPTIONS.keys():
         permutations_dicts = [dict(zip(keys, v)) for v in itertools.product(*values)]
 
         # iterate over the various option permutations for the assembler
-        for perm in permutations_dicts[:1]:
+        for perm in permutations_dicts:
 
             # hold the args we'll use to call the assembly job
             args = {}
