@@ -59,6 +59,10 @@ for assembler in OPTIONS.keys():
                     f"-a {assembler}",
                     f"-c {output_path / (assembler + '.ini')}",
                     f"-p {plate}",
+                    "-s",
+                    "s3",
+                    "-d",
+                    "addgene-sequencing-data/2018/FASTQ",
                     f"jobstore{str(i)}",
                 ]
             )
