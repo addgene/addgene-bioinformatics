@@ -456,7 +456,7 @@ def simulate_paired_reads_wgsim(
     len_first_read=250,
     len_second_read=250,
     outer_distance=750,
-):
+    ):
     seq_rcd = SeqRecord(seq, id="0", name="base", description="reference")
     seq_fNm = seq_nm + ".fasta"
     rd1_fNm = seq_nm + "_rd1.fastq"
@@ -1288,7 +1288,13 @@ def ssake(
     return command
 
 
-def spades(inp_fq_one_fNm, inp_fq_two_fNm, out_dir, *args, **kwargs):
+def spades(
+    inp_fq_one_fNm,
+    inp_fq_two_fNm,
+    out_dir,
+    *args,
+    **kwargs
+):
     # TODO: Resolve
     """
     trusted_contigs_fNm=None,

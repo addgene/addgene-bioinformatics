@@ -4,3 +4,5 @@ ipython==7.15.0
 matplotlib==3.2.2
 toil[aws,encryption,cwl,wdl]==3.20.0
 scikit-learn==0.23.0
+black==19.10b0
+pre-commit==2.6.0

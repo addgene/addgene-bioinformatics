@@ -287,6 +287,7 @@ if __name__ == "__main__":
         if options.assemble_using_spades:
             start_time = time.time()
             print("Assembling paired reads using SPAdes ...", end=" ", flush=True)
+            spades_wo_out_dir = BASE_FILE_NAME + "_spades_wo"
             if os.path.exists(spades_wo_out_dir):
                 shutil.rmtree(spades_wo_out_dir)
             command = utilities.spades(rd1_file_name, rd2_file_name, spades_wo_out_dir)
@@ -313,6 +314,7 @@ if __name__ == "__main__":
         if options.assemble_using_unicycler:
             start_time = time.time()
             print("Assembling paired reads using Unicycler ...", end=" ", flush=True)
+            unicycler_wo_out_dir = BASE_FILE_NAME + "_unicycler_wo"
             if os.path.exists(unicycler_wo_out_dir):
                 shutil.rmtree(unicycler_wo_out_dir)
             command = utilities.unicycler(

@@ -402,7 +402,7 @@ def accumulate_alignment_scores(assembler, cp_sequences):
                 )
             )
 
-            if assembler in ASSEMBLERS_REQUIRING_APC:
+            if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
                 circularizer_sequence_len.append(len(sequences["apc"]["sequence"]))
 
                 circularizer_maximum_score.append(
@@ -430,7 +430,7 @@ def accumulate_alignment_scores(assembler, cp_sequences):
     assembler_valid_score[assembler_valid_index] = assembler_maximum_score[
         assembler_valid_index
     ]
-    if assembler in ASSEMBLERS_REQUIRING_APC:
+    if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
         circularizer_valid_index = circularizer_sequence_len > 0
         circularizer_valid_score[circularizer_valid_index] = circularizer_maximum_score[
             circularizer_valid_index
@@ -491,7 +491,7 @@ def plot_alignment_scores(assembler, cp_sequences):
     )
 
     # Compute and plot circularizer score
-    if assembler in ASSEMBLERS_REQUIRING_APC:
+    if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
         circularizer_valid_index = cp_sequences["circularizer_valid_index"]
         circularizer_valid_score = 100.0 * (
             1
@@ -640,7 +640,7 @@ if __name__ == "__main__":
                 / len(cp_sequences["assembler_sequence_len"])
             )
         )
-        if assembler in ASSEMBLERS_REQUIRING_APC:
+        if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
             print(
                 "    Circularized (nonzero length): {:.1f}%".format(
                     100
@@ -669,7 +669,7 @@ if __name__ == "__main__":
                 / len(cp_sequences["assembler_sequence_len"][qc_valid_index]),
             )
         )
-        if assembler in ASSEMBLERS_REQUIRING_APC:
+        if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
             print(
                 "    Circularized assembly aligned (within {:.1f}%): {:.1f}%".format(
                     100 * fraction_aligned,
