@@ -53,7 +53,7 @@ def create_r_seq(seq_len):
     return r_seq
 
 
-def create_r_seq_w_rep(k_mer_len=25, k_mer_cnt=[2**(n+1) for n in range(8)]):
+def create_r_seq_w_rep(k_mer_len=25, k_mer_cnt=[2 ** (n + 1) for n in range(8)]):
     """Creates a k-mer set of randomly selected nucleotides and uses
     the set to construct a sequence with the specified number of
     repeats.
@@ -84,26 +84,35 @@ def create_r_seq_w_rep(k_mer_len=25, k_mer_cnt=[2**(n+1) for n in range(8)]):
 # fraction, indel extension probablility, and random seed:
 # error_rate=0.020, standard_deviation=50, indel_fraction=0.15,
 # indel_extended_prob=0.30, and random_seed=0, then move to utilities
-def simulate_paired_reads(seq, seq_nm, number_pairs=25000,
-                          len_first_read=250, len_second_read=250,
-                          outer_distance=500):
+def simulate_paired_reads(
+    seq,
+    seq_nm,
+    number_pairs=25000,
+    len_first_read=250,
+    len_second_read=250,
+    outer_distance=500,
+):
     rd1_seq_rcds = []
     rd2_seq_rcds = []
     seq_len = len(seq)
     for iP in range(number_pairs):
- 
+
         # Create a random rotation of the sequence
         i_seq = random.randint(0, seq_len)
-        r_seq = seq[seq_len - i_seq:seq_len] + seq[0:seq_len - i_seq]
+        r_seq = seq[seq_len - i_seq : seq_len] + seq[0 : seq_len - i_seq]
 
         # Create the first read starting from a random index, and
         # setting random PHRED quality scores
         i_rd1 = random.randint(0, seq_len - outer_distance - 1)
         rd1_seq_rcd = SeqRecord(
-            r_seq[i_rd1:i_rd1 + len_first_read],
-            id=str(iP), name="one", description="first read of read pair")
+            r_seq[i_rd1 : i_rd1 + len_first_read],
+            id=str(iP),
+            name="one",
+            description="first read of read pair",
+        )
         rd1_seq_rcd.letter_annotations["phred_quality"] = (
-            np.random.randint(20, 50, len_first_read)).tolist()
+            np.random.randint(20, 50, len_first_read)
+        ).tolist()
         rd1_seq_rcds.append(rd1_seq_rcd)
 
         # Create the second read starting from an index giving the
@@ -111,10 +120,14 @@ def simulate_paired_reads(seq, seq_nm, number_pairs=25000,
         # scores
         i_rd2 = i_rd1 + outer_distance - len_second_read
         rd2_seq_rcd = SeqRecord(
-            r_seq[i_rd2 + len_second_read:i_rd2:-1],
-            id=str(iP), name="two", description="second read of read pair")
+            r_seq[i_rd2 + len_second_read : i_rd2 : -1],
+            id=str(iP),
+            name="two",
+            description="second read of read pair",
+        )
         rd2_seq_rcd.letter_annotations["phred_quality"] = (
-            np.random.randint(20, 50, len_second_read)).tolist()
+            np.random.randint(20, 50, len_second_read)
+        ).tolist()
         rd2_seq_rcds.append(rd2_seq_rcd)
 
     rd1_fNm = seq_nm + "_rd1.fastq"
@@ -131,16 +144,20 @@ def simulate_unpaired_reads(seq, seq_nm, number_pairs=25000, len_read=500):
 
         # Create a random rotation of the sequence
         i_seq = random.randint(0, seq_len)
-        r_seq = seq[seq_len - i_seq:seq_len] + seq[0:seq_len - i_seq]
+        r_seq = seq[seq_len - i_seq : seq_len] + seq[0 : seq_len - i_seq]
 
         # Create the read starting from a random index, and
         # setting random PHRED quality scores
         i_rd = random.randint(0, seq_len - len_read - 1)
         rd_seq_rcd = SeqRecord(
-            r_seq[i_rd:i_rd + len_read],
-            id=str(iP), name="unpaired", description="unpaired read")
+            r_seq[i_rd : i_rd + len_read],
+            id=str(iP),
+            name="unpaired",
+            description="unpaired read",
+        )
         rd_seq_rcd.letter_annotations["phred_quality"] = (
-            np.random.randint(20, 50, len_read)).tolist()
+            np.random.randint(20, 50, len_read)
+        ).tolist()
         rd_seq_rcds.append(rd_seq_rcd)
 
     rd_fNmQ = seq_nm + "_rd.fastq"
@@ -164,21 +181,23 @@ def create_aligner(config):
     """
     # Create a pairwise aligner with the specified configuration
     aligner = Align.PairwiseAligner()
-    aligner.match_score = float(config['match_score'])
-    aligner.mismatch_score = float(config['mismatch_score'])
-    aligner.target_open_gap_score = float(config['target_open_gap_score'])
-    aligner.target_extend_gap_score = float(config['target_extend_gap_score'])
-    aligner.target_left_open_gap_score = float(config['target_left_open_gap_score'])
-    aligner.target_left_extend_gap_score = float(config['target_left_extend_gap_score'])
-    aligner.target_right_open_gap_score = float(config['target_right_open_gap_score'])
-    aligner.target_right_extend_gap_score = float(config['target_right_extend_gap_score'])
-    aligner.query_open_gap_score = float(config['query_open_gap_score'])
-    aligner.query_extend_gap_score = float(config['query_extend_gap_score'])
-    aligner.query_left_open_gap_score = float(config['query_left_open_gap_score'])
-    aligner.query_left_extend_gap_score = float(config['query_left_extend_gap_score'])
-    aligner.query_right_open_gap_score = float(config['query_right_open_gap_score'])
-    aligner.query_right_extend_gap_score = float(config['query_right_extend_gap_score'])
-    aligner.mode = config['mode']
+    aligner.match_score = float(config["match_score"])
+    aligner.mismatch_score = float(config["mismatch_score"])
+    aligner.target_open_gap_score = float(config["target_open_gap_score"])
+    aligner.target_extend_gap_score = float(config["target_extend_gap_score"])
+    aligner.target_left_open_gap_score = float(config["target_left_open_gap_score"])
+    aligner.target_left_extend_gap_score = float(config["target_left_extend_gap_score"])
+    aligner.target_right_open_gap_score = float(config["target_right_open_gap_score"])
+    aligner.target_right_extend_gap_score = float(
+        config["target_right_extend_gap_score"]
+    )
+    aligner.query_open_gap_score = float(config["query_open_gap_score"])
+    aligner.query_extend_gap_score = float(config["query_extend_gap_score"])
+    aligner.query_left_open_gap_score = float(config["query_left_open_gap_score"])
+    aligner.query_left_extend_gap_score = float(config["query_left_extend_gap_score"])
+    aligner.query_right_open_gap_score = float(config["query_right_open_gap_score"])
+    aligner.query_right_extend_gap_score = float(config["query_right_extend_gap_score"])
+    aligner.mode = config["mode"]
 
     return aligner
 
@@ -208,7 +227,7 @@ def count_k_mers_in_seq(seq, seq_id=0, k_mer_len=25, k_mers=None):
         k_mers = {}
     seq_len = len(seq)
     for i_seq in range(seq_len - k_mer_len + 1):
-        k_mer = str(seq[i_seq:i_seq + k_mer_len])
+        k_mer = str(seq[i_seq : i_seq + k_mer_len])
         if k_mer not in k_mers:
             k_mers[k_mer] = {}
             k_mers[k_mer]["src"] = set([seq_id])
@@ -278,12 +297,15 @@ def write_k_mer_counts_in_rds(k_mers_in_rd1, k_mers_in_rd2, k_mer_counts_fNm):
         for k_mer in sorted(k_mer_set):
             k_mer_cnt_rd1 = 0
             if k_mer in k_mer_set_rd1:
-                k_mer_cnt_rd1 = k_mers_in_rd1[k_mer]['cnt']
+                k_mer_cnt_rd1 = k_mers_in_rd1[k_mer]["cnt"]
             k_mer_cnt_rd2 = 0
             if k_mer in k_mer_set_rd2:
-                k_mer_cnt_rd2 = k_mers_in_rd2[k_mer]['cnt']
-            f.write("{0} {1:10d} {1:10d}\n".format(
-                k_mer, int(k_mer_cnt_rd1), int(k_mer_cnt_rd2)))
+                k_mer_cnt_rd2 = k_mers_in_rd2[k_mer]["cnt"]
+            f.write(
+                "{0} {1:10d} {1:10d}\n".format(
+                    k_mer, int(k_mer_cnt_rd1), int(k_mer_cnt_rd2)
+                )
+            )
 
 
 def read_k_mer_counts(k_mer_counts_fNm, seq_id=0, k_mers=None):
@@ -313,8 +335,7 @@ def read_k_mer_counts(k_mer_counts_fNm, seq_id=0, k_mers=None):
             cnt_rd1 = int(flds[1])
             cnt_rd2 = int(flds[2])
             if k_mer in k_mers:
-                print("Second occurance of k-mer: {0} unexpected".format(
-                    k_mer))
+                print("Second occurance of k-mer: {0} unexpected".format(k_mer))
             else:
                 k_mers[k_mer] = {}
                 k_mers[k_mer]["src"] = set([seq_id])
@@ -372,41 +393,53 @@ def rotate_seqs(a_seq, o_seq):
     # (default: 0.5)
     gap_extend_penalty = "0.5"
     command = " ".join(
-        ["csc",
-         "-m", method,
-         "-a", alphabet,
-         "-i", input_file,
-         "-o", output_file,
-         "-q", q_length,
-         "-l", block_length,
-         "-P", blocks_refine,
-         "-O", gap_open_penalty,
-         "-E", gap_extend_penalty,
+        [
+            "csc",
+            "-m",
+            method,
+            "-a",
+            alphabet,
+            "-i",
+            input_file,
+            "-o",
+            output_file,
+            "-q",
+            q_length,
+            "-l",
+            block_length,
+            "-P",
+            blocks_refine,
+            "-O",
+            gap_open_penalty,
+            "-E",
+            gap_extend_penalty,
         ]
     )
     hosting_dir = os.getcwd()
     working_dir = "/data"
-    volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
+    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
 
     # Write the multi-FASTA input file
     SeqIO.write(
-        [SeqRecord(a_seq, id="id_a", name="name_a", description="reference"),
-         SeqRecord(o_seq, id="id_o", name="name_o", description="offset")],
+        [
+            SeqRecord(a_seq, id="id_a", name="name_a", description="reference"),
+            SeqRecord(o_seq, id="id_o", name="name_o", description="offset"),
+        ],
         os.path.join(hosting_dir, input_file),
-        "fasta")
+        "fasta",
+    )
 
     # Run the command in the Docker image
     client = docker.from_env()
     client.containers.run(
-        image,
-        command=command,
-        volumes=volumes,
-        working_dir=working_dir,
+        image, command=command, volumes=volumes, working_dir=working_dir,
     )
 
     # Read the multi-FASTA output file
-    seq_rcds = [seq_record for seq_record in SeqIO.parse(
-        os.path.join(hosting_dir, output_file), "fasta")]
+    seq_rcds = [
+        seq_record
+        for seq_record in SeqIO.parse(os.path.join(hosting_dir, output_file), "fasta")
+    ]
 
     # Assign and return the rotated sequences
     r_a_seq = seq_rcds[0].seq
@@ -416,36 +449,49 @@ def rotate_seqs(a_seq, o_seq):
 
 
 # TODO: Complete in order to validate use of wgsim
-def simulate_paired_reads_wgsim(seq, seq_nm, number_pairs=25000,
-                                len_first_read=250, len_second_read=250,
-                                outer_distance=750):
+def simulate_paired_reads_wgsim(
+    seq,
+    seq_nm,
+    number_pairs=25000,
+    len_first_read=250,
+    len_second_read=250,
+    outer_distance=750,
+):
     seq_rcd = SeqRecord(seq, id="0", name="base", description="reference")
     seq_fNm = seq_nm + ".fasta"
     rd1_fNm = seq_nm + "_rd1.fastq"
     rd2_fNm = seq_nm + "_rd2.fastq"
     SeqIO.write(seq_rcd, seq_fNm, "fasta")
-    wgsim(seq_fNm,
-          rd1_fNm,
-          rd2_fNm,
-          error_rate=0.020,
-          outer_distance=outer_distance,
-          standard_deviation=50,
-          number_pairs=number_pairs,
-          len_first_read=len_first_read,
-          len_second_read=len_second_read,
-          mutation_rate=0.0010,
-          indel_fraction=0.15,
-          indel_extended_prob=0.30,
-          random_seed=0,
-          ambiguous_base_frac=0.05,
-          haplotype_mode=False)
+    wgsim(
+        seq_fNm,
+        rd1_fNm,
+        rd2_fNm,
+        error_rate=0.020,
+        outer_distance=outer_distance,
+        standard_deviation=50,
+        number_pairs=number_pairs,
+        len_first_read=len_first_read,
+        len_second_read=len_second_read,
+        mutation_rate=0.0010,
+        indel_fraction=0.15,
+        indel_extended_prob=0.30,
+        random_seed=0,
+        ambiguous_base_frac=0.05,
+        haplotype_mode=False,
+    )
     return rd1_fNm, rd2_fNm
 
 
-def kmc(read_file_names, database_file_name,
-        k_mer_length=25, signature_length=9,
-        count_min=2, max_count=255, count_max=1e9,
-        canonical_form=True):
+def kmc(
+    read_file_names,
+    database_file_name,
+    k_mer_length=25,
+    signature_length=9,
+    count_min=2,
+    max_count=255,
+    count_max=1e9,
+    canonical_form=True,
+):
     """
     Counts k-mers.
 
@@ -507,43 +553,42 @@ def kmc(read_file_names, database_file_name,
     image = "ralatsdio/kmc:v3.1.1"
     hosting_dir = os.getcwd()
     working_dir = "/data"
-    volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
+    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
 
     # Define kmc command
     command = " ".join(
-        ["kmc",
-         "-k" + str(k_mer_length),
-         "-p" + str(signature_length),
-         "-ci" + str(int(count_min)),
-         "-cs" + str(int(max_count)),
-         "-cx" + str(int(count_max)),
-         ]
+        [
+            "kmc",
+            "-k" + str(k_mer_length),
+            "-p" + str(signature_length),
+            "-ci" + str(int(count_min)),
+            "-cs" + str(int(max_count)),
+            "-cx" + str(int(count_max)),
+        ]
     )
     if not canonical_form:
         command = " ".join([command, "-b"])
     command = " ".join(
-        [command,
-         read_format,
-         input_str,
-         database_file_name,
-         working_dir,
-         ]
+        [command, read_format, input_str, database_file_name, working_dir,]
     )
 
     # Run the command in the Docker image
     client = docker.from_env()
     client.containers.run(
-        image,
-        command=command,
-        volumes=volumes,
-        working_dir=working_dir,
+        image, command=command, volumes=volumes, working_dir=working_dir,
     )
 
 
-def kmc_transform(inp_database_file_name, operation, out_database_file_name,
-                  inp_count_min=2, inp_count_max=1e9,
-                  out_count_min=2, out_count_max=1e9,
-                  is_sorted=False):
+def kmc_transform(
+    inp_database_file_name,
+    operation,
+    out_database_file_name,
+    inp_count_min=2,
+    inp_count_max=1e9,
+    out_count_min=2,
+    out_count_max=1e9,
+    is_sorted=False,
+):
     """
     Transforms single input database to output (text file or KMC database).
 
@@ -598,24 +643,27 @@ def kmc_transform(inp_database_file_name, operation, out_database_file_name,
     """
     # Check input arguments
     if operation not in ["reduce", "histogram", "dump"]:
-        raise(Exception("Operation is not implemented"))
+        raise (Exception("Operation is not implemented"))
 
     # Define image, and Docker run parameters
     image = "ralatsdio/kmc:v3.1.1"
     hosting_dir = os.getcwd()
     working_dir = "/data"
-    volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
+    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
 
     # Define kmc_tools command
     command = " ".join(
-        ["kmc_tools", "transform",
-         inp_database_file_name,
-         "-ci" + str(int(inp_count_min)),
-         "-cx" + str(int(inp_count_max)),
-         operation, out_database_file_name,
-         "-ci" + str(int(out_count_min)),
-         "-cx" + str(int(out_count_max)),
-         ]
+        [
+            "kmc_tools",
+            "transform",
+            inp_database_file_name,
+            "-ci" + str(int(inp_count_min)),
+            "-cx" + str(int(inp_count_max)),
+            operation,
+            out_database_file_name,
+            "-ci" + str(int(out_count_min)),
+            "-cx" + str(int(out_count_max)),
+        ]
     )
     if operation == "dump" and is_sorted:
         command = " ".join([command, "-s"])
@@ -623,20 +671,25 @@ def kmc_transform(inp_database_file_name, operation, out_database_file_name,
     # Run the command in the Docker image
     client = docker.from_env()
     client.containers.run(
-        image,
-        command=command,
-        volumes=volumes,
-        working_dir=working_dir,
+        image, command=command, volumes=volumes, working_dir=working_dir,
     )
 
 
 # TODO: Validate
-def kmc_simple(inp_database_file_name_a, operation, inp_database_file_name_b,
-               out_database_file_name,
-               inp_count_min_a=2, inp_count_max_a=1e9,
-               inp_count_min_b=2, inp_count_max_b=1e9,
-               out_count_min=2, out_max_count=255, out_count_max=1e9,
-               out_calc_mode=""):
+def kmc_simple(
+    inp_database_file_name_a,
+    operation,
+    inp_database_file_name_b,
+    out_database_file_name,
+    inp_count_min_a=2,
+    inp_count_max_a=1e9,
+    inp_count_min_b=2,
+    inp_count_max_b=1e9,
+    out_count_min=2,
+    out_max_count=255,
+    out_count_max=1e9,
+    out_calc_mode="",
+):
     """
     Performs set operation on two input KMC databases.
 
@@ -706,34 +759,41 @@ def kmc_simple(inp_database_file_name_a, operation, inp_database_file_name_b,
     kmc_tools ver. 3.1.1 (2019-05-19)
     """
     # Check input arguments
-    if operation not in ["intersect", "union", "kmers_subtract",
-                         "counters_subtract", "reverse_kmers_subtract",
-                         "reverse_counters_subtract"]:
-        raise(Exception("Invalid operation: {0}".format(operation)))
+    if operation not in [
+        "intersect",
+        "union",
+        "kmers_subtract",
+        "counters_subtract",
+        "reverse_kmers_subtract",
+        "reverse_counters_subtract",
+    ]:
+        raise (Exception("Invalid operation: {0}".format(operation)))
     if out_calc_mode not in ["", "min", "max", "sum", "diff", "left", "right"]:
-        raise(Exception("Invalid output calculation mode: {0}".format(
-            out_calc_mode)))
+        raise (Exception("Invalid output calculation mode: {0}".format(out_calc_mode)))
 
     # Define image, and Docker run parameters
     image = "ralatsdio/kmc:v3.1.1"
     hosting_dir = os.getcwd()
     working_dir = "/data"
-    volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
+    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
 
     # Define kmc_tools command
     command = " ".join(
-        ["kmc_tools", "simple",
-         inp_database_file_name_a,
-         "-ci" + str(int(inp_count_min_a)),
-         "-cx" + str(int(inp_count_max_a)),
-         inp_database_file_name_b,
-         "-ci" + str(int(inp_count_min_b)),
-         "-cx" + str(int(inp_count_max_b)),
-         operation, out_database_file_name,
-         "-ci" + str(int(out_count_min)),
-         "-cs" + str(int(out_max_count)),
-         "-cx" + str(int(out_count_max)),
-         ]
+        [
+            "kmc_tools",
+            "simple",
+            inp_database_file_name_a,
+            "-ci" + str(int(inp_count_min_a)),
+            "-cx" + str(int(inp_count_max_a)),
+            inp_database_file_name_b,
+            "-ci" + str(int(inp_count_min_b)),
+            "-cx" + str(int(inp_count_max_b)),
+            operation,
+            out_database_file_name,
+            "-ci" + str(int(out_count_min)),
+            "-cs" + str(int(out_max_count)),
+            "-cx" + str(int(out_count_max)),
+        ]
     )
     if out_calc_mode != "":
         command = " ".join([command, "-oc{0}".format(out_calc_mode)])
@@ -741,10 +801,7 @@ def kmc_simple(inp_database_file_name_a, operation, inp_database_file_name_b,
     # Run the command in the Docker image
     client = docker.from_env()
     client.containers.run(
-        image,
-        command=command,
-        volumes=volumes,
-        working_dir=working_dir,
+        image, command=command, volumes=volumes, working_dir=working_dir,
     )
 
 
@@ -816,14 +873,21 @@ def kmc_complex():
 
     kmc_tools ver. 3.1.1 (2019-05-19)
     """
-    raise(NotImplementedError("utility.kmc_complex() has not been implemented"))
+    raise (NotImplementedError("utility.kmc_complex() has not been implemented"))
 
 
 # TODO: Validate
-def kmc_filter(inp_database_file_name, inp_read_file_name, out_read_file_name,
-               trim_reads=False, hard_mask=False,
-               inp_db_count_min=2, inp_db_count_max=1e9,
-               inp_rd_count_min=2, inp_rd_count_max=1e9):
+def kmc_filter(
+    inp_database_file_name,
+    inp_read_file_name,
+    out_read_file_name,
+    trim_reads=False,
+    hard_mask=False,
+    inp_db_count_min=2,
+    inp_db_count_max=1e9,
+    inp_rd_count_min=2,
+    inp_rd_count_max=1e9,
+):
     """
     Filters out reads with too small number of k-mers.
 
@@ -876,38 +940,34 @@ def kmc_filter(inp_database_file_name, inp_read_file_name, out_read_file_name,
     image = "ralatsdio/kmc:v3.1.1"
     hosting_dir = os.getcwd()
     working_dir = "/data"
-    volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
+    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
 
     # Define kmc command
-    command = " ".join(
-        ["kmc_tools", "filter"]
-    )
+    command = " ".join(["kmc_tools", "filter"])
     # TODO: Determine if these options are mutually exclusive
     if trim_reads:
         command = " ".join([command, "-t"])
     if hard_mask:
         command = " ".join([command, "-hm"])
     command = " ".join(
-        [command,
-         inp_database_file_name,
-         "-ci"+str(int(inp_db_count_min)),
-         "-cx"+str(int(inp_db_count_max)),
-         inp_read_file_name,
-         "-ci"+str(int(inp_rd_count_min)),
-         "-cx"+str(int(inp_rd_count_max)),
-         read_format,
-         out_read_file_name,
-         read_format,
-         ]
+        [
+            command,
+            inp_database_file_name,
+            "-ci" + str(int(inp_db_count_min)),
+            "-cx" + str(int(inp_db_count_max)),
+            inp_read_file_name,
+            "-ci" + str(int(inp_rd_count_min)),
+            "-cx" + str(int(inp_rd_count_max)),
+            read_format,
+            out_read_file_name,
+            read_format,
+        ]
     )
 
     # Run the command in the Docker image
     client = docker.from_env()
     client.containers.run(
-        image,
-        command=command,
-        volumes=volumes,
-        working_dir=working_dir,
+        image, command=command, volumes=volumes, working_dir=working_dir,
     )
 
 
@@ -936,13 +996,13 @@ def get_kmc_read_format(read_file_names):
         if p_fa.search(input_file_name) is not None:  # FASTA
 
             # Count number of sequences
-            with open(input_file_name, 'r') as f:
+            with open(input_file_name, "r") as f:
                 n_seq = 0
                 for ln in f:
                     if p_ss.search(ln) is not None:
                         n_seq += 1
             if n_seq == 0:
-                raise(Exception("No sequence found in FASTA file"))
+                raise (Exception("No sequence found in FASTA file"))
 
             elif n_seq == 1:  # FASTA
                 read_format = "-fa"
@@ -957,13 +1017,13 @@ def get_kmc_read_format(read_file_names):
             read_format = "-fbam"  # BAM
 
         else:
-            raise(Exception("Unknown sequence file format"))
+            raise (Exception("Unknown sequence file format"))
 
         if valid_read_format == "":
             valid_read_format = read_format
 
         elif read_format != valid_read_format:
-            raise(Exception("Input files must use the same format"))
+            raise (Exception("Input files must use the same format"))
 
     return valid_read_format
 
@@ -996,27 +1056,29 @@ def get_bio_read_format(read_file_name):
         read_format = "fastq"
 
     else:
-        raise(Exception("Unknown read file format"))
+        raise (Exception("Unknown read file format"))
     if p_gz.search(read_file_name) is not None:
         is_gzipped = True
     return read_format, is_gzipped
 
 
-def wgsim(inp_fa_fNm,
-          out_fq_one_fNm,
-          out_fq_two_fNm,
-          error_rate=0.020,
-          outer_distance=500,
-          standard_deviation=50,
-          number_pairs=1000000,
-          len_first_read=70,
-          len_second_read=70,
-          mutation_rate=0.0010,
-          indel_fraction=0.15,
-          indel_extended_prob=0.30,
-          random_seed=0,
-          ambiguous_base_frac=0.05,
-          haplotype_mode=False):
+def wgsim(
+    inp_fa_fNm,
+    out_fq_one_fNm,
+    out_fq_two_fNm,
+    error_rate=0.020,
+    outer_distance=500,
+    standard_deviation=50,
+    number_pairs=1000000,
+    len_first_read=70,
+    len_second_read=70,
+    mutation_rate=0.0010,
+    indel_fraction=0.15,
+    indel_extended_prob=0.30,
+    random_seed=0,
+    ambiguous_base_frac=0.05,
+    haplotype_mode=False,
+):
     """
     Simulating sequence reads from a reference genome.
 
@@ -1041,62 +1103,56 @@ def wgsim(inp_fa_fNm,
     image = "ralatsdio/samtools:v1.10"
     hosting_dir = os.getcwd()
     working_dir = "/data"
-    volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
+    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
 
     # Define kmc command
     command = " ".join(
-        ["wgsim",
-         "-e" + str(error_rate),
-         "-d" + str(outer_distance),
-         "-s" + str(standard_deviation),
-         "-N" + str(number_pairs),
-         "-1" + str(len_first_read),
-         "-2" + str(len_second_read),
-         "-r" + str(mutation_rate),
-         "-R" + str(indel_fraction),
-         "-X" + str(indel_extended_prob),
-         "-S" + str(random_seed),
-         "-A" + str(ambiguous_base_frac),
-         ]
+        [
+            "wgsim",
+            "-e" + str(error_rate),
+            "-d" + str(outer_distance),
+            "-s" + str(standard_deviation),
+            "-N" + str(number_pairs),
+            "-1" + str(len_first_read),
+            "-2" + str(len_second_read),
+            "-r" + str(mutation_rate),
+            "-R" + str(indel_fraction),
+            "-X" + str(indel_extended_prob),
+            "-S" + str(random_seed),
+            "-A" + str(ambiguous_base_frac),
+        ]
     )
     if haplotype_mode:
         command = " ".join([command, "-h"])
-    command = " ".join(
-        [command,
-         inp_fa_fNm,
-         out_fq_one_fNm,
-         out_fq_two_fNm,
-         ]
-    )
+    command = " ".join([command, inp_fa_fNm, out_fq_one_fNm, out_fq_two_fNm,])
 
     # Run the command in the Docker image
     client = docker.from_env()
     client.containers.run(
-        image,
-        command=command,
-        volumes=volumes,
-        working_dir=working_dir,
+        image, command=command, volumes=volumes, working_dir=working_dir,
     )
 
 
-def ssake(inp_fq_one_fNm,
-          inp_fq_two_fNm,
-          out_base_fNm,
-          fragment_len,
-          phred_threshold=20,  # -x
-          n_consec_bases=70,   # -n
-          ascii_offset=33,     # -d
-          min_coverage=5,      # -w
-          n_ovrlap_bases=20,   # -m
-          n_reads_to_call=2,   # -o
-          base_ratio=0.7,      # -r
-          n_bases_to_trim=0,   # -t
-          contig_size=100,     # -z
-          do_track_cvrg=0,     # -c
-          do_ignore_mppng=0,   # -y
-          do_ignore_headr=0,   # -k
-          do_break_ties=0,     # -q
-          do_run_verbose=0):   # -v
+def ssake(
+    inp_fq_one_fNm,
+    inp_fq_two_fNm,
+    out_base_fNm,
+    fragment_len,
+    phred_threshold=20,  # -x
+    n_consec_bases=70,  # -n
+    ascii_offset=33,  # -d
+    min_coverage=5,  # -w
+    n_ovrlap_bases=20,  # -m
+    n_reads_to_call=2,  # -o
+    base_ratio=0.7,  # -r
+    n_bases_to_trim=0,  # -t
+    contig_size=100,  # -z
+    do_track_cvrg=0,  # -c
+    do_ignore_mppng=0,  # -y
+    do_ignore_headr=0,  # -k
+    do_break_ties=0,  # -q
+    do_run_verbose=0,
+):  # -v
     """
     Run a simple pipeline using SSAKE to assemble reads in a docker
     container.  SSAKE is a genomics application for de novo assembly
@@ -1183,48 +1239,56 @@ def ssake(inp_fq_one_fNm,
     image = "ralatsdio/ssake:v4.0.1"
     hosting_dir = os.getcwd()
     working_dir = "/data"
-    volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
+    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
 
     # Define SSAKE command
     command = " ".join(
-        ["runSSAKE.sh",
-         "-x", str(phred_threshold),
-         "-n", str(n_consec_bases),
-         "-d", str(ascii_offset),
-         "-w", str(min_coverage),
-         "-m", str(n_ovrlap_bases),
-         "-o", str(n_reads_to_call),
-         "-r", str(base_ratio),
-         "-t", str(n_bases_to_trim),
-         "-z", str(contig_size),
-         "-c", str(do_track_cvrg),
-         "-y", str(do_ignore_mppng),
-         "-k", str(do_ignore_headr),
-         "-q", str(do_break_ties),
-         "-v", str(do_run_verbose),
-         inp_fq_one_fNm,
-         inp_fq_two_fNm,
-         str(fragment_len),
-         out_base_fNm,
-         ]
+        [
+            "runSSAKE.sh",
+            "-x",
+            str(phred_threshold),
+            "-n",
+            str(n_consec_bases),
+            "-d",
+            str(ascii_offset),
+            "-w",
+            str(min_coverage),
+            "-m",
+            str(n_ovrlap_bases),
+            "-o",
+            str(n_reads_to_call),
+            "-r",
+            str(base_ratio),
+            "-t",
+            str(n_bases_to_trim),
+            "-z",
+            str(contig_size),
+            "-c",
+            str(do_track_cvrg),
+            "-y",
+            str(do_ignore_mppng),
+            "-k",
+            str(do_ignore_headr),
+            "-q",
+            str(do_break_ties),
+            "-v",
+            str(do_run_verbose),
+            inp_fq_one_fNm,
+            inp_fq_two_fNm,
+            str(fragment_len),
+            out_base_fNm,
+        ]
     )
 
     # Run the command in the Docker image
     client = docker.from_env()
     client.containers.run(
-        image,
-        command=command,
-        volumes=volumes,
-        working_dir=working_dir,
+        image, command=command, volumes=volumes, working_dir=working_dir,
     )
     return command
 
 
-def spades(inp_fq_one_fNm,
-           inp_fq_two_fNm,
-           out_dir,
-           *args,
-           **kwargs):
+def spades(inp_fq_one_fNm, inp_fq_two_fNm, out_dir, *args, **kwargs):
     # TODO: Resolve
     """
     trusted_contigs_fNm=None,
@@ -1349,15 +1413,10 @@ def spades(inp_fq_one_fNm,
     image = "ralatsdio/spades:v3.13.1"
     hosting_dir = os.getcwd()
     working_dir = "/data"
-    volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
+    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
 
     # Define SPAdes command
-    command = " ".join(
-        ["spades.py",
-         "-1", inp_fq_one_fNm,
-         "-2", inp_fq_two_fNm,
-         ]
-    )
+    command = " ".join(["spades.py", "-1", inp_fq_one_fNm, "-2", inp_fq_two_fNm,])
     # TODO: Resolve
     """
     if trusted_contigs_fNm is not None:
@@ -1367,31 +1426,16 @@ def spades(inp_fq_one_fNm,
              ]
         )
     """
-    command = " ".join(
-        [command,
-         "-o", out_dir,
-         ]
-    )
+    command = " ".join([command, "-o", out_dir,])
     for arg in args:
-        command = " ".join(
-            [command,
-             arg,
-             ]
-        )
+        command = " ".join([command, arg,])
     for key, val in kwargs.items():
-        command = " ".join(
-            [command,
-             "--" + key.replace("_", "-"), str(val),
-             ]
-        )
+        command = " ".join([command, "--" + key.replace("_", "-"), str(val),])
 
     # Run the command in the Docker image
     client = docker.from_env()
     client.containers.run(
-        image,
-        command=command,
-        volumes=volumes,
-        working_dir=working_dir,
+        image, command=command, volumes=volumes, working_dir=working_dir,
     )
     return command
 
@@ -1424,33 +1468,22 @@ def apc(base_file_name, contigs_file_name):
     image = "ralatsdio/apc:v0.1.0"
     hosting_dir = os.getcwd()
     working_dir = "/data"
-    volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
+    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
 
     # Define apc command
-    command = " ".join(
-        ["apc.pl",
-         "-b", base_file_name,
-         contigs_file_name,
-         ]
-    )
+    command = " ".join(["apc.pl", "-b", base_file_name, contigs_file_name,])
 
     # Run the command in the Docker image
     client = docker.from_env()
     client.containers.run(
-        image,
-        command=command,
-        volumes=volumes,
-        working_dir=working_dir,
+        image, command=command, volumes=volumes, working_dir=working_dir,
     )
     return command
 
 
-def unicycler(inp_fq_one_fNm,
-              inp_fq_two_fNm,
-              out_dir,
-              *args,
-              inp_fq_lng_fNm=None,
-              **kwargs):
+def unicycler(
+    inp_fq_one_fNm, inp_fq_two_fNm, out_dir, *args, inp_fq_lng_fNm=None, **kwargs
+):
     """
     Run Unicycler assembly pipeline v0.4.8 in a docker container.
 
@@ -1534,45 +1567,21 @@ def unicycler(inp_fq_one_fNm,
     image = "ralatsdio/unicycler:v0.4.8"
     hosting_dir = os.getcwd()
     working_dir = "/data"
-    volumes = {hosting_dir: {'bind': working_dir, 'mode': 'rw'}}
+    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
 
     # Define Unicycler command
-    command = " ".join(
-        ["unicycler",
-         "-1", inp_fq_one_fNm,
-         "-2", inp_fq_two_fNm,
-         ]
-    )
+    command = " ".join(["unicycler", "-1", inp_fq_one_fNm, "-2", inp_fq_two_fNm,])
     if inp_fq_lng_fNm is not None:
-        command = " ".join(
-            [command,
-             "-l", inp_fq_lng_fNm,
-             ]
-        )
-    command = " ".join(
-        [command,
-         "-o", out_dir,
-         ]
-    )
+        command = " ".join([command, "-l", inp_fq_lng_fNm,])
+    command = " ".join([command, "-o", out_dir,])
     for arg in args:
-        command = " ".join(
-            [command,
-             arg,
-             ]
-        )
+        command = " ".join([command, arg,])
     for key, val in kwargs.items():
-        command = " ".join(
-            [command,
-             "--" + key,
-             ]
-        )
+        command = " ".join([command, "--" + key,])
 
     # Run the command in the Docker image
     client = docker.from_env()
     client.containers.run(
-        image,
-        command=command,
-        volumes=volumes,
-        working_dir=working_dir,
+        image, command=command, volumes=volumes, working_dir=working_dir,
     )
     return command

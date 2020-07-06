@@ -15,11 +15,18 @@ class UnicyclerJob(Job):
     """
     Accepts paired-end Illumina reads for assembly using Unicycler.
     """
-    def __init__(self, read_one_file_id, read_two_file_id,
-                 output_directory, parent_rv={},
-                 read_one_file_name="R1.fastq.gz",
-                 read_two_file_name="R2.fastq.gz",
-                 *args, **kwargs):
+
+    def __init__(
+        self,
+        read_one_file_id,
+        read_two_file_id,
+        output_directory,
+        parent_rv={},
+        read_one_file_name="R1.fastq.gz",
+        read_two_file_name="R2.fastq.gz",
+        *args,
+        **kwargs
+    ):
         """
         Parameters
         ----------
@@ -58,9 +65,11 @@ class UnicyclerJob(Job):
             # Read the read files from the file store into the local
             # temporary directory
             read_one_file_path = utilities.readGlobalFile(
-                fileStore, self.read_one_file_id, self.read_one_file_name)
+                fileStore, self.read_one_file_id, self.read_one_file_name
+            )
             read_two_file_path = utilities.readGlobalFile(
-                fileStore, self.read_two_file_id, self.read_two_file_name)
+                fileStore, self.read_two_file_id, self.read_two_file_name
+            )
 
             # Mount the Toil local temporary directory to the same path in
             # the container, and use the path as the working directory in
@@ -72,26 +81,31 @@ class UnicyclerJob(Job):
             apiDockerCall(
                 self,
                 image=image,
-                volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
+                volumes={working_dir: {"bind": working_dir, "mode": "rw"}},
                 working_dir=working_dir,
-                parameters=["unicycler",
-                            "--short1",
-                            read_one_file_path,
-                            "--short2",
-                            read_two_file_path,
-                            "--out",
-                            os.path.join(working_dir, self.output_directory),
-                            ])
+                parameters=[
+                    "unicycler",
+                    "--short1",
+                    read_one_file_path,
+                    "--short2",
+                    read_two_file_path,
+                    "--out",
+                    os.path.join(working_dir, self.output_directory),
+                ],
+            )
 
             # Write the Unicycler log, and final assembly contigs
             # FASTA and graph GFA v1 files from the local temporary
             # directory into the file store
             log_file_id = utilities.writeGlobalFile(
-                fileStore, self.output_directory, log_file_name)
+                fileStore, self.output_directory, log_file_name
+            )
             contigs_file_id = utilities.writeGlobalFile(
-                fileStore, self.output_directory, contigs_file_name)
+                fileStore, self.output_directory, contigs_file_name
+            )
             graph_file_id = utilities.writeGlobalFile(
-                fileStore, self.output_directory, graph_file_name)
+                fileStore, self.output_directory, graph_file_name
+            )
 
         except Exception as exc:
             # Ensure expectred return values on exceptions
@@ -102,19 +116,10 @@ class UnicyclerJob(Job):
 
         # Return file ids and names for export
         unicycler_rv = {
-            'unicycler_rv': {
-                'log_file': {
-                    'id': log_file_id,
-                    'name': log_file_name,
-                },
-                'contigs_file': {
-                    'id': contigs_file_id,
-                    'name': contigs_file_name,
-                },
-                'graph_file': {
-                    'id': graph_file_id,
-                    'name': graph_file_name,
-                },
+            "unicycler_rv": {
+                "log_file": {"id": log_file_id, "name": log_file_name,},
+                "contigs_file": {"id": contigs_file_id, "name": contigs_file_name,},
+                "graph_file": {"id": graph_file_id, "name": graph_file_name,},
             }
         }
         unicycler_rv.update(self.parent_rv)
@@ -132,18 +137,27 @@ if __name__ == "__main__":
     Job.Runner.addToilOptions(parser)
     cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-4]
     cmps.extend(["dat", "miscellaneous"])
-    parser.add_argument('-d', '--data-path',
-                        default=os.sep + os.path.join(*cmps),
-                        help="path containing plate and well FASTQ source")
-    parser.add_argument('-s', '--source-scheme',
-                        default="file",
-                        help="scheme used for the source URL")
-    parser.add_argument('-p', '--plate-spec', default="A11967A_sW0154",
-                        help="the plate specification")
-    parser.add_argument('-w', '--well-spec', default="B01",
-                        help="the well specification")
-    parser.add_argument('-o', '--output-directory', default=None,
-                        help="the directory containing all output files")
+    parser.add_argument(
+        "-d",
+        "--data-path",
+        default=os.sep + os.path.join(*cmps),
+        help="path containing plate and well FASTQ source",
+    )
+    parser.add_argument(
+        "-s", "--source-scheme", default="file", help="scheme used for the source URL"
+    )
+    parser.add_argument(
+        "-p", "--plate-spec", default="A11967A_sW0154", help="the plate specification"
+    )
+    parser.add_argument(
+        "-w", "--well-spec", default="B01", help="the well specification"
+    )
+    parser.add_argument(
+        "-o",
+        "--output-directory",
+        default=None,
+        help="the directory containing all output files",
+    )
     options = parser.parse_args()
     if options.output_directory is None:
         options.output_directory = options.plate_spec + "_" + options.well_spec
@@ -156,15 +170,17 @@ if __name__ == "__main__":
 
             # Import the local read files into the file store
             read_one_file_ids, read_two_file_ids = utilities.importReadFiles(
-                toil, options.data_path, options.plate_spec,
-                [options.well_spec], options.source_scheme)
+                toil,
+                options.data_path,
+                options.plate_spec,
+                [options.well_spec],
+                options.source_scheme,
+            )
 
             # Construct and start the Unicycker job
             unicycler_job = UnicyclerJob(
-                read_one_file_ids[0],
-                read_two_file_ids[0],
-                options.output_directory,
-                )
+                read_one_file_ids[0], read_two_file_ids[0], options.output_directory,
+            )
             unicycler_rv = toil.start(unicycler_job)
 
         else:
@@ -175,5 +191,5 @@ if __name__ == "__main__":
 
         # Export all Unicycler output files from the file store
         utilities.exportFiles(
-            toil, options.output_directory, unicycler_rv['unicycler_rv']
+            toil, options.output_directory, unicycler_rv["unicycler_rv"]
         )

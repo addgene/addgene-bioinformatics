@@ -34,55 +34,52 @@ if __name__ == "__main__":
 
     # Add and parse arguments
     parser = ArgumentParser()
-    base_dir = os.path.join(
-        os.sep, *os.path.abspath(__file__).split(os.sep)[0:-5])
+    base_dir = os.path.join(os.sep, *os.path.abspath(__file__).split(os.sep)[0:-5])
     parser.add_argument(
-        '-s', '--sequencing-data-dir',
-        default=os.path.join(
-            base_dir,
-            "addgene-sequencing-data",
-            "2018",
-            "FASTQ"),
-        help="directory containing sequencing data files")
+        "-s",
+        "--sequencing-data-dir",
+        default=os.path.join(base_dir, "addgene-sequencing-data", "2018", "FASTQ"),
+        help="directory containing sequencing data files",
+    )
     parser.add_argument(
-        '-a', '--assembler-data-dir',
-        default=os.path.join(
-            base_dir,
-            "addgene-assembler-data",
-            "results-2020-01-16"),
-        help="directory containing assembler data files")
+        "-a",
+        "--assembler-data-dir",
+        default=os.path.join(base_dir, "addgene-assembler-data", "results-2020-01-16"),
+        help="directory containing assembler data files",
+    )
     parser.add_argument(
-        '-p', '--assembler-data-file',
+        "-p",
+        "--assembler-data-file",
         default="spades-2020-01-03-174518-pairwise-rl-01.pickle",
-        help="file containing assembler data")
+        help="file containing assembler data",
+    )
     # parser.add_argument(
     #     '-f', '--force-case', type=int,
     #     default=0,
     #     help="force processing of case")
     parser.add_argument(
-        '-i', '--use-invalid',
-        action='store_true',
-        help="use invalid cases (no or unaligned circular sequence)")
+        "-i",
+        "--use-invalid",
+        action="store_true",
+        help="use invalid cases (no or unaligned circular sequence)",
+    )
 
     OPTIONS = parser.parse_args()
 
     # Read and parse aligner configuration file
-    home_dir = os.path.join(
-        os.sep, *os.path.abspath(__file__).split(os.sep)[0:-4])
+    home_dir = os.path.join(os.sep, *os.path.abspath(__file__).split(os.sep)[0:-4])
     aligner_config_dir = os.path.join(home_dir, "resources")
     aligner_config_file = "pairwise-rl-01.cfg"
     aligner_config = ConfigParser()
     aligner_config.read(os.path.join(aligner_config_dir, aligner_config_file))
-    aligner_config['aligner']['file'] = aligner_config_file
+    aligner_config["aligner"]["file"] = aligner_config_file
 
     # Create a pairwise aligner with the specified configuration
-    aligner = utilities.create_aligner(aligner_config['aligner'])
+    aligner = utilities.create_aligner(aligner_config["aligner"])
 
     # Load assembly results
     with open(
-        os.path.join(
-            OPTIONS.assembler_data_dir, OPTIONS.assembler_data_file
-        ), 'rb'
+        os.path.join(OPTIONS.assembler_data_dir, OPTIONS.assembler_data_file), "rb"
     ) as f:
         results = pickle.load(f)
 
@@ -92,11 +89,9 @@ if __name__ == "__main__":
 
     # Print header to a file, and stdout
     if OPTIONS.use_invalid:
-        output_file = open(
-            __file__.replace(".py", "-invalid.csv"), 'w', buffering=1)
+        output_file = open(__file__.replace(".py", "-invalid.csv"), "w", buffering=1)
     else:
-        output_file = open(
-            __file__.replace(".py", "-valid.csv"), 'w', buffering=1)
+        output_file = open(__file__.replace(".py", "-valid.csv"), "w", buffering=1)
     header = ""
     header += "{:>12s},".format("plate")
     header += "{:>12s},".format("well")
@@ -106,18 +101,18 @@ if __name__ == "__main__":
     header += "{:>12s},".format("sim_spd_scr")
     header += "{:>12s},".format("sim_apc_scr")
     header += "{:>14s}".format("num_attempts")
-    output_file.write(header + '\n')
+    output_file.write(header + "\n")
 
     # Load alignments, if they exist
     alignments = {}
     pickle_fnm = __file__.replace(".py", ".pickle")
     if os.path.exists(pickle_fnm):
-        with open(pickle_fnm, 'rb') as pickle_file:
+        with open(pickle_fnm, "rb") as pickle_file:
             alignments = pickle.load(pickle_file)
 
     # Consider each plate and well
     plates = list(results.keys())
-    plates.remove('aligner_config')
+    plates.remove("aligner_config")
     wells = list(results[plates[0]].keys())
     for plate in [plates[1]]:
         for well in wells:
@@ -128,24 +123,24 @@ if __name__ == "__main__":
             result = results[plate][well]
 
             # Skip result if no valid QC sequence found
-            if 'qc' not in result:
+            if "qc" not in result:
                 continue
-            seq = result['qc']['sequence']
+            seq = result["qc"]["sequence"]
             seq_len = len(seq)
 
             # Skip result if QC sequence has zero length
             if seq_len == 0:
                 continue
 
-            # Identify valid cases, those for witch an aligned
+            # Identify valid cases, those for which an aligned
             # circular sequence exists
             is_valid = False
             exp_spd_scr = 0.0
             exp_apc_scr = 0.0
-            if 'apc' in result:
-                exp_spd_scr = result['spades']['sequence_score']
-                exp_apc_scr = result['apc']['sequence_score']
-                if (exp_apc_scr == seq_len):
+            if "apc" in result:
+                exp_spd_scr = result["spades"]["sequence_score"]
+                exp_apc_scr = result["apc"]["sequence_score"]
+                if exp_apc_scr == seq_len:
                     is_valid = True
 
             # Skip cases not selected
@@ -158,23 +153,27 @@ if __name__ == "__main__":
                 continue
 
             # Skip result if alignment processing complete
-            if 'results' not in alignments:
-                alignments['results'] = []
-            if (result in alignments['results']
+            if "results" not in alignments:
+                alignments["results"] = []
+            if (
+                result in alignments["results"]
                 and plate in alignments
-                and well in alignments[plate]):
-                sim_apc_scr = alignments[plate][well]['sim_apc_scr']
-                num_attempts = alignments[plate][well]['num_attempts']
-                if (abs(sim_apc_scr - seq_len) / seq_len <= MAX_DIFFERENCE
-                    or num_attempts == MAX_ATTEMPTS):
+                and well in alignments[plate]
+            ):
+                sim_apc_scr = alignments[plate][well]["sim_apc_scr"]
+                num_attempts = alignments[plate][well]["num_attempts"]
+                if (
+                    abs(sim_apc_scr - seq_len) / seq_len <= MAX_DIFFERENCE
+                    or num_attempts == MAX_ATTEMPTS
+                ):
 
                     # Format alignments for output
-                    seq_len = alignments[plate][well]['seq_len']
-                    exp_spd_scr = alignments[plate][well]['exp_spd_scr']
-                    exp_apc_scr = alignments[plate][well]['exp_apc_scr']
-                    sim_spd_scr = alignments[plate][well]['sim_spd_scr']
-                    sim_apc_scr = alignments[plate][well]['sim_apc_scr']
-                    num_attempts = alignments[plate][well]['num_attempts']
+                    seq_len = alignments[plate][well]["seq_len"]
+                    exp_spd_scr = alignments[plate][well]["exp_spd_scr"]
+                    exp_apc_scr = alignments[plate][well]["exp_apc_scr"]
+                    sim_spd_scr = alignments[plate][well]["sim_spd_scr"]
+                    sim_apc_scr = alignments[plate][well]["sim_apc_scr"]
+                    num_attempts = alignments[plate][well]["num_attempts"]
                     data = ""
                     data += "{:>12s},".format(plate)
                     data += "{:>12s},".format(well)
@@ -184,7 +183,7 @@ if __name__ == "__main__":
                     data += "{:>12.1f},".format(sim_spd_scr)
                     data += "{:>12.1f},".format(sim_apc_scr)
                     data += "{:>14d}".format(num_attempts)
-                    output_file.write(data + '\n')
+                    output_file.write(data + "\n")
 
                     # If we get here, note processing done
                     print("> Plate {0} well {1} done".format(plate, well))
@@ -203,29 +202,24 @@ if __name__ == "__main__":
 
             # Copy and parse the actual reads
             start_time = time.time()
-            print("Copy and parse the actual reads ...",
-                  end=" ", flush=True)
+            print("Copy and parse the actual reads ...", end=" ", flush=True)
             rd1_fnm, rd2_fnm = test_spades_assembly.copy_actual_reads(
-                plate, well, case_dir, OPTIONS.sequencing_data_dir)
-            with gzip.open(os.path.join(case_dir, rd1_fnm), 'rt') as f:
-                rd1_seq_rcds = [
-                    seq_rcd for seq_rcd in SeqIO.parse(f, "fastq")
-                ]
-            with gzip.open(os.path.join(case_dir, rd2_fnm), 'rt') as f:
-                rd2_seq_rcds = [
-                    seq_rcd for seq_rcd in SeqIO.parse(f, "fastq")
-                ]
+                plate, well, case_dir, OPTIONS.sequencing_data_dir
+            )
+            with gzip.open(os.path.join(case_dir, rd1_fnm), "rt") as f:
+                rd1_seq_rcds = [seq_rcd for seq_rcd in SeqIO.parse(f, "fastq")]
+            with gzip.open(os.path.join(case_dir, rd2_fnm), "rt") as f:
+                rd2_seq_rcds = [seq_rcd for seq_rcd in SeqIO.parse(f, "fastq")]
             if len(rd1_seq_rcds) != len(rd2_seq_rcds):
-                raise(Exception("Unequal number of reads in paired read files"))
-            print("done in {0} s".format(time.time() - start_time),
-                  flush=True)
+                raise (Exception("Unequal number of reads in paired read files"))
+            print("done in {0} s".format(time.time() - start_time), flush=True)
 
             # Read data file, if present
             trial_pth = os.path.join(case_dir, "trial.txt")
             if os.path.exists(trial_pth):
-                with open(trial_pth, 'r') as f:
-                    lines = f.readline().replace('\n', '')
-                    fields = lines.split(',')
+                with open(trial_pth, "r") as f:
+                    lines = f.readline().replace("\n", "")
+                    fields = lines.split(",")
                     sim_spd_scr = float(fields[5])
                     sim_apc_scr = float(fields[6])
                     num_attempts = int(fields[7])
@@ -235,35 +229,39 @@ if __name__ == "__main__":
                 num_attempts = 0
 
             # Attempt to draw actual reads which assemble correctly
-            while (abs(sim_apc_scr - seq_len) / seq_len > MAX_DIFFERENCE
-                   and num_attempts < MAX_ATTEMPTS):
+            while (
+                abs(sim_apc_scr - seq_len) / seq_len > MAX_DIFFERENCE
+                and num_attempts < MAX_ATTEMPTS
+            ):
                 num_attempts += 1
                 print("Trial {0} of {1}".format(num_attempts, MAX_ATTEMPTS))
 
                 # Sample and write the actual reads
                 start_time = time.time()
-                print("Sample and write the actual reads ...",
-                      end=" ", flush=True)
+                print("Sample and write the actual reads ...", end=" ", flush=True)
                 num_rds = len(rd1_seq_rcds)
-                smp_idx = random.sample(
-                    range(len(rd1_seq_rcds)), min(NUMBER_PAIRS, int(num_rds / 2)))
+                smp_idx = random.sample(range(len(rd1_seq_rcds)), int(num_rds / 2))
                 rd1_seq_rcds_smp = [rd1_seq_rcds[idx] for idx in smp_idx]
                 rd2_seq_rcds_smp = [rd2_seq_rcds[idx] for idx in smp_idx]
                 rd1_smp_fnm = rd1_fnm.replace(".fastq.gz", "_smp.fastq")
-                with open(os.path.join(case_dir, rd1_smp_fnm), 'w') as f:
+                with open(os.path.join(case_dir, rd1_smp_fnm), "w") as f:
                     SeqIO.write(rd1_seq_rcds_smp, f, "fastq")
                 rd2_smp_fnm = rd2_fnm.replace(".fastq.gz", "_smp.fastq")
-                with open(os.path.join(case_dir, rd2_smp_fnm), 'w') as f:
+                with open(os.path.join(case_dir, rd2_smp_fnm), "w") as f:
                     SeqIO.write(rd2_seq_rcds_smp, f, "fastq")
-                print("done in {0} s".format(time.time() - start_time),
-                      flush=True)
+                print("done in {0} s".format(time.time() - start_time), flush=True)
 
                 # Assemble using SPAdes (and apc), and align
                 try:
                     test_spades_assembly.assemble_using_spades(
-                        case_dir, rd1_smp_fnm, rd2_smp_fnm, force=True)
-                    sim_spd_scr, sim_apc_scr = test_spades_assembly.align_assembly_output(
-                        aligner, case_dir, seq)
+                        case_dir, rd1_smp_fnm, rd2_smp_fnm, force=True
+                    )
+                    (
+                        sim_spd_scr,
+                        sim_apc_scr,
+                    ) = test_spades_assembly.align_assembly_output(
+                        aligner, case_dir, seq
+                    )
                 except Exception as e:
                     print("failed: {0}".format(str(e)), flush=True)
 
@@ -277,26 +275,26 @@ if __name__ == "__main__":
             data += "{:>12.1f},".format(sim_spd_scr)
             data += "{:>12.1f},".format(sim_apc_scr)
             data += "{:>14d}".format(num_attempts)
-            output_file.write(data + '\n')
+            output_file.write(data + "\n")
 
             # Write data file
-            with open(trial_pth, 'w') as f:
-                f.write(data + '\n')
+            with open(trial_pth, "w") as f:
+                f.write(data + "\n")
 
             # Collect results and alignments, and dump for restarting
-            alignments['results'].append(result)
+            alignments["results"].append(result)
             if plate not in alignments:
                 alignments[plate] = {}
             if well not in alignments[plate]:
                 alignments[plate][well] = {}
-            alignments[plate][well]['seq'] = seq
-            alignments[plate][well]['seq_len'] = seq_len
-            alignments[plate][well]['exp_spd_scr'] = exp_spd_scr
-            alignments[plate][well]['exp_apc_scr'] = exp_apc_scr
-            alignments[plate][well]['sim_spd_scr'] = sim_spd_scr
-            alignments[plate][well]['sim_apc_scr'] = sim_apc_scr
-            alignments[plate][well]['num_attempts'] = num_attempts
-            with open(pickle_fnm, 'wb') as pickle_file:
+            alignments[plate][well]["seq"] = seq
+            alignments[plate][well]["seq_len"] = seq_len
+            alignments[plate][well]["exp_spd_scr"] = exp_spd_scr
+            alignments[plate][well]["exp_apc_scr"] = exp_apc_scr
+            alignments[plate][well]["sim_spd_scr"] = sim_spd_scr
+            alignments[plate][well]["sim_apc_scr"] = sim_apc_scr
+            alignments[plate][well]["num_attempts"] = num_attempts
+            with open(pickle_fnm, "wb") as pickle_file:
                 pickle.dump(alignments, pickle_file)
             print("Done")
 

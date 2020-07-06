@@ -48,32 +48,19 @@ def copy_actual_reads(plate, well, working_dir, sequencing_data_dir):
     # Find the plate directory given that we only know the Addgene,
     # but not the seqWell identifier
     plate_dir = os.path.basename(
-        glob.glob(
-            os.path.join(
-                sequencing_data_dir,
-                plate + "*"
-            )
-        )[0]
+        glob.glob(os.path.join(sequencing_data_dir, plate + "*"))[0]
     )
 
     # Follow the read file naming convention
-    rd1_fnm = plate_dir.replace(
-        "_FASTQ", "") + "_" + well + "_R1_001.fastq.gz"
+    rd1_fnm = plate_dir.replace("_FASTQ", "") + "_" + well + "_R1_001.fastq.gz"
     rd2_fnm = rd1_fnm.replace("R1", "R2")
 
     # Copy each file, if needed
     rd_fnms = (rd1_fnm, rd2_fnm)
     for rd_fnm in rd_fnms:
-        rd_file_path = os.path.join(
-            sequencing_data_dir,
-            plate_dir,
-            rd_fnm
-        )
+        rd_file_path = os.path.join(sequencing_data_dir, plate_dir, rd_fnm)
         if not os.path.exists(rd_fnm):
-            shutil.copy(
-                rd_file_path,
-                working_dir
-            )
+            shutil.copy(rd_file_path, working_dir)
 
     return rd_fnms
 
@@ -93,14 +80,13 @@ def assemble_using_spades(case_dir, rd1_fnm, rd2_fnm, force=False):
             start_time = time.time()
             print("Assembling using SPAdes ...", end=" ", flush=True)
             command = utilities.spades(
-                rd1_fnm, rd2_fnm, SPADES_OUTPUT_DIR, cov_cutoff=100)
-            print("done in {0} s".format(time.time() - start_time),
-                  flush=True)
+                rd1_fnm, rd2_fnm, SPADES_OUTPUT_DIR, cov_cutoff=100
+            )
+            print("done in {0} s".format(time.time() - start_time), flush=True)
             print("Command: {0}".format(command), flush=True)
 
             # Copy SPAdes output file
-            output_pth = os.path.join(
-                SPADES_OUTPUT_DIR, SPADES_OUTPUT_FNM)
+            output_pth = os.path.join(SPADES_OUTPUT_DIR, SPADES_OUTPUT_FNM)
             if os.path.exists(output_pth):
                 shutil.copy(output_pth, ".")
 
@@ -108,8 +94,7 @@ def assemble_using_spades(case_dir, rd1_fnm, rd2_fnm, force=False):
             start_time = time.time()
             print("Circularize using apc ...", end=" ", flush=True)
             command = utilities.apc(APC_BASE_FNM, SPADES_OUTPUT_FNM)
-            print("done in {0} s".format(time.time() - start_time),
-                  flush=True)
+            print("done in {0} s".format(time.time() - start_time), flush=True)
             print("Command: {0}".format(command), flush=True)
             print("Directory: {0}".format(os.getcwd()))
 
@@ -120,13 +105,11 @@ def align_assembly_output(aligner, case_dir, seq):
     start_time = time.time()
     case = os.path.basename(case_dir)
     print("Aligning {0} assemblies ...".format(case), end=" ", flush=True)
-    output_pth = os.path.join(
-        case_dir, SPADES_OUTPUT_DIR, SPADES_OUTPUT_FNM)
+    output_pth = os.path.join(case_dir, SPADES_OUTPUT_DIR, SPADES_OUTPUT_FNM)
     spd_scr = -1.0
     if os.path.exists(output_pth):
         spd_scr = 0.0
-        seq_rcds = [seq_rcd for seq_rcd in SeqIO.parse(
-            output_pth, "fasta")]
+        seq_rcds = [seq_rcd for seq_rcd in SeqIO.parse(output_pth, "fasta")]
         if len(seq_rcds) > 0:
             spd_scr = aligner.score(seq + seq, seq_rcds[0].seq)
 
@@ -135,8 +118,7 @@ def align_assembly_output(aligner, case_dir, seq):
     apc_scr = -1.0
     if os.path.exists(output_pth):
         apc_scr = 0.0
-        seq_rcds = [seq_rcd for seq_rcd in SeqIO.parse(
-            output_pth, "fasta")]
+        seq_rcds = [seq_rcd for seq_rcd in SeqIO.parse(output_pth, "fasta")]
         if len(seq_rcds) > 0:
             apc_scr = aligner.score(seq + seq, seq_rcds[0].seq)
     print("done in {0} s".format(time.time() - start_time), flush=True)
@@ -147,27 +129,25 @@ if __name__ == "__main__":
 
     # Add and parse arguments
     parser = ArgumentParser()
-    base_dir = os.path.join(
-        os.sep, *os.path.abspath(__file__).split(os.sep)[0:-5])
+    base_dir = os.path.join(os.sep, *os.path.abspath(__file__).split(os.sep)[0:-5])
     parser.add_argument(
-        '-s', '--sequencing-data-dir',
-        default=os.path.join(
-            base_dir,
-            "addgene-sequencing-data",
-            "2018",
-            "FASTQ"),
-        help="directory containing sequencing data files")
+        "-s",
+        "--sequencing-data-dir",
+        default=os.path.join(base_dir, "addgene-sequencing-data", "2018", "FASTQ"),
+        help="directory containing sequencing data files",
+    )
     parser.add_argument(
-        '-a', '--assembler-data-dir',
-        default=os.path.join(
-            base_dir,
-            "addgene-assembler-data",
-            "results-2020-01-16"),
-        help="directory containing assembler data files")
+        "-a",
+        "--assembler-data-dir",
+        default=os.path.join(base_dir, "addgene-assembler-data", "results-2020-01-16"),
+        help="directory containing assembler data files",
+    )
     parser.add_argument(
-        '-p', '--assembler-data-file',
+        "-p",
+        "--assembler-data-file",
         default="spades-2020-01-03-174518-pairwise-rl-01.pickle",
-        help="file containing assembler data")
+        help="file containing assembler data",
+    )
     # parser.add_argument(
     #     '-f', '--force-case', type=int,
     #     default=0,
@@ -176,22 +156,19 @@ if __name__ == "__main__":
     OPTIONS = parser.parse_args()
 
     # Read and parse aligner configuration file
-    home_dir = os.path.join(
-        os.sep, *os.path.abspath(__file__).split(os.sep)[0:-4])
+    home_dir = os.path.join(os.sep, *os.path.abspath(__file__).split(os.sep)[0:-4])
     aligner_config_dir = os.path.join(home_dir, "resources")
     aligner_config_file = "pairwise-rl-01.cfg"
     aligner_config = ConfigParser()
     aligner_config.read(os.path.join(aligner_config_dir, aligner_config_file))
-    aligner_config['aligner']['file'] = aligner_config_file
+    aligner_config["aligner"]["file"] = aligner_config_file
 
     # Create a pairwise aligner with the specified configuration
-    aligner = utilities.create_aligner(aligner_config['aligner'])
+    aligner = utilities.create_aligner(aligner_config["aligner"])
 
     # Load assembly results
     with open(
-        os.path.join(
-            OPTIONS.assembler_data_dir, OPTIONS.assembler_data_file
-        ), 'rb'
+        os.path.join(OPTIONS.assembler_data_dir, OPTIONS.assembler_data_file), "rb"
     ) as f:
         results = pickle.load(f)
 
@@ -200,7 +177,7 @@ if __name__ == "__main__":
         os.mkdir(RESULTS_DIR)
 
     # Print header to a file, and stdout
-    output_file = open(__file__.replace(".py", ".csv"), 'w', buffering=1)
+    output_file = open(__file__.replace(".py", ".csv"), "w", buffering=1)
     result = ""
     result += "{:>12s},".format("plate")
     result += "{:>12s},".format("well")
@@ -211,38 +188,38 @@ if __name__ == "__main__":
     result += "{:>12s},".format("act_apc_scr")
     result += "{:>12s},".format("sim_spd_scr")
     result += "{:>12s}".format("sim_apc_scr")
-    output_file.write(result + '\n')
+    output_file.write(result + "\n")
 
     # Load assemblies, if the exist, and print, or initialize
     assemblies = []
     completed = {}
     pickle_fnm = __file__.replace(".py", ".pickle")
     if os.path.exists(pickle_fnm):
-        with open(pickle_fnm, 'rb') as pickle_file:
+        with open(pickle_fnm, "rb") as pickle_file:
             assemblies = pickle.load(pickle_file)
             for assembly in assemblies:
                 result = ""
-                result += "{:>12s},".format(assembly['plate'])
-                result += "{:>12s},".format(assembly['well'])
-                result += "{:>12d},".format(assembly['seq_len'])
-                result += "{:>12.1f},".format(assembly['exp_spd_scr'])
-                result += "{:>12.1f},".format(assembly['exp_apc_scr'])
-                result += "{:>12.1f},".format(assembly['act_spd_scr'])
-                result += "{:>12.1f},".format(assembly['act_apc_scr'])
-                result += "{:>12.1f},".format(assembly['sim_spd_scr'])
-                result += "{:>12.1f}".format(assembly['sim_apc_scr'])
-                output_file.write(result + '\n')
+                result += "{:>12s},".format(assembly["plate"])
+                result += "{:>12s},".format(assembly["well"])
+                result += "{:>12d},".format(assembly["seq_len"])
+                result += "{:>12.1f},".format(assembly["exp_spd_scr"])
+                result += "{:>12.1f},".format(assembly["exp_apc_scr"])
+                result += "{:>12.1f},".format(assembly["act_spd_scr"])
+                result += "{:>12.1f},".format(assembly["act_apc_scr"])
+                result += "{:>12.1f},".format(assembly["sim_spd_scr"])
+                result += "{:>12.1f}".format(assembly["sim_apc_scr"])
+                output_file.write(result + "\n")
 
                 # Collect completed plates and wells
-                plate = assembly['plate']
-                well = assembly['well']
+                plate = assembly["plate"]
+                well = assembly["well"]
                 if plate not in completed:
                     completed[plate] = set()
                 completed[plate].add(well)
 
     # Consider each plate and well
     plates = list(results.keys())
-    plates.remove('aligner_config')
+    plates.remove("aligner_config")
     wells = list(results[plates[0]].keys())
     for plate in plates:
         for well in wells:
@@ -256,34 +233,34 @@ if __name__ == "__main__":
             if well not in results[plate]:
                 continue
             assembly = results[plate][well]
-            assembly['plate'] = plate
-            assembly['well'] = well
+            assembly["plate"] = plate
+            assembly["well"] = well
             result = ""
             result += "{:>12s},".format(plate)
             result += "{:>12s},".format(well)
 
             # Skip result if no valid QC assembly found
-            if 'qc' not in assembly:
+            if "qc" not in assembly:
                 continue
-            seq = assembly['qc']['sequence']
+            seq = assembly["qc"]["sequence"]
             seq_len = len(seq)
-            assembly['seq_len'] = seq_len
+            assembly["seq_len"] = seq_len
             if seq_len == 0:
                 continue
             result += "{:>12d},".format(seq_len)
 
             # Skip result if no circularized assembly found
-            if 'apc' not in assembly:
+            if "apc" not in assembly:
                 continue
-            exp_spd_scr = assembly['spades']['sequence_score']
-            exp_apc_scr = assembly['apc']['sequence_score']
+            exp_spd_scr = assembly["spades"]["sequence_score"]
+            exp_apc_scr = assembly["apc"]["sequence_score"]
             result += "{:>12.1f},".format(exp_spd_scr)
             result += "{:>12.1f},".format(exp_apc_scr)
-            assembly['exp_spd_scr'] = exp_spd_scr
-            assembly['exp_apc_scr'] = exp_apc_scr
+            assembly["exp_spd_scr"] = exp_spd_scr
+            assembly["exp_apc_scr"] = exp_apc_scr
 
             # Skip result if sequence score does not equal sequence length
-            if (exp_apc_scr != seq_len):
+            if exp_apc_scr != seq_len:
                 continue
             print("> Plate {0} well {1}".format(plate, well))
 
@@ -300,14 +277,15 @@ if __name__ == "__main__":
             # Copy actual reads into place, assemble using SPAdes (and
             # apc), and align
             rd1_fnm, rd2_fnm = copy_actual_reads(
-                plate, well, case_dir, OPTIONS.sequencing_data_dir)
+                plate, well, case_dir, OPTIONS.sequencing_data_dir
+            )
 
             assemble_using_spades(case_dir, rd1_fnm, rd2_fnm)
             act_spd_scr, act_apc_scr = align_assembly_output(aligner, case_dir, seq)
             result += "{:>12.1f},".format(act_spd_scr)
             result += "{:>12.1f},".format(act_apc_scr)
-            assembly['act_spd_scr'] = act_spd_scr
-            assembly['act_apc_scr'] = act_apc_scr
+            assembly["act_spd_scr"] = act_spd_scr
+            assembly["act_apc_scr"] = act_apc_scr
 
             # === Simulated Reads ===
 
@@ -317,21 +295,22 @@ if __name__ == "__main__":
 
             # Simulate paired reads of the QC sequence using wgsim,
             # assemble using SPAdes (and apc), and align
-            if not os.path.exists(
-                    os.path.join(case_dir, WGSIM_OUTPUT_FNM)
-            ):
+            if not os.path.exists(os.path.join(case_dir, WGSIM_OUTPUT_FNM)):
                 with pushd(case_dir):
                     start_time = time.time()
                     print(
                         "Simulating paired reads from QC sequence using wgsim ...",
-                        end=" ", flush=True)
+                        end=" ",
+                        flush=True,
+                    )
                     rd1_fnm, rd2_fnm = utilities.simulate_paired_reads_wgsim(
                         seq + seq,
                         WGSIM_BASE_FNM,
                         number_pairs=NUMBER_PAIRS,
                         len_first_read=LEN_FIRST_READ,
                         len_second_read=LEN_SECOND_READ,
-                        outer_distance=OUTER_DISTANCE)
+                        outer_distance=OUTER_DISTANCE,
+                    )
                     print("done in {0} s".format(time.time() - start_time), flush=True)
 
             else:
@@ -341,13 +320,13 @@ if __name__ == "__main__":
             sim_spd_scr, sim_apc_scr = align_assembly_output(aligner, case_dir, seq)
             result += "{:>12.1f},".format(sim_spd_scr)
             result += "{:>12.1f}".format(sim_apc_scr)
-            assembly['sim_spd_scr'] = sim_spd_scr
-            assembly['sim_apc_scr'] = sim_apc_scr
-            output_file.write(result + '\n')
+            assembly["sim_spd_scr"] = sim_spd_scr
+            assembly["sim_apc_scr"] = sim_apc_scr
+            output_file.write(result + "\n")
 
             # Append current assembly, and dump assemblies for restart
             assemblies.append(assembly)
-            with open(pickle_fnm, 'wb') as pickle_file:
+            with open(pickle_fnm, "wb") as pickle_file:
                 pickle.dump(assemblies, pickle_file)
 
             # break

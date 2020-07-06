@@ -12,11 +12,7 @@ from Bio.Seq import Seq
 from matplotlib import pyplot as plt
 import numpy as np
 
-sys.path.append(
-    os.path.join(
-        os.sep, *os.path.abspath(__file__).split(os.sep)[0:-2]
-    )
-)
+sys.path.append(os.path.join(os.sep, *os.path.abspath(__file__).split(os.sep)[0:-2]))
 
 import utilities
 from jobs.utilities import ASSEMBLERS_REQUIRING_APC
@@ -36,7 +32,7 @@ def to_int(a_str):
     int
         the int
     """
-    if a_str == '':
+    if a_str == "":
         return 0
     else:
         return int(a_str)
@@ -77,30 +73,31 @@ def read_qc_sequences(sequencing_data_dir, qc_sequences_fNm):
                 qc_sequences[plate][well] = {}
 
             # Plasmid ID
-            qc_sequences[plate][well]['plasmid_id'] = to_int(row[0])
+            qc_sequences[plate][well]["plasmid_id"] = to_int(row[0])
 
             # Sequence ID (LIMS identifier)
-            qc_sequences[plate][well]['sequence_id'] = to_int(row[3])
+            qc_sequences[plate][well]["sequence_id"] = to_int(row[3])
 
             # Sequence length (of QC-team approved sequence)
-            qc_sequences[plate][well]['sequence_len'] = to_int(row[4])
+            qc_sequences[plate][well]["sequence_len"] = to_int(row[4])
 
             # Sequence (actual nucleotide sequence)
-            qc_sequences[plate][well]['sequence'] = Seq(row[5])
+            qc_sequences[plate][well]["sequence"] = Seq(row[5])
 
             # Doubled sequence (actual nucleotide sequence, but doubled)
-            qc_sequences[plate][well]['doubled_sequence'] = Seq(row[5]
-                                                                + row[5])
+            qc_sequences[plate][well]["doubled_sequence"] = Seq(row[5] + row[5])
 
     return qc_sequences
 
 
-def align_cp_to_qc_sequences(assembler,
-                             assembler_data_dir,
-                             assembler_run_dir,
-                             sequencing_data_dir,
-                             qc_sequences_fNm,
-                             aligner_config):
+def align_cp_to_qc_sequences(
+    assembler,
+    assembler_data_dir,
+    assembler_run_dir,
+    sequencing_data_dir,
+    qc_sequences_fNm,
+    aligner_config,
+):
     """
     Aligns sequences produced by candidate sequence assembly processes
     to curated quality control full public sequences.
@@ -136,14 +133,16 @@ def align_cp_to_qc_sequences(assembler,
 
     # Initialize candidate process (CP) sequences dictionary
     cp_sequences = {}
-    cp_sequences['aligner_config'] = aligner_config
+    cp_sequences["aligner_config"] = aligner_config
 
     # Print header to a file, and stdout
     output_file = open(
         os.path.join(
             assembler_data_dir,
-            assembler_run_dir + "-" + os.path.basename(aligner_config['file'])
-            ).replace(".cfg", ".csv"), 'w')
+            assembler_run_dir + "-" + os.path.basename(aligner_config["file"]),
+        ).replace(".cfg", ".csv"),
+        "w",
+    )
 
     result = ""
 
@@ -161,23 +160,21 @@ def align_cp_to_qc_sequences(assembler,
     result += "{:>12s},".format("apc_seq_scr")
     result += "{:>12s}".format("apc_rcm_scr")
 
-    output_file.write(result + '\n')
+    output_file.write(result + "\n")
 
     print(result)
 
     # Consider each plate directory contained in the run directory
     plate_specs = sorted(
         filter(
-            '.DS_Store'.__ne__,
-            os.listdir(
-                os.path.join(assembler_data_dir, assembler_run_dir)
-            )
+            ".DS_Store".__ne__,
+            os.listdir(os.path.join(assembler_data_dir, assembler_run_dir)),
         )
     )
     for plate_spec in plate_specs:
 
         # Find the plate id
-        plate = plate_spec.split('_')[0]
+        plate = plate_spec.split("_")[0]
 
         # Initialize plate dictionary
         if plate not in cp_sequences:
@@ -186,12 +183,10 @@ def align_cp_to_qc_sequences(assembler,
         # Consider each well directory contained in the plate directory
         wells = sorted(
             filter(
-                '.DS_Store'.__ne__,
+                ".DS_Store".__ne__,
                 os.listdir(
-                    os.path.join(
-                        assembler_data_dir, assembler_run_dir, plate_spec
-                    )
-                )
+                    os.path.join(assembler_data_dir, assembler_run_dir, plate_spec)
+                ),
             )
         )
         for well in wells:
@@ -202,54 +197,59 @@ def align_cp_to_qc_sequences(assembler,
 
             # Assign quality control sequence values
             try:
-                qc_sequence = qc_sequences[plate][well]['sequence']
-                qc_sequence_len = qc_sequences[plate][well]['sequence_len']
-                qc_doubled_sequence = qc_sequences[plate][well]['doubled_sequence']
+                qc_sequence = qc_sequences[plate][well]["sequence"]
+                qc_sequence_len = qc_sequences[plate][well]["sequence_len"]
+                qc_doubled_sequence = qc_sequences[plate][well]["doubled_sequence"]
 
             except Exception as e:
                 continue
 
             # Assign candidate process assembler sequence values
-            cp_sequences[plate][well]['qc'] = {}
+            cp_sequences[plate][well]["qc"] = {}
             cp_sequences[plate][well][assembler] = {}
-            if assembler == 'masurca':
+            if assembler == "masurca":
                 cp_sequence_fNm = "final.genome.scf.fasta"
 
-            elif assembler == 'novoplasty':
+            elif assembler == "novoplasty":
                 cp_sequence_fNm = "Circularized_assembly_1_Toil.fasta"
 
-            elif assembler == 'shovill':
+            elif assembler == "shovill":
                 cp_sequence_fNm = "contigs.fa"
 
-            elif assembler == 'skesa':
+            elif assembler == "skesa":
                 cp_sequence_fNm = "contigs.fa"
 
-            elif assembler == 'spades':
+            elif assembler == "spades":
                 cp_sequence_fNm = "contigs.fasta"
 
-            elif assembler == 'unicycler':
+            elif assembler == "unicycler":
                 cp_sequence_fNm = "assembly.fasta"
 
-            elif assembler == 'seqwell':
+            elif assembler == "seqwell":
                 cp_sequence_fNm = "assembly.fasta"
 
             else:
-                raise(Exception("Unexpected assembler"))
+                raise (Exception("Unexpected assembler"))
             try:
-                cp_sequence = next(SeqIO.parse(
-                    os.path.join(assembler_data_dir,
-                                 assembler_run_dir,
-                                 plate_spec,
-                                 well,
-                                 cp_sequence_fNm),
-                    "fasta", IUPAC.unambiguous_dna)).seq
+                cp_sequence = next(
+                    SeqIO.parse(
+                        os.path.join(
+                            assembler_data_dir,
+                            assembler_run_dir,
+                            plate_spec,
+                            well,
+                            cp_sequence_fNm,
+                        ),
+                        "fasta",
+                        IUPAC.unambiguous_dna,
+                    )
+                ).seq
                 cp_reverse_complement = cp_sequence.complement()[::-1]
 
-                cp_sequence_score = aligner.score(
-                    qc_doubled_sequence, cp_sequence)
+                cp_sequence_score = aligner.score(qc_doubled_sequence, cp_sequence)
                 cp_reverse_complement_score = aligner.score(
-                    qc_doubled_sequence, cp_reverse_complement)
-
+                    qc_doubled_sequence, cp_reverse_complement
+                )
 
             except Exception as e:
                 cp_sequence = Seq("", IUPAC.unambiguous_dna)
@@ -258,17 +258,21 @@ def align_cp_to_qc_sequences(assembler,
                 cp_sequence_score = 0
                 cp_reverse_complement_score = 0
 
-            cp_sequences[plate][well]['qc']['sequence'] = qc_sequence
+            cp_sequences[plate][well]["qc"]["sequence"] = qc_sequence
 
-            cp_sequences[plate][well][assembler]['sequence'] = cp_sequence
-            cp_sequences[plate][well][assembler]['reverse_complement'] = cp_reverse_complement
+            cp_sequences[plate][well][assembler]["sequence"] = cp_sequence
+            cp_sequences[plate][well][assembler][
+                "reverse_complement"
+            ] = cp_reverse_complement
 
-            cp_sequences[plate][well][assembler]['sequence_score'] = cp_sequence_score
-            cp_sequences[plate][well][assembler]['reverse_complement_score'] = cp_reverse_complement_score
+            cp_sequences[plate][well][assembler]["sequence_score"] = cp_sequence_score
+            cp_sequences[plate][well][assembler][
+                "reverse_complement_score"
+            ] = cp_reverse_complement_score
 
             # Assign candidate process apc sequence values
             # Note: apc is not called after every assembler
-            cp_sequences[plate][well]['apc'] = {}
+            cp_sequences[plate][well]["apc"] = {}
 
             apc_sequence = Seq("", IUPAC.unambiguous_dna)
             apc_reverse_complement = Seq("", IUPAC.unambiguous_dna)
@@ -278,19 +282,27 @@ def align_cp_to_qc_sequences(assembler,
 
             if assembler in ASSEMBLERS_REQUIRING_APC:
                 try:
-                    apc_sequence = next(SeqIO.parse(
-                        os.path.join(assembler_data_dir,
-                                     assembler_run_dir,
-                                     plate_spec,
-                                     well,
-                                     "apc.1.fa"),
-                        "fasta", IUPAC.unambiguous_dna)).seq
+                    apc_sequence = next(
+                        SeqIO.parse(
+                            os.path.join(
+                                assembler_data_dir,
+                                assembler_run_dir,
+                                plate_spec,
+                                well,
+                                "apc.1.fa",
+                            ),
+                            "fasta",
+                            IUPAC.unambiguous_dna,
+                        )
+                    ).seq
                     apc_reverse_complement = apc_sequence.complement()[::-1]
 
                     apc_sequence_score = aligner.score(
-                        qc_doubled_sequence, apc_sequence)
+                        qc_doubled_sequence, apc_sequence
+                    )
                     apc_reverse_complement_score = aligner.score(
-                        qc_doubled_sequence, apc_reverse_complement)
+                        qc_doubled_sequence, apc_reverse_complement
+                    )
 
                 except Exception as e:
                     apc_sequence = Seq("", IUPAC.unambiguous_dna)
@@ -299,11 +311,15 @@ def align_cp_to_qc_sequences(assembler,
                     apc_sequence_score = 0
                     apc_reverse_complement_score = 0
 
-            cp_sequences[plate][well]['apc']['sequence'] = apc_sequence
-            cp_sequences[plate][well]['apc']['reverse_complement'] = apc_reverse_complement
+            cp_sequences[plate][well]["apc"]["sequence"] = apc_sequence
+            cp_sequences[plate][well]["apc"][
+                "reverse_complement"
+            ] = apc_reverse_complement
 
-            cp_sequences[plate][well]['apc']['sequence_score'] = apc_sequence_score
-            cp_sequences[plate][well]['apc']['reverse_complement_score'] = apc_reverse_complement_score
+            cp_sequences[plate][well]["apc"]["sequence_score"] = apc_sequence_score
+            cp_sequences[plate][well]["apc"][
+                "reverse_complement_score"
+            ] = apc_reverse_complement_score
 
             # Print results to a file, and stdout
             result = ""
@@ -321,7 +337,7 @@ def align_cp_to_qc_sequences(assembler,
             result += "{:12.1f},".format(apc_sequence_score)
             result += "{:12.1f}".format(apc_reverse_complement_score)
 
-            output_file.write(result + '\n')
+            output_file.write(result + "\n")
 
             print(result)
 
@@ -330,8 +346,7 @@ def align_cp_to_qc_sequences(assembler,
     return cp_sequences
 
 
-def accumulate_alignment_scores(assembler,
-                                cp_sequences):
+def accumulate_alignment_scores(assembler, cp_sequences):
     """Accumulate alignement results.
 
     Finds the maximum of the sequence and reverse complement
@@ -368,29 +383,36 @@ def accumulate_alignment_scores(assembler,
     circularizer_valid_score = []
 
     for plate, wells in cp_sequences.items():
-        if plate == 'aligner_config' or not wells:
+        if plate == "aligner_config" or not wells:
             continue
 
         for well, sequences in wells.items():
             if not sequences:
                 continue
 
-            qc_sequence_len.append(
-                len(sequences['qc']['sequence']))
+            qc_sequence_len.append(len(sequences["qc"]["sequence"]))
 
-            assembler_sequence_len.append(
-                len(sequences[assembler]['sequence']))
-            assembler_maximum_score.append(max(
-                [sequences[assembler]['sequence_score'],
-                 sequences[assembler]['reverse_complement_score']]))
+            assembler_sequence_len.append(len(sequences[assembler]["sequence"]))
+            assembler_maximum_score.append(
+                max(
+                    [
+                        sequences[assembler]["sequence_score"],
+                        sequences[assembler]["reverse_complement_score"],
+                    ]
+                )
+            )
 
             if assembler in ASSEMBLERS_REQUIRING_APC:
-                circularizer_sequence_len.append(
-                    len(sequences['apc']['sequence']))
+                circularizer_sequence_len.append(len(sequences["apc"]["sequence"]))
 
-                circularizer_maximum_score.append(max(
-                    [sequences['apc']['sequence_score'],
-                     sequences['apc']['reverse_complement_score']]))
+                circularizer_maximum_score.append(
+                    max(
+                        [
+                            sequences["apc"]["sequence_score"],
+                            sequences["apc"]["reverse_complement_score"],
+                        ]
+                    )
+                )
 
     qc_sequence_len = np.array(qc_sequence_len)
 
@@ -404,26 +426,28 @@ def accumulate_alignment_scores(assembler,
 
     # Identify results for which the sequence length is greater than
     # zero
-    assembler_valid_index = (assembler_sequence_len > 0)
-    assembler_valid_score[assembler_valid_index] = (
-        assembler_maximum_score[assembler_valid_index])
+    assembler_valid_index = assembler_sequence_len > 0
+    assembler_valid_score[assembler_valid_index] = assembler_maximum_score[
+        assembler_valid_index
+    ]
     if assembler in ASSEMBLERS_REQUIRING_APC:
-        circularizer_valid_index = (circularizer_sequence_len > 0)
-        circularizer_valid_score[circularizer_valid_index] = (
-            circularizer_maximum_score[circularizer_valid_index])
+        circularizer_valid_index = circularizer_sequence_len > 0
+        circularizer_valid_score[circularizer_valid_index] = circularizer_maximum_score[
+            circularizer_valid_index
+        ]
 
     # Assign return values
-    cp_sequences['qc_sequence_len'] = qc_sequence_len
+    cp_sequences["qc_sequence_len"] = qc_sequence_len
 
-    cp_sequences['assembler_sequence_len'] = assembler_sequence_len
-    cp_sequences['assembler_maximum_score'] = assembler_maximum_score
-    cp_sequences['assembler_valid_index'] = assembler_valid_index
-    cp_sequences['assembler_valid_score'] = assembler_valid_score
+    cp_sequences["assembler_sequence_len"] = assembler_sequence_len
+    cp_sequences["assembler_maximum_score"] = assembler_maximum_score
+    cp_sequences["assembler_valid_index"] = assembler_valid_index
+    cp_sequences["assembler_valid_score"] = assembler_valid_score
 
-    cp_sequences['circularizer_sequence_len'] = circularizer_sequence_len
-    cp_sequences['circularizer_maximum_score'] = circularizer_maximum_score
-    cp_sequences['circularizer_valid_index'] = circularizer_valid_index
-    cp_sequences['circularizer_valid_score'] = circularizer_valid_score
+    cp_sequences["circularizer_sequence_len"] = circularizer_sequence_len
+    cp_sequences["circularizer_maximum_score"] = circularizer_maximum_score
+    cp_sequences["circularizer_valid_index"] = circularizer_valid_index
+    cp_sequences["circularizer_valid_score"] = circularizer_valid_score
 
     return cp_sequences
 
@@ -447,33 +471,45 @@ def plot_alignment_scores(assembler, cp_sequences):
     bin_edges = np.arange(0.0, 100.0 + 2 * bin_width, bin_width)
 
     # Compute and plot assembler score
-    assembler_valid_index = cp_sequences['assembler_valid_index']
-    assembler_valid_score = (
-        100.0 * (1 +
-                 (cp_sequences['assembler_valid_score'][assembler_valid_index]
-                  - cp_sequences['qc_sequence_len'][assembler_valid_index])
-                 / cp_sequences['qc_sequence_len'][assembler_valid_index])
-   )
+    assembler_valid_index = cp_sequences["assembler_valid_index"]
+    assembler_valid_score = 100.0 * (
+        1
+        + (
+            cp_sequences["assembler_valid_score"][assembler_valid_index]
+            - cp_sequences["qc_sequence_len"][assembler_valid_index]
+        )
+        / cp_sequences["qc_sequence_len"][assembler_valid_index]
+    )
 
     assembler_histogram, _ = np.histogram(assembler_valid_score, bin_edges)
-    ax.bar(bin_edges[:-1] - bin_width / 4,
-           100.0 * assembler_histogram / len(assembler_valid_index),
-           width=2.0, align='center', color='b')
+    ax.bar(
+        bin_edges[:-1] - bin_width / 4,
+        100.0 * assembler_histogram / len(assembler_valid_index),
+        width=2.0,
+        align="center",
+        color="b",
+    )
 
     # Compute and plot circularizer score
     if assembler in ASSEMBLERS_REQUIRING_APC:
-        circularizer_valid_index = cp_sequences['circularizer_valid_index']
-        circularizer_valid_score = (
-            100.0 * (1 +
-                     (cp_sequences['circularizer_valid_score'][circularizer_valid_index]
-                      - cp_sequences['qc_sequence_len'][circularizer_valid_index])
-                     / cp_sequences['qc_sequence_len'][circularizer_valid_index])
+        circularizer_valid_index = cp_sequences["circularizer_valid_index"]
+        circularizer_valid_score = 100.0 * (
+            1
+            + (
+                cp_sequences["circularizer_valid_score"][circularizer_valid_index]
+                - cp_sequences["qc_sequence_len"][circularizer_valid_index]
+            )
+            / cp_sequences["qc_sequence_len"][circularizer_valid_index]
         )
 
         circularizer_histogram, _ = np.histogram(circularizer_valid_score, bin_edges)
-        ax.bar(bin_edges[:-1] + bin_width / 4,
-               100.0 * circularizer_histogram / len(circularizer_valid_index),
-               width=2.0, align='center', color='r')
+        ax.bar(
+            bin_edges[:-1] + bin_width / 4,
+            100.0 * circularizer_histogram / len(circularizer_valid_index),
+            width=2.0,
+            align="center",
+            color="r",
+        )
 
     ax.set_title(assembler)
     ax.set_xlabel("Alignment Score (% of QC Sequence Length)")
@@ -485,8 +521,11 @@ def plot_alignment_scores(assembler, cp_sequences):
     y1, y2 = ax.get_ylim()
     yW = y2 - y1
 
-    ax.text(x1 + 0.10 * xW, y2 - 0.05 * yW,
-            "Assembled: {}".format(len(assembler_valid_index)))
+    ax.text(
+        x1 + 0.10 * xW,
+        y2 - 0.05 * yW,
+        "Assembled: {}".format(len(assembler_valid_index)),
+    )
 
     plt.show()
 
@@ -495,35 +534,32 @@ if __name__ == "__main__":
 
     # Add and parse arguments
     parser = ArgumentParser()
-    base_dir = os.path.join(
-        os.sep, *os.path.abspath(__file__).split(os.sep)[0:-5])
-    home_dir = os.path.join(
-        os.sep, *os.path.abspath(__file__).split(os.sep)[0:-4])
+    base_dir = os.path.join(os.sep, *os.path.abspath(__file__).split(os.sep)[0:-5])
+    home_dir = os.path.join(os.sep, *os.path.abspath(__file__).split(os.sep)[0:-4])
     parser.add_argument(
-        '-d', '--assembler-data-directory',
-        default=os.path.join(
-            base_dir,
-            "addgene-assembler-data",
-            "results-2020-01-16"),
-        help="directory containing assembler run directory")
+        "-d",
+        "--assembler-data-directory",
+        default=os.path.join(base_dir, "addgene-assembler-data", "results-2020-01-16"),
+        help="directory containing assembler run directory",
+    )
     parser.add_argument(
-        '-s', '--sequencing-data-directory',
-        default=os.path.join(
-            base_dir,
-            "addgene-sequencing-data"),
-        help="directory containing sequencing data directories")
+        "-s",
+        "--sequencing-data-directory",
+        default=os.path.join(base_dir, "addgene-sequencing-data"),
+        help="directory containing sequencing data directories",
+    )
     parser.add_argument(
-        '-q', '--qc-sequences-file',
+        "-q",
+        "--qc-sequences-file",
         default="2018_QC_Sequences.csv",
-        help="file containing QC sequences")
+        help="file containing QC sequences",
+    )
     parser.add_argument(
-        '-p', '--plot',
-        action='store_true',
-        help="plot alignment results")
+        "-p", "--plot", action="store_true", help="plot alignment results"
+    )
     parser.add_argument(
-        '-r', '--reprocess',
-        action='store_true',
-        help="reprocess each run directory")
+        "-r", "--reprocess", action="store_true", help="reprocess each run directory"
+    )
     options = parser.parse_args()
 
     # Read and parse configuration file
@@ -531,24 +567,23 @@ if __name__ == "__main__":
     config_file = "pairwise-rl-01.cfg"
     config = ConfigParser()
     config.read(os.path.join(config_dir, config_file))
-    config['aligner']['file'] = config_file
+    config["aligner"]["file"] = config_file
 
     # Identify run directories
     assembler_run_dirs = []
     for assembler_run_dir in os.listdir(options.assembler_data_directory):
         if os.path.isdir(
-            os.path.join(
-                options.assembler_data_directory,
-                assembler_run_dir)):
+            os.path.join(options.assembler_data_directory, assembler_run_dir)
+        ):
             assembler_run_dirs.append(assembler_run_dir)
 
     # Initialize candidate process alignment dictionary
     cp_alignment = {}
-    cp_alignment['aligner'] = dict(config['aligner'])
+    cp_alignment["aligner"] = dict(config["aligner"])
     for assembler_run_dir in assembler_run_dirs:
 
         # Identify assembler corresponding to the run directory
-        assembler = assembler_run_dir.split('-')[0]
+        assembler = assembler_run_dir.split("-")[0]
 
         # Initialize candidate process assembler dictionary
         cp_alignment[assembler] = {}
@@ -556,8 +591,8 @@ if __name__ == "__main__":
         # Create and dump, or load candidate process sequences pickle
         cp_alignment_path = os.path.join(
             options.assembler_data_directory,
-            assembler_run_dir + "-" + os.path.basename(config_file)
-            ).replace(".cfg", ".pickle")
+            assembler_run_dir + "-" + os.path.basename(config_file),
+        ).replace(".cfg", ".pickle")
         if not os.path.isfile(cp_alignment_path) or options.reprocess:
 
             # Align sequences produced by candidate sequence assembly
@@ -569,24 +604,25 @@ if __name__ == "__main__":
                 assembler_run_dir,
                 options.sequencing_data_directory,
                 options.qc_sequences_file,
-                dict(config['aligner']))
+                dict(config["aligner"]),
+            )
 
-            with open(cp_alignment_path, 'wb') as f:
+            with open(cp_alignment_path, "wb") as f:
                 pickle.dump(cp_sequences, f, pickle.HIGHEST_PROTOCOL)
 
         else:
 
-            with open(cp_alignment_path, 'rb') as f:
+            with open(cp_alignment_path, "rb") as f:
                 cp_sequences = pickle.load(f)
 
         # Accumulate alignement results
         cp_sequences = accumulate_alignment_scores(assembler, cp_sequences)
-        cp_alignment[assembler]['sequences'] = cp_sequences
+        cp_alignment[assembler]["sequences"] = cp_sequences
 
         # Note in computing valid indexes below that since the
         # assembler results are from the same plates, the nonzero QC
         # sequences are the same for each assembler
-        qc_valid_index = (cp_sequences['qc_sequence_len'] > 0)
+        qc_valid_index = cp_sequences["qc_sequence_len"] > 0
 
         # TODO: Review all following lines
 
@@ -597,121 +633,289 @@ if __name__ == "__main__":
         # Print alignment results
         print("")
         print("Assembler: {}".format(assembler))
-        print("    Assembled (nonzero length): {:.1f}%".format(
-            100 * sum(cp_sequences['assembler_sequence_len'] > 0)
-            / len(cp_sequences['assembler_sequence_len'])))
+        print(
+            "    Assembled (nonzero length): {:.1f}%".format(
+                100
+                * sum(cp_sequences["assembler_sequence_len"] > 0)
+                / len(cp_sequences["assembler_sequence_len"])
+            )
+        )
         if assembler in ASSEMBLERS_REQUIRING_APC:
-            print("    Circularized (nonzero length): {:.1f}%".format(
-                100 * sum(cp_sequences['circularizer_sequence_len'] > 0)
-                / sum(cp_sequences['assembler_sequence_len'] > 0)))
+            print(
+                "    Circularized (nonzero length): {:.1f}%".format(
+                    100
+                    * sum(cp_sequences["circularizer_sequence_len"] > 0)
+                    / sum(cp_sequences["assembler_sequence_len"] > 0)
+                )
+            )
 
         fraction_aligned = 0.10
-        print("    Assembly aligned (within {:.1f}%): {:.1f}%".format(
-            100 * fraction_aligned,
-            100 * sum(
-                (cp_sequences['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
-                 cp_sequences['assembler_valid_score'][qc_valid_index]) &
-                (cp_sequences['assembler_valid_score'][qc_valid_index] <=
-                 cp_sequences['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned)))
-            / len(cp_sequences['assembler_sequence_len'][qc_valid_index])))
-        if assembler in ASSEMBLERS_REQUIRING_APC:
-            print("    Circularized assembly aligned (within {:.1f}%): {:.1f}%".format(
+        print(
+            "    Assembly aligned (within {:.1f}%): {:.1f}%".format(
                 100 * fraction_aligned,
-                100 * sum(
-                    (cp_sequences['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
-                     cp_sequences['circularizer_valid_score'][qc_valid_index]) &
-                    (cp_sequences['circularizer_valid_score'][qc_valid_index] <=
-                     cp_sequences['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned)))
-                / sum(cp_sequences['assembler_sequence_len'][qc_valid_index] > 0)))
+                100
+                * sum(
+                    (
+                        cp_sequences["qc_sequence_len"][qc_valid_index]
+                        * (1.0 - fraction_aligned)
+                        <= cp_sequences["assembler_valid_score"][qc_valid_index]
+                    )
+                    & (
+                        cp_sequences["assembler_valid_score"][qc_valid_index]
+                        <= cp_sequences["qc_sequence_len"][qc_valid_index]
+                        * (1.0 + fraction_aligned)
+                    )
+                )
+                / len(cp_sequences["assembler_sequence_len"][qc_valid_index]),
+            )
+        )
+        if assembler in ASSEMBLERS_REQUIRING_APC:
+            print(
+                "    Circularized assembly aligned (within {:.1f}%): {:.1f}%".format(
+                    100 * fraction_aligned,
+                    100
+                    * sum(
+                        (
+                            cp_sequences["qc_sequence_len"][qc_valid_index]
+                            * (1.0 - fraction_aligned)
+                            <= cp_sequences["circularizer_valid_score"][qc_valid_index]
+                        )
+                        & (
+                            cp_sequences["circularizer_valid_score"][qc_valid_index]
+                            <= cp_sequences["qc_sequence_len"][qc_valid_index]
+                            * (1.0 + fraction_aligned)
+                        )
+                    )
+                    / sum(cp_sequences["assembler_sequence_len"][qc_valid_index] > 0),
+                )
+            )
 
     if assembler != "seqwell":
         print("")
         print("Assembler: any")
-        print("    Assembled (nonzero length): {:.1f}%".format(
-            100 * sum(
-                # (cp_alignment['masurca']['sequences']['assembler_sequence_len'] > 0) |
-                (cp_alignment['novoplasty']['sequences']['assembler_sequence_len'] > 0) |
-                (cp_alignment['shovill']['sequences']['assembler_sequence_len'] > 0) |
-                # (cp_alignment['skesa']['sequences']['assembler_sequence_len'] > 0) |
-                (cp_alignment['spades']['sequences']['assembler_sequence_len'] > 0) # |
-                # (cp_alignment['unicycler']['sequences']['assembler_sequence_len'] > 0)
-            ) / len(cp_sequences['assembler_sequence_len'])))
-        print("    Circularized (nonzero length): {:.1f}%".format(
-            100 * sum(
-                # (cp_alignment['masurca']['sequences']['circularizer_sequence_len'] > 0) |
-                (cp_alignment['novoplasty']['sequences']['assembler_sequence_len'] > 0) |
-                (cp_alignment['shovill']['sequences']['circularizer_sequence_len'] > 0) |
-                # (cp_alignment['skesa']['sequences']['circularizer_sequence_len'] > 0) |
-                (cp_alignment['spades']['sequences']['circularizer_sequence_len'] > 0) # |
-                # (cp_alignment['unicycler']['sequences']['circularizer_sequence_len'] > 0)
-            ) / len(cp_sequences['assembler_sequence_len'])))
+        print(
+            "    Assembled (nonzero length): {:.1f}%".format(
+                100
+                * sum(
+                    # (cp_alignment['masurca']['sequences']['assembler_sequence_len'] > 0) |
+                    (
+                        cp_alignment["novoplasty"]["sequences"][
+                            "assembler_sequence_len"
+                        ]
+                        > 0
+                    )
+                    | (
+                        cp_alignment["shovill"]["sequences"]["assembler_sequence_len"]
+                        > 0
+                    )
+                    |
+                    # (cp_alignment['skesa']['sequences']['assembler_sequence_len'] > 0) |
+                    (
+                        cp_alignment["spades"]["sequences"]["assembler_sequence_len"]
+                        > 0
+                    )  # |
+                    # (cp_alignment['unicycler']['sequences']['assembler_sequence_len'] > 0)
+                )
+                / len(cp_sequences["assembler_sequence_len"])
+            )
+        )
+        print(
+            "    Circularized (nonzero length): {:.1f}%".format(
+                100
+                * sum(
+                    # (cp_alignment['masurca']['sequences']['circularizer_sequence_len'] > 0) |
+                    (
+                        cp_alignment["novoplasty"]["sequences"][
+                            "assembler_sequence_len"
+                        ]
+                        > 0
+                    )
+                    | (
+                        cp_alignment["shovill"]["sequences"][
+                            "circularizer_sequence_len"
+                        ]
+                        > 0
+                    )
+                    |
+                    # (cp_alignment['skesa']['sequences']['circularizer_sequence_len'] > 0) |
+                    (
+                        cp_alignment["spades"]["sequences"]["circularizer_sequence_len"]
+                        > 0
+                    )  # |
+                    # (cp_alignment['unicycler']['sequences']['circularizer_sequence_len'] > 0)
+                )
+                / len(cp_sequences["assembler_sequence_len"])
+            )
+        )
 
-        print("    Linear assembly aligned (within {:.1f}%): {:.1f}".format(
-            100 * fraction_aligned,
-            100 * sum(
-                # ((cp_alignment['masurca']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
-                #   cp_alignment['masurca']['sequences']['assembler_valid_score'][qc_valid_index]) &
-                #  (cp_alignment['masurca']['sequences']['assembler_valid_score'][qc_valid_index] <=
-                #   cp_alignment['masurca']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned))) |
+        print(
+            "    Linear assembly aligned (within {:.1f}%): {:.1f}".format(
+                100 * fraction_aligned,
+                100
+                * sum(
+                    # ((cp_alignment['masurca']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
+                    #   cp_alignment['masurca']['sequences']['assembler_valid_score'][qc_valid_index]) &
+                    #  (cp_alignment['masurca']['sequences']['assembler_valid_score'][qc_valid_index] <=
+                    #   cp_alignment['masurca']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned))) |
+                    (
+                        (
+                            cp_alignment["novoplasty"]["sequences"]["qc_sequence_len"][
+                                qc_valid_index
+                            ]
+                            * (1.0 - fraction_aligned)
+                            <= cp_alignment["novoplasty"]["sequences"][
+                                "assembler_valid_score"
+                            ][qc_valid_index]
+                        )
+                        & (
+                            cp_alignment["novoplasty"]["sequences"][
+                                "assembler_valid_score"
+                            ][qc_valid_index]
+                            <= cp_alignment["novoplasty"]["sequences"][
+                                "qc_sequence_len"
+                            ][qc_valid_index]
+                            * (1.0 + fraction_aligned)
+                        )
+                    )
+                    | (
+                        (
+                            cp_alignment["shovill"]["sequences"]["qc_sequence_len"][
+                                qc_valid_index
+                            ]
+                            * (1.0 - fraction_aligned)
+                            <= cp_alignment["shovill"]["sequences"][
+                                "assembler_valid_score"
+                            ][qc_valid_index]
+                        )
+                        & (
+                            cp_alignment["shovill"]["sequences"][
+                                "assembler_valid_score"
+                            ][qc_valid_index]
+                            <= cp_alignment["shovill"]["sequences"]["qc_sequence_len"][
+                                qc_valid_index
+                            ]
+                            * (1.0 + fraction_aligned)
+                        )
+                    )
+                    |
+                    # ((cp_alignment['skesa']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
+                    #   cp_alignment['skesa']['sequences']['assembler_valid_score'][qc_valid_index]) &
+                    #  (cp_alignment['skesa']['sequences']['assembler_valid_score'][qc_valid_index] <=
+                    #   cp_alignment['skesa']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned))) |
+                    (
+                        (
+                            cp_alignment["spades"]["sequences"]["qc_sequence_len"][
+                                qc_valid_index
+                            ]
+                            * (1.0 - fraction_aligned)
+                            <= cp_alignment["spades"]["sequences"][
+                                "assembler_valid_score"
+                            ][qc_valid_index]
+                        )
+                        & (
+                            cp_alignment["spades"]["sequences"][
+                                "assembler_valid_score"
+                            ][qc_valid_index]
+                            <= cp_alignment["spades"]["sequences"]["qc_sequence_len"][
+                                qc_valid_index
+                            ]
+                            * (1.0 + fraction_aligned)
+                        )
+                    )  # |
+                    # ((cp_alignment['unicycler']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
+                    #   cp_alignment['unicycler']['sequences']['assembler_valid_score'][qc_valid_index]) &
+                    #  (cp_alignment['unicycler']['sequences']['assembler_valid_score'][qc_valid_index] <=
+                    #   cp_alignment['unicycler']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned)))
+                )
+                / len(
+                    cp_alignment["novoplasty"]["sequences"]["assembler_sequence_len"]
+                ),
+            )
+        )
 
-                ((cp_alignment['novoplasty']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
-                  cp_alignment['novoplasty']['sequences']['assembler_valid_score'][qc_valid_index]) &
-                 (cp_alignment['novoplasty']['sequences']['assembler_valid_score'][qc_valid_index] <=
-                  cp_alignment['novoplasty']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned))) |
-
-                ((cp_alignment['shovill']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
-                  cp_alignment['shovill']['sequences']['assembler_valid_score'][qc_valid_index]) &
-                 (cp_alignment['shovill']['sequences']['assembler_valid_score'][qc_valid_index] <=
-                  cp_alignment['shovill']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned))) |
-
-                # ((cp_alignment['skesa']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
-                #   cp_alignment['skesa']['sequences']['assembler_valid_score'][qc_valid_index]) &
-                #  (cp_alignment['skesa']['sequences']['assembler_valid_score'][qc_valid_index] <=
-                #   cp_alignment['skesa']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned))) |
-
-                ((cp_alignment['spades']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
-                  cp_alignment['spades']['sequences']['assembler_valid_score'][qc_valid_index]) &
-                 (cp_alignment['spades']['sequences']['assembler_valid_score'][qc_valid_index] <=
-                  cp_alignment['spades']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned))) # |
-
-                # ((cp_alignment['unicycler']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
-                #   cp_alignment['unicycler']['sequences']['assembler_valid_score'][qc_valid_index]) &
-                #  (cp_alignment['unicycler']['sequences']['assembler_valid_score'][qc_valid_index] <=
-                #   cp_alignment['unicycler']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned)))
-
-            ) / len(cp_alignment['novoplasty']['sequences']['assembler_sequence_len'])))
-
-        print("    Circular assembly aligned (within {:.1f}%): {:.1f}".format(
-            100 * fraction_aligned,
-            100 * sum(
-                # ((cp_alignment['masurca']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
-                #   cp_alignment['masurca']['sequences']['circularizer_valid_score'][qc_valid_index]) &
-                #  (cp_alignment['masurca']['sequences']['circularizer_valid_score'][qc_valid_index] <=
-                #   cp_alignment['masurca']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned))) |
-
-                ((cp_alignment['novoplasty']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
-                  cp_alignment['novoplasty']['sequences']['assembler_valid_score'][qc_valid_index]) &
-                 (cp_alignment['novoplasty']['sequences']['assembler_valid_score'][qc_valid_index] <=
-                  cp_alignment['novoplasty']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned))) |
-
-                ((cp_alignment['shovill']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
-                  cp_alignment['shovill']['sequences']['circularizer_valid_score'][qc_valid_index]) &
-                 (cp_alignment['shovill']['sequences']['circularizer_valid_score'][qc_valid_index] <=
-                  cp_alignment['shovill']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned))) |
-
-                # ((cp_alignment['skesa']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
-                #   cp_alignment['skesa']['sequences']['circularizer_valid_score'][qc_valid_index]) &
-                #  (cp_alignment['skesa']['sequences']['circularizer_valid_score'][qc_valid_index] <=
-                #   cp_alignment['skesa']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned))) |
-
-                ((cp_alignment['spades']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
-                  cp_alignment['spades']['sequences']['circularizer_valid_score'][qc_valid_index]) &
-                 (cp_alignment['spades']['sequences']['circularizer_valid_score'][qc_valid_index] <=
-                  cp_alignment['spades']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned))) # |
-
-                # ((cp_alignment['unicycler']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
-                #   cp_alignment['unicycler']['sequences']['circularizer_valid_score'][qc_valid_index]) &
-                #  (cp_alignment['unicycler']['sequences']['circularizer_valid_score'][qc_valid_index] <=
-                #   cp_alignment['unicycler']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned)))
-
-            ) / len(cp_alignment['novoplasty']['sequences']['assembler_sequence_len'][qc_valid_index])))
+        print(
+            "    Circular assembly aligned (within {:.1f}%): {:.1f}".format(
+                100 * fraction_aligned,
+                100
+                * sum(
+                    # ((cp_alignment['masurca']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
+                    #   cp_alignment['masurca']['sequences']['circularizer_valid_score'][qc_valid_index]) &
+                    #  (cp_alignment['masurca']['sequences']['circularizer_valid_score'][qc_valid_index] <=
+                    #   cp_alignment['masurca']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned))) |
+                    (
+                        (
+                            cp_alignment["novoplasty"]["sequences"]["qc_sequence_len"][
+                                qc_valid_index
+                            ]
+                            * (1.0 - fraction_aligned)
+                            <= cp_alignment["novoplasty"]["sequences"][
+                                "assembler_valid_score"
+                            ][qc_valid_index]
+                        )
+                        & (
+                            cp_alignment["novoplasty"]["sequences"][
+                                "assembler_valid_score"
+                            ][qc_valid_index]
+                            <= cp_alignment["novoplasty"]["sequences"][
+                                "qc_sequence_len"
+                            ][qc_valid_index]
+                            * (1.0 + fraction_aligned)
+                        )
+                    )
+                    | (
+                        (
+                            cp_alignment["shovill"]["sequences"]["qc_sequence_len"][
+                                qc_valid_index
+                            ]
+                            * (1.0 - fraction_aligned)
+                            <= cp_alignment["shovill"]["sequences"][
+                                "circularizer_valid_score"
+                            ][qc_valid_index]
+                        )
+                        & (
+                            cp_alignment["shovill"]["sequences"][
+                                "circularizer_valid_score"
+                            ][qc_valid_index]
+                            <= cp_alignment["shovill"]["sequences"]["qc_sequence_len"][
+                                qc_valid_index
+                            ]
+                            * (1.0 + fraction_aligned)
+                        )
+                    )
+                    |
+                    # ((cp_alignment['skesa']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
+                    #   cp_alignment['skesa']['sequences']['circularizer_valid_score'][qc_valid_index]) &
+                    #  (cp_alignment['skesa']['sequences']['circularizer_valid_score'][qc_valid_index] <=
+                    #   cp_alignment['skesa']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned))) |
+                    (
+                        (
+                            cp_alignment["spades"]["sequences"]["qc_sequence_len"][
+                                qc_valid_index
+                            ]
+                            * (1.0 - fraction_aligned)
+                            <= cp_alignment["spades"]["sequences"][
+                                "circularizer_valid_score"
+                            ][qc_valid_index]
+                        )
+                        & (
+                            cp_alignment["spades"]["sequences"][
+                                "circularizer_valid_score"
+                            ][qc_valid_index]
+                            <= cp_alignment["spades"]["sequences"]["qc_sequence_len"][
+                                qc_valid_index
+                            ]
+                            * (1.0 + fraction_aligned)
+                        )
+                    )  # |
+                    # ((cp_alignment['unicycler']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 - fraction_aligned) <=
+                    #   cp_alignment['unicycler']['sequences']['circularizer_valid_score'][qc_valid_index]) &
+                    #  (cp_alignment['unicycler']['sequences']['circularizer_valid_score'][qc_valid_index] <=
+                    #   cp_alignment['unicycler']['sequences']['qc_sequence_len'][qc_valid_index] * (1.0 + fraction_aligned)))
+                )
+                / len(
+                    cp_alignment["novoplasty"]["sequences"]["assembler_sequence_len"][
+                        qc_valid_index
+                    ]
+                ),
+            )
+        )
