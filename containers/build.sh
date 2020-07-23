@@ -4,6 +4,8 @@ docker build --tag ralatsdio/biocontainers:v1.1.0 BioContainers/v1.1.0 \
        | tee BioContainers/v1.1.0/build.log 2>&1
 
 # Build assembler images
+docker build --tag ralatsdio/idba:v1.1.3 IDBA/v1.1.3 \
+       | tee IDBA/v1.1.3/build.log 2>&1
 docker build --tag ralatsdio/masurca:v3.3.1 MaSuRCA/v3.3.1 \
        | tee MaSuRCA/v3.3.1/build.log 2>&1
 docker build --tag ralatsdio/novoplasty:v3.7.0 NOVOPlasty/v3.7.0 \
