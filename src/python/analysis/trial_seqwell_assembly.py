@@ -27,7 +27,7 @@ APC_BASE_FNM = "apc"
 APC_OUTPUT_FNM = APC_BASE_FNM + ".1.fa"
 
 MAX_DIFFERENCE = 0.10
-MAX_ATTEMPTS = 16
+MAX_ATTEMPTS = 4
 
 
 if __name__ == "__main__":
