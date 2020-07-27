@@ -1585,3 +1585,61 @@ def unicycler(
         image, command=command, volumes=volumes, working_dir=working_dir,
     )
     return command
+
+
+def idba(inp_fq_one_fNm, inp_fq_two_fNm, out_dir, *args, inp_fq_lng_fNm=None, **kwargs):
+    """
+    Run IDBA assember v1.1.3 in a docker container.
+
+    Usage: idba_ud -r read.fa -o output_dir
+
+    Allowed Options: 
+      -o, --out arg (=out)           output directory
+      -r, --read arg                 fasta read file (<=128)
+          --read_level_2 arg         paired-end reads fasta for second level scaffolds
+          --read_level_3 arg         paired-end reads fasta for third level scaffolds
+          --read_level_4 arg         paired-end reads fasta for fourth level scaffolds
+          --read_level_5 arg         paired-end reads fasta for fifth level scaffolds
+      -l, --long_read arg            fasta long read file (>128)
+          --mink arg (=20)           minimum k value (<=124)
+          --maxk arg (=50)           maximum k value (<=124)
+          --step arg (=10)           increment of k-mer of each iteration
+          --prefix arg (=3)          prefix length used to build sub k-mer table
+          --min_count arg (=2)       minimum multiplicity for filtering k-mer when building the graph
+          --min_support arg (=1)     minimum supoort in each iteration
+          --num_threads arg (=0)     number of threads
+          --seed_kmer arg (=30)      seed kmer size for alignment
+          --min_contig arg (=200)    minimum size of contig
+          --similar arg (=0.95)      similarity for alignment
+          --max_mismatch arg (=3)    max mismatch of error correction
+          --min_pairs arg (=3)       minimum number of pairs
+          --no_coverage              do not iterate on coverage
+          --no_correct               do not do correction
+          --pre_correction           perform pre-correction before assembly
+    """
+    # Define image, and Docker run parameters
+    image = "ralatsdio/idba:v1.1.3"
+    hosting_dir = os.getcwd()
+    working_dir = "/data"
+    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
+
+    # Define IDBA command
+    # fq2fa --merge --filter read_1.fq read_2.fq read.fa
+    # idba idba_ud  -r read.fa -o output
+    command = " ".join(
+        ["fq2a", "--merge", "--filter", inp_fq_one_fNm, inp_fq_two_fNm, "read.fa"]
+    )
+    if inp_fq_lng_fNm is not None:
+        command = " ".join([command, "-l", inp_fq_lng_fNm])
+    command = " ".join([command, "-o", out_dir])
+    for arg in args:
+        command = " ".join([command, arg])
+    for key, val in kwargs.items():
+        command = " ".join([command, "--" + key])
+
+    # Run the command in the Docker image
+    client = docker.from_env()
+    client.containers.run(
+        image, command=command, volumes=volumes, working_dir=working_dir,
+    )
+    return command
