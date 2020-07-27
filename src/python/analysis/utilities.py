@@ -1589,7 +1589,7 @@ def unicycler(
 
 def idba(inp_fq_one_fNm, inp_fq_two_fNm, out_dir, *args, inp_fq_lng_fNm=None, **kwargs):
     """
-    Run IDBA assember v1.1.3 in a docker container.
+    Run IDBA-UD assember v1.1.3 in a docker container.
 
     Usage: idba_ud -r read.fa -o output_dir
 
@@ -1627,8 +1627,9 @@ def idba(inp_fq_one_fNm, inp_fq_two_fNm, out_dir, *args, inp_fq_lng_fNm=None, **
     # fq2fa --merge --filter read_1.fq read_2.fq read.fa
     # idba idba_ud  -r read.fa -o output
     command = " ".join(
-        ["fq2a", "--merge", "--filter", inp_fq_one_fNm, inp_fq_two_fNm, "read.fa"]
+        ["fq2a", "--merge", "--filter", inp_fq_one_fNm, inp_fq_two_fNm, "read.fa", ";"]
     )
+    command = " ".join([command, "idba", "idba_ud", "-r", "read.fa"])
     if inp_fq_lng_fNm is not None:
         command = " ".join([command, "-l", inp_fq_lng_fNm])
     command = " ".join([command, "-o", out_dir])
