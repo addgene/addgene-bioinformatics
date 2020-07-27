@@ -456,7 +456,7 @@ def simulate_paired_reads_wgsim(
     len_first_read=250,
     len_second_read=250,
     outer_distance=750,
-    ):
+):
     seq_rcd = SeqRecord(seq, id="0", name="base", description="reference")
     seq_fNm = seq_nm + ".fasta"
     rd1_fNm = seq_nm + "_rd1.fastq"
@@ -1288,13 +1288,7 @@ def ssake(
     return command
 
 
-def spades(
-    inp_fq_one_fNm,
-    inp_fq_two_fNm,
-    out_dir,
-    *args,
-    **kwargs
-):
+def spades(inp_fq_one_fNm, inp_fq_two_fNm, out_dir, *args, **kwargs):
     # TODO: Resolve
     """
     trusted_contigs_fNm=None,
@@ -1576,14 +1570,14 @@ def unicycler(
     volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
 
     # Define Unicycler command
-    command = " ".join(["unicycler", "-1", inp_fq_one_fNm, "-2", inp_fq_two_fNm,])
+    command = " ".join(["unicycler", "-1", inp_fq_one_fNm, "-2", inp_fq_two_fNm])
     if inp_fq_lng_fNm is not None:
-        command = " ".join([command, "-l", inp_fq_lng_fNm,])
-    command = " ".join([command, "-o", out_dir,])
+        command = " ".join([command, "-l", inp_fq_lng_fNm])
+    command = " ".join([command, "-o", out_dir])
     for arg in args:
-        command = " ".join([command, arg,])
+        command = " ".join([command, arg])
     for key, val in kwargs.items():
-        command = " ".join([command, "--" + key,])
+        command = " ".join([command, "--" + key])
 
     # Run the command in the Docker image
     client = docker.from_env()
