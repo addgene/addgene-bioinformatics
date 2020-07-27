@@ -5,11 +5,13 @@ from pathlib import Path
 from sys import executable
 
 OPTIONS = {
-    "spades": {"--cov-cutoff": ["auto", "off", "100"], "--careful": [True, False]},
-    "unicycler": {
-        "--depth-filter": ["0.1", False],
-        "‑m": ["normal", "bold", "conservative"],
+    "spades": {
+        "--cov-cutoff": ["auto", "off", "100"],
+        "--careful": [True, False],
+        "--plasmid": [True, False],
+        "--isolate": [True, False],
     },
+    "unicycler": {"--depth-filter": ["0.1", False], "-m": ["normal", "bold"]},
 }
 PLATES = [
     "A11935_sW0148",
