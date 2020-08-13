@@ -6,12 +6,12 @@ from sys import executable
 
 OPTIONS = {
     "spades": {
-        "--cov-cutoff": ["auto", "off", "100"],
+        "--cov-cutoff": ["auto", "off", "50", "100", "250"],
         "--careful": [True, False],
         "--plasmid": [True, False],
         "--isolate": [True, False],
     },
-    "unicycler": {"--depth-filter": ["0.1", False], "-m": ["normal", "bold"]},
+    "unicycler": {"--depth_filter": ["0.1", False], "--mode": ["normal", "bold"]},
 }
 PLATES = [
     "A11935_sW0148",
