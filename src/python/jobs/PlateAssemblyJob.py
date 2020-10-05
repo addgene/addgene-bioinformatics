@@ -2,6 +2,7 @@ from argparse import ArgumentParser
 from glob import glob
 import logging
 import os
+from pathlib import Path
 import re
 
 import boto
@@ -21,7 +22,7 @@ class PlateAssemblyJob(Job):
     FASTQ read files were found.
     """
     def __init__(self, well_specs, read_one_file_ids, read_two_file_ids,
-                 plate_spec, assembler, coverage_cutoff,
+                 plate_spec, assembler, config_file_path=None,
                  *args, **kwargs):
         """
         Parameters
@@ -39,8 +40,6 @@ class PlateAssemblyJob(Job):
             specification for plate containing the specified wells
         assembler : str
             name of assembler to run, from utilities.ASSEMBLERS_TO_RUN
-        coverage_cutoff : str
-            read coverage cutoff value
         """
         super(PlateAssemblyJob, self).__init__(*args, **kwargs)
         self.well_specs = well_specs
@@ -50,7 +49,7 @@ class PlateAssemblyJob(Job):
         if assembler not in utilities.ASSEMBLERS_TO_RUN:
             raise Exception("Unexpected assembler")
         self.assembler = assembler
-        self.coverage_cutoff = coverage_cutoff
+        self.config_file_path = config_file_path
 
     def run(self, fileStore):
         """
@@ -71,8 +70,8 @@ class PlateAssemblyJob(Job):
                         self.read_one_file_ids[iW],
                         self.read_two_file_ids[iW],
                         self.assembler,
-                        self.coverage_cutoff,
                         self.plate_spec + "_" + self.well_specs[iW],
+                        config_file_path=self.config_file_path
                         )).rv())
         return well_assembly_rvs
 
@@ -99,8 +98,8 @@ if __name__ == "__main__":
     parser.add_argument('-a', '--assembler', default="spades",
                         choices=utilities.ASSEMBLERS_TO_RUN,
                         help="name of the assembler to run")
-    parser.add_argument('-c', '--coverage-cutoff', default="100",
-                        help="the coverage cutoff")
+    parser.add_argument("-c", "--config", default=None,
+                        help="a .ini file with args to be passed to the assembler")  
     parser.add_argument('-o', '--output-directory', default=None,
                         help="the directory containing all output files")
 
@@ -166,7 +165,7 @@ if __name__ == "__main__":
                 read_two_file_ids,
                 options.plate_spec,
                 options.assembler,
-                options.coverage_cutoff,
+                config_file_path=str(Path(options.config).absolute()) if options.config is not None else None,
                 )
             well_assembly_rvs = toil.start(plate_assembly_job)
 
@@ -178,6 +177,6 @@ if __name__ == "__main__":
         # Export all assembler output files, and apc output files, if
         # apc is required by the asembler, from the file store
         utilities.exportWellAssemblyFiles(
-            toil, options.assembler, options.plate_spec, well_specs,
+            toil, options.assembler, options.output_directory, well_specs,
             well_assembly_rvs
         )

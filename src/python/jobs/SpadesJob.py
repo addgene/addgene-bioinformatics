@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 import logging
 import os
+from pathlib import Path
 
 from toil.job import Job
 from toil.common import Toil
@@ -17,9 +18,10 @@ class SpadesJob(Job):
     cutoff specification.
     """
     def __init__(self, read_one_file_id, read_two_file_id,
-                 coverage_cutoff, output_directory, parent_rv={},
+                 output_directory, parent_rv={},
                  read_one_file_name="R1.fastq.gz",
                  read_two_file_name="R2.fastq.gz",
+                 config_file_path=None,
                  *args, **kwargs):
         """
         Parameters
@@ -30,8 +32,6 @@ class SpadesJob(Job):
         read_two_file_id : toil.fileStore.FileID
             id of the file in the file store containing FASTQ Illumina
             short right paired reads
-        coverage_cutoff : str
-            read coverage cutoff value (must be "off", "auto", or a string representing a positive float)
         output_directory : str
             name of directory for output
         parent_rv : dict
@@ -42,12 +42,9 @@ class SpadesJob(Job):
         self.read_one_file_name = read_one_file_name
         self.read_two_file_id = read_two_file_id
         self.read_two_file_name = read_two_file_name
-        self.coverage_cutoff = coverage_cutoff
         self.output_directory = output_directory
         self.parent_rv = parent_rv
-
-        # Check that the value of the coverage cutoff is a positive float, "auto", or "off"
-        assert coverage_cutoff == "auto" or coverage_cutoff == "off" or float(coverage_cutoff) > 0
+        self.config_file_path = config_file_path
 
     def run(self, fileStore):
         """
@@ -77,21 +74,26 @@ class SpadesJob(Job):
             image = "ralatsdio/spades:v3.13.1"
             working_dir = fileStore.localTempDir
             logger.info("Calling image {0}".format(image))
+            parameters = ["spades.py",
+                          "-1",
+                          read_one_file_path,
+                          "-2",
+                          read_two_file_path,
+                          "-o",
+                          os.path.join(working_dir, self.output_directory),
+                         ]
+
+            if self.config_file_path is not None:
+                parsed_params = utilities.parseConfigFile(self.config_file_path)
+                parameters.extend(parsed_params)
+                logger.info("Adding parsed params to CLI call: " + str(parsed_params))
+
             apiDockerCall(
                 self,
                 image=image,
                 volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
                 working_dir=working_dir,
-                parameters=["spades.py",
-                            "-1",
-                            read_one_file_path,
-                            "-2",
-                            read_two_file_path,
-                            "-o",
-                            os.path.join(working_dir, self.output_directory),
-                            "--cov-cutoff",
-                            self.coverage_cutoff,
-                            ])
+                parameters=parameters)
 
             # Write the warnings and spades log files, and contigs FASTA
             # file from the local temporary directory into the file store
@@ -152,10 +154,11 @@ if __name__ == "__main__":
                         help="the plate specification")
     parser.add_argument('-w', '--well-spec', default="B01",
                         help="the well specification")
-    parser.add_argument('-c', '--coverage-cutoff', default="100",
-                        help="the coverage cutoff")
     parser.add_argument('-o', '--output-directory', default=None,
                         help="the directory containing all output files")
+    parser.add_argument("-c", "--config", default=None,
+                        help="a .ini file with args to be passed to SPAdes")  
+
     options = parser.parse_args()
     if options.output_directory is None:
         options.output_directory = options.plate_spec + "_" + options.well_spec
@@ -175,8 +178,8 @@ if __name__ == "__main__":
             spades_job = SpadesJob(
                 read_one_file_ids[0],
                 read_two_file_ids[0],
-                options.coverage_cutoff,
                 options.output_directory,
+                config_file_path=str(Path(options.config).absolute()) if options.config is not None else None,
                 )
             spades_rv = toil.start(spades_job)
 

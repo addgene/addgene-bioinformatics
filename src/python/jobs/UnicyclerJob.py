@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 import logging
 import os
+from pathlib import Path
 
 from toil.job import Job
 from toil.common import Toil
@@ -19,6 +20,7 @@ class UnicyclerJob(Job):
                  output_directory, parent_rv={},
                  read_one_file_name="R1.fastq.gz",
                  read_two_file_name="R2.fastq.gz",
+                 config_file_path=None,
                  *args, **kwargs):
         """
         Parameters
@@ -33,6 +35,8 @@ class UnicyclerJob(Job):
             name of directory for output
         parent_rv : dict
             dictionary of return values from the parent job
+        config_file_path : Optional[str]
+            a path to a .ini file containing arguments to be passed to the CLI call
         """
         super(UnicyclerJob, self).__init__(*args, **kwargs)
         self.read_one_file_id = read_one_file_id
@@ -41,6 +45,7 @@ class UnicyclerJob(Job):
         self.read_two_file_name = read_two_file_name
         self.output_directory = output_directory
         self.parent_rv = parent_rv
+        self.config_file_path = config_file_path
 
     def run(self, fileStore):
         """
@@ -69,19 +74,26 @@ class UnicyclerJob(Job):
             image = "ralatsdio/unicycler:v0.4.7"
             working_dir = fileStore.localTempDir
             logger.info("Calling image {0}".format(image))
+            parameters = ["unicycler",
+                          "--short1",
+                          read_one_file_path,
+                          "--short2",
+                          read_two_file_path,
+                          "--out",
+                          os.path.join(working_dir, self.output_directory),
+                         ]
+
+            if self.config_file_path is not None:
+                parsed_params = utilities.parseConfigFile(self.config_file_path)
+                parameters.extend(parsed_params)
+                logger.info("Adding parsed params to CLI call: " + str(parsed_params))
+
             apiDockerCall(
                 self,
                 image=image,
                 volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
                 working_dir=working_dir,
-                parameters=["unicycler",
-                            "--short1",
-                            read_one_file_path,
-                            "--short2",
-                            read_two_file_path,
-                            "--out",
-                            os.path.join(working_dir, self.output_directory),
-                            ])
+                parameters=parameters)
 
             # Write the Unicycler log, and final assembly contigs
             # FASTA and graph GFA v1 files from the local temporary
@@ -144,6 +156,9 @@ if __name__ == "__main__":
                         help="the well specification")
     parser.add_argument('-o', '--output-directory', default=None,
                         help="the directory containing all output files")
+    parser.add_argument("-c", "--config", default=None,
+                        help="a .ini file with args to be passed to Unicycler")
+
     options = parser.parse_args()
     if options.output_directory is None:
         options.output_directory = options.plate_spec + "_" + options.well_spec
@@ -164,6 +179,7 @@ if __name__ == "__main__":
                 read_one_file_ids[0],
                 read_two_file_ids[0],
                 options.output_directory,
+                config_file_path=str(Path(options.config).absolute()) if options.config is not None else None,
                 )
             unicycler_rv = toil.start(unicycler_job)
 
