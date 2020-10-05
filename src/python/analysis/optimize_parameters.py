@@ -56,7 +56,7 @@ for assembler in OPTIONS.keys():
             command = " ".join(
                 [
                     executable,
-                    "../src/python/toil/PlateAssemblyJob.py",
+                    "../jobs/PlateAssemblyJob.py",
                     f"-o {output_path / plate}",
                     f"-a {assembler}",
                     f"-c {output_path / (assembler + '.ini')}",
