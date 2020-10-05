@@ -4,3 +4,6 @@
 .vscode/
 dat/miscellaneous/A11967A_sW0154_FASTA/apc*
 .venv
+*.log
+optimization/results*/
+optimization/jobstore*/

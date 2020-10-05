@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 import logging
 import os
+from pathlib import Path
 
 from toil.job import Job
 from toil.common import Toil
@@ -29,8 +30,8 @@ class WellAssemblyJob(Job):
         read_one_file_id,
         read_two_file_id,
         assembler,
-        coverage_cutoff,
         output_directory,
+        config_file_path=None,
         *args,
         **kwargs
     ):
@@ -45,8 +46,6 @@ class WellAssemblyJob(Job):
             right paired reads
         assembler : str
             name of assembler to run, from utilities.ASSEMBLERS_TO_RUN
-        coverage_cutoff : str
-            read coverage cutoff value
         output_directory : str
             name of directory for output
         """
@@ -56,7 +55,7 @@ class WellAssemblyJob(Job):
         if assembler not in utilities.ASSEMBLERS_TO_RUN:
             raise Exception("Unexpected assembler")
         self.assembler = assembler
-        self.coverage_cutoff = coverage_cutoff
+        self.config_file_path = config_file_path
         self.output_directory = output_directory
 
     def run(self, fileStore):
@@ -103,8 +102,8 @@ class WellAssemblyJob(Job):
                 spades_job = SpadesJob(
                     self.read_one_file_id,
                     self.read_two_file_id,
-                    self.coverage_cutoff,
                     self.output_directory,
+                    config_file_path=self.config_file_path,
                 )
                 apc_job = ApcJob(
                     spades_job.rv("spades_rv", "contigs_file", "id"),
@@ -114,7 +113,10 @@ class WellAssemblyJob(Job):
 
             elif self.assembler == "unicycler":
                 unicycler_job = UnicyclerJob(
-                    self.read_one_file_id, self.read_two_file_id, self.output_directory,
+                    self.read_one_file_id,
+                    self.read_two_file_id,
+                    self.output_directory,
+                    config_file_path=self.config_file_path,
                 )
                 apc_job = ApcJob(
                     unicycler_job.rv("unicycler_rv", "contigs_file", "id"),
@@ -173,7 +175,10 @@ if __name__ == "__main__":
         help="name of assembler to run",
     )
     parser.add_argument(
-        "-c", "--coverage-cutoff", default="100", help="the coverage cutoff"
+        "-c",
+        "--config",
+        default=None,
+        help="a .ini file with args to be passed to the assembler",
     )
     parser.add_argument(
         "-o",
@@ -207,8 +212,10 @@ if __name__ == "__main__":
                 read_one_file_ids[0],
                 read_two_file_ids[0],
                 options.assembler,
-                options.coverage_cutoff,
                 options.output_directory,
+                config_file_path=str(Path(options.config).absolute())
+                if options.config is not None
+                else None,
             )
             well_assembly_rv = toil.start(well_assembly_job)
 

@@ -129,7 +129,7 @@ GRAPH_KMER_SIZE = auto
 # Set this to 1 for all Illumina-only assemblies, or set this to 0 if
 # you have more than 15x coverage by long reads (Pacbio or Nanopore)
 # or any other long reads/mate pairs (Illumina MP, Sanger, 454, etc).
-USE_LINKING_MATES = 0
+USE_LINKING_MATES = 1
 # Specifies whether to run mega-reads correction on the grid
 USE_GRID = 0
 # Specifies grid engine to use SGE or SLURM
@@ -164,7 +164,7 @@ CLOSE_GAPS = 1
 NUM_THREADS = {threads}
 # This is mandatory jellyfish hash size -- a safe value is
 # estimated_genome_size*estimated_coverage
-JF_SIZE = 200000000
+JF_SIZE = 2000000
 # Set this to 1 to use SOAPdenovo contigging/scaffolding
 # module. Assembly will be worse but will run faster. Useful for very
 # large (> 5Gbp) genomes from Illumina-only data.
