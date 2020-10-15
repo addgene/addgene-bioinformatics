@@ -1,4 +1,3 @@
-import filecmp
 import os
 import shutil
 import unittest
@@ -67,12 +66,13 @@ class ToilTestCase(unittest.TestCase):
         self.apc_fasta = "apc.1.fa"
 
     def tearDown(self):
-        if os.path.exists(self.test_directory_aa):
-            shutil.rmtree(self.test_directory_aa)
-        if os.path.exists(self.test_directory_ab):
-            shutil.rmtree(self.test_directory_ab)
-        if os.path.exists(self.test_directory_bg):
-            shutil.rmtree(self.test_directory_bg)
+        # if os.path.exists(self.test_directory_aa):
+        #     shutil.rmtree(self.test_directory_aa)
+        # if os.path.exists(self.test_directory_ab):
+        #     shutil.rmtree(self.test_directory_ab)
+        # if os.path.exists(self.test_directory_bg):
+        #     shutil.rmtree(self.test_directory_bg)
+        pass
 
     def _import_read_files(self, toil, well_specs):
         read_one_file_ids, read_two_file_ids = utilities.importReadFiles(
@@ -206,8 +206,8 @@ class JobsTestCase(ToilTestCase):
             spades_job = SpadesJob(
                 read_one_file_ids[0],
                 read_two_file_ids[0],
-                self.coverage_cutoff,
                 self.output_directory_ab,
+                {'coverage-cutoff': 100},
             )
             spades_rv = toil.start(spades_job)
 
@@ -358,24 +358,26 @@ class PlateAssemblyJobTestCase(ToilTestCase):
 if __name__ == "__main__":
 
     jobsTestSuite = unittest.TestSuite()
-    jobsTestSuite.addTest(JobsTestCase("test_masurca_job"))
-    jobsTestSuite.addTest(JobsTestCase("test_novoplasty_job"))
-    jobsTestSuite.addTest(JobsTestCase("test_shovill_job"))
-    jobsTestSuite.addTest(JobsTestCase("test_skesa_job"))
-    jobsTestSuite.addTest(JobsTestCase("test_spades_job"))
-    jobsTestSuite.addTest(JobsTestCase("test_unicycler_job"))
+    # jobsTestSuite.addTest(JobsTestCase("test_masurca_job"))
+    # jobsTestSuite.addTest(JobsTestCase("test_novoplasty_job"))
+    # jobsTestSuite.addTest(JobsTestCase("test_shovill_job"))
+    # jobsTestSuite.addTest(JobsTestCase("test_skesa_job"))
+    # jobsTestSuite.addTest(JobsTestCase("test_spades_job"))
+    # jobsTestSuite.addTest(JobsTestCase("test_unicycler_job"))
     jobsTestSuite.addTest(JobsTestCase("test_apc_job"))
 
-    wellAssemblyJobTestSuite = unittest.TestLoader().loadTestsFromTestCase(
-        WellAssemblyJobTestCase
-    )
+    # wellAssemblyJobTestSuite = unittest.TestLoader().loadTestsFromTestCase(
+    # WellAssemblyJobTestCase
+    # )
 
-    plateAssemblyJobTestSuite = unittest.TestLoader().loadTestsFromTestCase(
-        PlateAssemblyJobTestCase
-    )
+    # plateAssemblyJobTestSuite = unittest.TestLoader().loadTestsFromTestCase(
+    # PlateAssemblyJobTestCase
+    # )
 
-    testSuites = unittest.TestSuite(
-        [jobsTestSuite, wellAssemblyJobTestSuite, plateAssemblyJobTestSuite,]
-    )
+    # testSuites = unittest.TestSuite(
+    # [jobsTestSuite, wellAssemblyJobTestSuite, plateAssemblyJobTestSuite,]
+    # )
+
+    testSuites = unittest.TestSuite([jobsTestSuite,])
 
     unittest.TextTestRunner(verbosity=2).run(testSuites)

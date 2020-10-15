@@ -29,7 +29,8 @@ class PlateAssemblyJob(Job):
         read_two_file_ids,
         plate_spec,
         assembler,
-        config_file_path=None,
+        config_file_id,
+        config_file_name,
         *args,
         **kwargs
     ):
@@ -49,6 +50,10 @@ class PlateAssemblyJob(Job):
             specification for plate containing the specified wells
         assembler : str
             name of assembler to run, from utilities.ASSEMBLERS_TO_RUN
+        config_file_id : toil.fileStore.FileID
+            id of the file in the file store containing assembler args
+        config_file_name : str
+            name of the file in the file store containing assembler args
         """
         super(PlateAssemblyJob, self).__init__(*args, **kwargs)
         self.well_specs = well_specs
@@ -58,7 +63,8 @@ class PlateAssemblyJob(Job):
         if assembler not in utilities.ASSEMBLERS_TO_RUN:
             raise Exception("Unexpected assembler")
         self.assembler = assembler
-        self.config_file_path = config_file_path
+        self.config_file_id = config_file_id
+        self.config_file_name = config_file_name
 
     def run(self, fileStore):
         """
@@ -82,8 +88,9 @@ class PlateAssemblyJob(Job):
                         self.read_one_file_ids[iW],
                         self.read_two_file_ids[iW],
                         self.assembler,
+                        self.config_file_id,
+                        self.config_file_name,
                         self.plate_spec + "_" + self.well_specs[iW],
-                        config_file_path=self.config_file_path,
                     )
                 ).rv()
             )
@@ -120,11 +127,18 @@ if __name__ == "__main__":
         choices=utilities.ASSEMBLERS_TO_RUN,
         help="name of the assembler to run",
     )
+    cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-4]
     parser.add_argument(
         "-c",
-        "--config",
-        default=None,
-        help="a .ini file with args to be passed to the assembler",
+        "--config-path",
+        default=os.sep + os.path.join(*cmps),
+        help="path to a .ini file with args to be passed to the assembler",
+    )
+    parser.add_argument(
+        "-f",
+        "--config-file",
+        default="Assembler.ini",
+        help="path to a .ini file with args to be passed to the assembler",
     )
     parser.add_argument(
         "-o",
@@ -192,12 +206,18 @@ if __name__ == "__main__":
                 if read_two_file in read_two_files:
                     well_specs.append(p.search(read_one_file).group(1))
 
+            # Import local read file pairs
             read_one_file_ids, read_two_file_ids = utilities.importReadFiles(
                 toil,
                 options.data_path,
                 options.plate_spec,
                 well_specs,
                 options.source_scheme,
+            )
+
+            # Import local config file into the file store
+            config_file_id = utilities.importConfigFile(
+                toil, os.path.join(options.config_path, options.config_file)
             )
 
             # Construct and start the plate assembly job
@@ -207,9 +227,8 @@ if __name__ == "__main__":
                 read_two_file_ids,
                 options.plate_spec,
                 options.assembler,
-                config_file_path=str(Path(options.config).absolute())
-                if options.config is not None
-                else None,
+                config_file_id,
+                options.config_file,
             )
             well_assembly_rvs = toil.start(plate_assembly_job)
 

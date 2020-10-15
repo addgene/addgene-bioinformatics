@@ -1,7 +1,6 @@
 from argparse import ArgumentParser
 import logging
 import os
-from pathlib import Path
 
 from toil.job import Job
 from toil.common import Toil
@@ -22,11 +21,10 @@ class SpadesJob(Job):
         self,
         read_one_file_id,
         read_two_file_id,
+        config_file_id,
+        config_file_name,
         output_directory,
         parent_rv={},
-        read_one_file_name="R1.fastq.gz",
-        read_two_file_name="R2.fastq.gz",
-        config_file_path=None,
         *args,
         **kwargs
     ):
@@ -39,6 +37,10 @@ class SpadesJob(Job):
         read_two_file_id : toil.fileStore.FileID
             id of the file in the file store containing FASTQ Illumina
             short right paired reads
+        config_file_id : toil.fileStore.FileID
+            id of the file in the file store containing assembler args
+        config_file_name : str
+            name of the file in the file store containing assembler args
         output_directory : str
             name of directory for output
         parent_rv : dict
@@ -46,12 +48,11 @@ class SpadesJob(Job):
         """
         super(SpadesJob, self).__init__(*args, **kwargs)
         self.read_one_file_id = read_one_file_id
-        self.read_one_file_name = read_one_file_name
         self.read_two_file_id = read_two_file_id
-        self.read_two_file_name = read_two_file_name
+        self.config_file_id = config_file_id
+        self.config_file_name = config_file_name
         self.output_directory = output_directory
         self.parent_rv = parent_rv
-        self.config_file_path = config_file_path
 
     def run(self, fileStore):
         """
@@ -67,13 +68,22 @@ class SpadesJob(Job):
         contigs_file_name = "contigs.fasta"
 
         try:
+            # Read the config file from the file store into the local
+            # temporary directory, and parse
+            config_file_path = utilities.readGlobalFile(
+                fileStore, self.config_file_id, self.config_file_name
+            )
+            common_config, assembler_params = utilities.parseConfigFile(
+                config_file_path, "spades"
+            )
+
             # Read the read files from the file store into the local
             # temporary directory
             read_one_file_path = utilities.readGlobalFile(
-                fileStore, self.read_one_file_id, self.read_one_file_name
+                fileStore, self.read_one_file_id, common_config["read_one_file_name"]
             )
             read_two_file_path = utilities.readGlobalFile(
-                fileStore, self.read_two_file_id, self.read_two_file_name
+                fileStore, self.read_two_file_id, common_config["read_two_file_name"]
             )
 
             # Mount the Toil local temporary directory to the same path in
@@ -92,12 +102,9 @@ class SpadesJob(Job):
                 "-o",
                 os.path.join(working_dir, self.output_directory),
             ]
-
-            if self.config_file_path is not None:
-                parsed_params = utilities.parseConfigFile(self.config_file_path)
-                parameters.extend(parsed_params)
-                logger.info("Adding parsed params to CLI call: " + str(parsed_params))
-
+            if len(assembler_params) > 0:
+                parameters.extend(assembler_params)
+            logger.info("Using parameters {0}".format(str(parameters)))
             apiDockerCall(
                 self,
                 image=image,
@@ -142,9 +149,9 @@ if __name__ == "__main__":
     """
     Assemble reads corresponding to a single well.
     """
-    # Parse FASTQ data path, plate and well specification, coverage
-    # cutoff, and output directory, making the output directory if
-    # needed
+    # Parse FASTQ data path, plate and well specification,
+    # configuration path and file, and output directory, making the
+    # output directory if needed
     parser = ArgumentParser()
     Job.Runner.addToilOptions(parser)
     cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-4]
@@ -164,19 +171,25 @@ if __name__ == "__main__":
     parser.add_argument(
         "-w", "--well-spec", default="B01", help="the well specification"
     )
+    cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-1]
+    parser.add_argument(
+        "-c",
+        "--config-path",
+        default=os.sep + os.path.join(*cmps),
+        help="path to a .ini file with args to be passed to the assembler",
+    )
+    parser.add_argument(
+        "-f",
+        "--config-file",
+        default="Assembler.ini",
+        help="path to a .ini file with args to be passed to the assembler",
+    )
     parser.add_argument(
         "-o",
         "--output-directory",
         default=None,
         help="the directory containing all output files",
     )
-    parser.add_argument(
-        "-c",
-        "--config",
-        default=None,
-        help="a .ini file with args to be passed to SPAdes",
-    )
-
     options = parser.parse_args()
     if options.output_directory is None:
         options.output_directory = options.plate_spec + "_" + options.well_spec
@@ -196,14 +209,18 @@ if __name__ == "__main__":
                 options.source_scheme,
             )
 
+            # Import local config file into the file store
+            config_file_id = utilities.importConfigFile(
+                toil, os.path.join(options.config_path, options.config_file)
+            )
+
             # Construct and start the SPAdes job
             spades_job = SpadesJob(
                 read_one_file_ids[0],
                 read_two_file_ids[0],
+                config_file_id,
+                options.config_file,
                 options.output_directory,
-                config_file_path=str(Path(options.config).absolute())
-                if options.config is not None
-                else None,
             )
             spades_rv = toil.start(spades_job)
 

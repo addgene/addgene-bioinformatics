@@ -20,10 +20,9 @@ class SkesaJob(Job):
         self,
         read_one_file_id,
         read_two_file_id,
+        config_file_id,
+        config_file_name,
         parent_rv={},
-        read_one_file_name="R1.fastq.gz",
-        read_two_file_name="R2.fastq.gz",
-        output_file="contigs.fa",
         *args,
         **kwargs
     ):
@@ -36,15 +35,18 @@ class SkesaJob(Job):
         read_two_file_id : toil.fileStore.FileID
             id of the file in the file store containing FASTQ Illumina
             short right paired reads
+        config_file_id : toil.fileStore.FileID
+            id of the file in the file store containing assembler args
+        config_file_name : str
+            name of the file in the file store containing assembler args
         parent_rv : dict
             dictionary of return values from the parent job
         """
         super(SkesaJob, self).__init__(*args, **kwargs)
         self.read_one_file_id = read_one_file_id
-        self.read_one_file_name = read_one_file_name
         self.read_two_file_id = read_two_file_id
-        self.read_two_file_name = read_two_file_name
-        self.output_file = output_file
+        self.config_file_id = config_file_id
+        self.config_file_name = config_file_name
         self.parent_rv = parent_rv
 
     def run(self, fileStore):
@@ -58,16 +60,25 @@ class SkesaJob(Job):
         # Expected output file names
         # TODO: Find a way to capture stderr
         # log_file_name = "skesa.log"
-        contigs_file_name = self.output_file
+        contigs_file_name = "contigs.fa"
 
         try:
+            # Read the config file from the file store into the local
+            # temporary directory, and parse
+            config_file_path = utilities.readGlobalFile(
+                fileStore, self.config_file_id, self.config_file_name
+            )
+            common_config, assembler_params = utilities.parseConfigFile(
+                config_file_path, "skesa"
+            )
+
             # Read the read files from the file store into the local
             # temporary directory
             read_one_file_path = utilities.readGlobalFile(
-                fileStore, self.read_one_file_id, self.read_one_file_name
+                fileStore, self.read_one_file_id, common_config["read_one_file_name"]
             )
             read_two_file_path = utilities.readGlobalFile(
-                fileStore, self.read_two_file_id, self.read_two_file_name
+                fileStore, self.read_two_file_id, common_config["read_two_file_name"]
             )
 
             # Mount the Toil local temporary directory to the same path in
@@ -77,20 +88,22 @@ class SkesaJob(Job):
             image = "ralatsdio/skesa:v2.3.0"
             working_dir = fileStore.localTempDir
             logger.info("Calling image {0}".format(image))
+            parameters = [
+                "skesa",
+                "--fastq",
+                ",".join([read_one_file_path, read_two_file_path]),
+                "--contigs_out",
+                os.path.join(working_dir, contigs_file_name),
+            ]
+            if len(assembler_params) > 0:
+                parameters.extend(assembler_params)
+            logger.info("Using parameters {0}".format(str(parameters)))
             apiDockerCall(
                 self,
                 image=image,
                 volumes={working_dir: {"bind": working_dir, "mode": "rw"}},
                 working_dir=working_dir,
-                parameters=[
-                    "skesa",
-                    "--fastq",
-                    ",".join([read_one_file_path, read_two_file_path]),
-                    "--contigs_out",
-                    os.path.join(working_dir, contigs_file_name),
-                ],
-                # stderr=True,
-                # steamfile=log_file_name,
+                parameters=parameters,
             )
 
             # Write the SKESA log, and contigs FASTA file from the
@@ -124,8 +137,9 @@ if __name__ == "__main__":
     """
     Assemble reads corresponding to a single well.
     """
-    # Parse FASTQ data path, plate and well specification, and output
-    # directory, making the output directory if needed
+    # Parse FASTQ data path, plate and well specification,
+    # configuration path and file, and output directory, making the
+    # output directory if needed
     parser = ArgumentParser()
     Job.Runner.addToilOptions(parser)
     cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-4]
@@ -144,6 +158,19 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-w", "--well-spec", default="B01", help="the well specification"
+    )
+    cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-1]
+    parser.add_argument(
+        "-c",
+        "--config-path",
+        default=os.sep + os.path.join(*cmps),
+        help="path to a .ini file with args to be passed to the assembler",
+    )
+    parser.add_argument(
+        "-f",
+        "--config-file",
+        default="Assembler.ini",
+        help="path to a .ini file with args to be passed to the assembler",
     )
     parser.add_argument(
         "-o",
@@ -170,8 +197,18 @@ if __name__ == "__main__":
                 options.source_scheme,
             )
 
+            # Import local config file into the file store
+            config_file_id = utilities.importConfigFile(
+                toil, os.path.join(options.config_path, options.config_file)
+            )
+
             # Construct and start the SKESA job
-            skesa_job = SkesaJob(read_one_file_ids[0], read_two_file_ids[0],)
+            skesa_job = SkesaJob(
+                read_one_file_ids[0],
+                read_two_file_ids[0],
+                config_file_id,
+                options.config_file,
+            )
             skesa_rv = toil.start(skesa_job)
 
         else:
