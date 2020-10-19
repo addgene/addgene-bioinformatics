@@ -191,14 +191,18 @@ END
             # the container, and use the path as the working directory in
             # the container, then call MaSuRCA
             # TODO: Specify the container on construction
-            image = "ralatsdio/masurca:v3.3.1"
+            image = "ralatsdio/masurca:v3.4.1"
             logger.info("Calling image {0}".format(image))
+            parameters = ["masurca.sh", assembler_params['config_file_name'],],
+            logger.info("Using parameters {0}".format(str(parameters)))
+            logger.info(config)
+            import pdb; pdb.set_trace()
             apiDockerCall(
                 self,
                 image=image,
                 volumes={working_dir: {"bind": working_dir, "mode": "rw"}},
                 working_dir=working_dir,
-                parameters=["masurca.sh", assembler_params['config_file_name'],],
+                parameters=parameters,
             )
 
             # Write the CABOG stdout, super read code stderr, and
