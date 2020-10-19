@@ -127,7 +127,7 @@ if __name__ == "__main__":
         choices=utilities.ASSEMBLERS_TO_RUN,
         help="name of the assembler to run",
     )
-    cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-4]
+    cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-1]
     parser.add_argument(
         "-c",
         "--config-path",

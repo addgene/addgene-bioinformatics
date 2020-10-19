@@ -22,12 +22,15 @@ class ToilTestCase(unittest.TestCase):
     def setUp(self):
         cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-4]
         cmps.extend(["dat", "miscellaneous"])
-        self.data_directory = os.sep + os.path.join(*cmps)
+        self.data_path = os.sep + os.path.join(*cmps)
         self.plate_spec_a = "A11967A_sW0154"
         self.well_spec_a = "A01"
         self.well_spec_b = "B01"
         self.assembler = "spades"
-        self.coverage_cutoff = "100"
+
+        cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-1]
+        self.config_path = os.sep + os.path.join(*cmps)
+        self.config_file = "Assembler.ini"
 
         self.output_directory_aa = "{0}_{1}".format(self.plate_spec_a, self.well_spec_a)
         self.actual_directory_aa = self.output_directory_aa
@@ -66,19 +69,24 @@ class ToilTestCase(unittest.TestCase):
         self.apc_fasta = "apc.1.fa"
 
     def tearDown(self):
-        # if os.path.exists(self.test_directory_aa):
-        #     shutil.rmtree(self.test_directory_aa)
-        # if os.path.exists(self.test_directory_ab):
-        #     shutil.rmtree(self.test_directory_ab)
-        # if os.path.exists(self.test_directory_bg):
-        #     shutil.rmtree(self.test_directory_bg)
-        pass
+        if os.path.exists(self.test_directory_aa):
+            shutil.rmtree(self.test_directory_aa)
+        if os.path.exists(self.test_directory_ab):
+            shutil.rmtree(self.test_directory_ab)
+        if os.path.exists(self.test_directory_bg):
+            shutil.rmtree(self.test_directory_bg)
 
     def _import_read_files(self, toil, well_specs):
         read_one_file_ids, read_two_file_ids = utilities.importReadFiles(
-            toil, self.data_directory, self.plate_spec_a, well_specs
+            toil, self.data_path, self.plate_spec_a, well_specs
         )
         return read_one_file_ids, read_two_file_ids
+
+    def _import_config_file(self, toil):
+        config_file_id = utilities.importConfigFile(
+            toil, os.path.join(self.config_path, self.config_file)
+        )
+        return config_file_id
 
     def _import_contigs_file(self, toil):
         contigs_file_id = utilities.importContigsFile(
@@ -107,7 +115,14 @@ class JobsTestCase(ToilTestCase):
                 toil, [self.well_spec_b]
             )
 
-            masurca_job = MasurcaJob(read_one_file_ids[0], read_two_file_ids[0],)
+            config_file_id = self._import_config_file(toil)
+
+            masurca_job = MasurcaJob(
+                read_one_file_ids[0],
+                read_two_file_ids[0],
+                config_file_id,
+                self.config_file,
+            )
             masurca_rv = toil.start(masurca_job)
 
             utilities.exportFiles(
@@ -131,7 +146,14 @@ class JobsTestCase(ToilTestCase):
                 toil, [self.well_spec_a]
             )
 
-            novoplasty_job = NovoplastyJob(read_one_file_ids[0], read_two_file_ids[0],)
+            config_file_id = self._import_config_file(toil)
+
+            novoplasty_job = NovoplastyJob(
+                read_one_file_ids[0],
+                read_two_file_ids[0],
+                config_file_id,
+                self.config_file,
+            )
             novoplasty_rv = toil.start(novoplasty_job)
 
             utilities.exportFiles(
@@ -155,8 +177,14 @@ class JobsTestCase(ToilTestCase):
                 toil, [self.well_spec_b]
             )
 
+            config_file_id = self._import_config_file(toil)
+
             shovill_job = ShovillJob(
-                read_one_file_ids[0], read_two_file_ids[0], self.output_directory_ab,
+                read_one_file_ids[0],
+                read_two_file_ids[0],
+                config_file_id,
+                self.config_file,
+                self.output_directory_ab,
             )
             shovill_rv = toil.start(shovill_job)
 
@@ -181,7 +209,14 @@ class JobsTestCase(ToilTestCase):
                 toil, [self.well_spec_b]
             )
 
-            skesa_job = SkesaJob(read_one_file_ids[0], read_two_file_ids[0],)
+            config_file_id = self._import_config_file(toil)
+
+            skesa_job = SkesaJob(
+                read_one_file_ids[0],
+                read_two_file_ids[0],
+                config_file_id,
+                self.config_file,
+            )
             skesa_rv = toil.start(skesa_job)
 
             utilities.exportFiles(toil, self.test_directory_ab, skesa_rv["skesa_rv"])
@@ -203,11 +238,14 @@ class JobsTestCase(ToilTestCase):
                 toil, [self.well_spec_b]
             )
 
+            config_file_id = self._import_config_file(toil)
+
             spades_job = SpadesJob(
                 read_one_file_ids[0],
                 read_two_file_ids[0],
+                config_file_id,
+                self.config_file,
                 self.output_directory_ab,
-                {'coverage-cutoff': 100},
             )
             spades_rv = toil.start(spades_job)
 
@@ -230,8 +268,14 @@ class JobsTestCase(ToilTestCase):
                 toil, [self.well_spec_b]
             )
 
+            config_file_id = self._import_config_file(toil)
+
             unicycler_job = UnicyclerJob(
-                read_one_file_ids[0], read_two_file_ids[0], self.output_directory_ab,
+                read_one_file_ids[0],
+                read_two_file_ids[0],
+                config_file_id,
+                self.config_file,
+                self.output_directory_ab,
             )
             unicycler_rv = toil.start(unicycler_job)
 
@@ -278,11 +322,14 @@ class WellAssemblyJobTestCase(ToilTestCase):
                 toil, [self.well_spec_b]
             )
 
+            config_file_id = self._import_config_file(toil)
+
             well_assembly_job = WellAssemblyJob(
                 read_one_file_ids[0],
                 read_two_file_ids[0],
                 self.assembler,
-                self.coverage_cutoff,
+                config_file_id,
+                self.config_file,
                 self.output_directory_ab,
             )
             well_assembly_rv = toil.start(well_assembly_job)
@@ -319,13 +366,16 @@ class PlateAssemblyJobTestCase(ToilTestCase):
                 toil, self.well_specs
             )
 
+            config_file_id = self._import_config_file(toil)
+
             plate_assembly_job = PlateAssemblyJob(
                 self.well_specs,
                 read_one_file_ids,
                 read_two_file_ids,
                 self.plate_spec_b,
                 self.assembler,
-                self.coverage_cutoff,
+                config_file_id,
+                self.config_file,
                 cores=2,
                 disk="3G",
                 memory="4G",
@@ -358,26 +408,28 @@ class PlateAssemblyJobTestCase(ToilTestCase):
 if __name__ == "__main__":
 
     jobsTestSuite = unittest.TestSuite()
+
+    # TODO: Resolve
     # jobsTestSuite.addTest(JobsTestCase("test_masurca_job"))
-    # jobsTestSuite.addTest(JobsTestCase("test_novoplasty_job"))
-    # jobsTestSuite.addTest(JobsTestCase("test_shovill_job"))
-    # jobsTestSuite.addTest(JobsTestCase("test_skesa_job"))
-    # jobsTestSuite.addTest(JobsTestCase("test_spades_job"))
-    # jobsTestSuite.addTest(JobsTestCase("test_unicycler_job"))
+    jobsTestSuite.addTest(JobsTestCase("test_novoplasty_job"))
+    jobsTestSuite.addTest(JobsTestCase("test_shovill_job"))
+    jobsTestSuite.addTest(JobsTestCase("test_skesa_job"))
+    jobsTestSuite.addTest(JobsTestCase("test_spades_job"))
+    jobsTestSuite.addTest(JobsTestCase("test_unicycler_job"))
     jobsTestSuite.addTest(JobsTestCase("test_apc_job"))
 
-    # wellAssemblyJobTestSuite = unittest.TestLoader().loadTestsFromTestCase(
-    # WellAssemblyJobTestCase
-    # )
-
-    # plateAssemblyJobTestSuite = unittest.TestLoader().loadTestsFromTestCase(
-    # PlateAssemblyJobTestCase
-    # )
-
-    # testSuites = unittest.TestSuite(
-    # [jobsTestSuite, wellAssemblyJobTestSuite, plateAssemblyJobTestSuite,]
-    # )
-
     testSuites = unittest.TestSuite([jobsTestSuite,])
+
+    wellAssemblyJobTestSuite = unittest.TestLoader().loadTestsFromTestCase(
+        WellAssemblyJobTestCase
+    )
+
+    plateAssemblyJobTestSuite = unittest.TestLoader().loadTestsFromTestCase(
+        PlateAssemblyJobTestCase
+    )
+
+    testSuites = unittest.TestSuite(
+        [jobsTestSuite, wellAssemblyJobTestSuite, plateAssemblyJobTestSuite,]
+    )
 
     unittest.TextTestRunner(verbosity=2).run(testSuites)
