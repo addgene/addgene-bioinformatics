@@ -4,21 +4,8 @@ from configparser import ConfigParser
 
 logger = logging.getLogger(__name__)
 
-ASSEMBLERS_TO_RUN = [
-    'masurca',
-    'novoplasty',
-    'shovill',
-    'skesa',
-    'spades',
-    'unicycler'
-]
-ASSEMBLERS_REQUIRING_APC = [
-    'masurca',
-    'shovill',
-    'skesa',
-    'spades',
-    'unicycler'
-]
+ASSEMBLERS_TO_RUN = ["masurca", "novoplasty", "shovill", "skesa", "spades", "unicycler"]
+ASSEMBLERS_REQUIRING_APC = ["masurca", "shovill", "skesa", "spades", "unicycler"]
 
 
 def importFile(toil, source_path, scheme="file"):
@@ -46,8 +33,7 @@ def importFile(toil, source_path, scheme="file"):
         file_id = toil.importFile(file_path)
 
     except Exception as exc:
-        logger.info("Importing file {0} failed: {1}".format(
-            file_path, exc))
+        logger.info("Importing file {0} failed: {1}".format(file_path, exc))
         file_id = None
 
     return file_id
@@ -82,19 +68,51 @@ def importReadFiles(toil, data_path, plate_spec, well_specs, scheme="file"):
 
     for well_spec in well_specs:
 
-        read_one_file_ids.append(importFile(
-            toil, os.path.join(
-                data_path, "{0}_FASTQ".format(plate_spec),
-                "{0}_{1}_R1_001.fastq.gz".format(plate_spec, well_spec)),
-            scheme))
+        read_one_file_ids.append(
+            importFile(
+                toil,
+                os.path.join(
+                    data_path,
+                    "{0}_FASTQ".format(plate_spec),
+                    "{0}_{1}_R1_001.fastq.gz".format(plate_spec, well_spec),
+                ),
+                scheme,
+            )
+        )
 
-        read_two_file_ids.append(importFile(
-            toil, os.path.join(
-                data_path, "{0}_FASTQ".format(plate_spec),
-                "{0}_{1}_R2_001.fastq.gz".format(plate_spec, well_spec)),
-            scheme))
+        read_two_file_ids.append(
+            importFile(
+                toil,
+                os.path.join(
+                    data_path,
+                    "{0}_FASTQ".format(plate_spec),
+                    "{0}_{1}_R2_001.fastq.gz".format(plate_spec, well_spec),
+                ),
+                scheme,
+            )
+        )
 
     return read_one_file_ids, read_two_file_ids
+
+
+def importConfigFile(toil, config_path, scheme="file"):
+    """
+    Import the assembler config source from the config path containing the file.
+
+    Parameters
+    ----------
+    config_path : str
+        path containing the configuration file
+    scheme : str
+        scheme used for the source URL
+
+    Returns
+    -------
+    str
+        id of the imported config file in the file store
+    """
+    config_file_id = importFile(toil, config_path, scheme)
+    return config_file_id
 
 
 def importContigsFile(toil, data_path, scheme="file"):
@@ -114,8 +132,7 @@ def importContigsFile(toil, data_path, scheme="file"):
     str
         id of the imported contigs file in the file store
     """
-    contigs_file_id = importFile(
-        toil, os.path.join(data_path, "contigs.fasta"), scheme)
+    contigs_file_id = importFile(toil, os.path.join(data_path, "contigs.fasta"), scheme)
     return contigs_file_id
 
 
@@ -146,8 +163,7 @@ def readGlobalFile(fileStore, file_id, *cmps):
         fileStore.readGlobalFile(file_id, userPath=file_path)
 
     except Exception as exc:
-        logger.info("Reading global file {0} failed: {1}".format(
-            file_path, exc))
+        logger.info("Reading global file {0} failed: {1}".format(file_path, exc))
         file_path = None
 
     return file_path
@@ -176,8 +192,7 @@ def writeGlobalFile(fileStore, *cmps):
         file_id = fileStore.writeGlobalFile(file_path)
 
     except Exception as exc:
-        logger.info("Writing global file {0} failed {1}".format(
-            file_path, exc))
+        logger.info("Writing global file {0} failed {1}".format(file_path, exc))
         file_id = None
 
     return file_id
@@ -198,19 +213,22 @@ def exportFiles(toil, output_directory, job_rv):
         name, id, and file name of files to export
     """
     for name, spec in job_rv.items():
-        if spec['id'] is not None:
+        if spec["id"] is not None:
             try:
-                logger.info("Exporting file {0}".format(spec['name']))
-                toil.exportFile(spec['id'], "file://" + os.path.abspath(
-                    os.path.join(output_directory, spec['name'])))
+                logger.info("Exporting file {0}".format(spec["name"]))
+                toil.exportFile(
+                    spec["id"],
+                    "file://"
+                    + os.path.abspath(os.path.join(output_directory, spec["name"])),
+                )
 
             except Exception as exc:
-                logger.info("Exporting file {0} failed: {1}".format(
-                    spec['name'], exc))
+                logger.info("Exporting file {0} failed: {1}".format(spec["name"], exc))
 
 
-def exportWellAssemblyFiles(toil, assembler, output_directory, well_specs,
-                            well_assembly_rvs):
+def exportWellAssemblyFiles(
+    toil, assembler, output_directory, well_specs, well_assembly_rvs
+):
     """
     Export the assembler output files, and the apc output files, if
     apc required by the assembler.
@@ -235,20 +253,23 @@ def exportWellAssemblyFiles(toil, assembler, output_directory, well_specs,
             os.makedirs(well_output_directory)
 
         # Export all assembler output files from the file store
-        exportFiles(toil, well_output_directory,
-                    well_assembly_rvs[iW][assembler + "_rv"])
+        exportFiles(
+            toil, well_output_directory, well_assembly_rvs[iW][assembler + "_rv"]
+        )
 
         if assembler in ASSEMBLERS_REQUIRING_APC:
             # Export all apc output files from the file store
-            exportFiles(toil, well_output_directory,
-                        well_assembly_rvs[iW]['apc_rv'])
+            exportFiles(toil, well_output_directory, well_assembly_rvs[iW]["apc_rv"])
 
 
-def parseConfigFile(config_file_path):
+def parseConfigFile(config_file_path, assembler):
     """
-    Given a .ini file with args to pass to the assembler, create a list of args add to the apiDockerCall.
+    Given the path to a .ini file with common parameters, and args to
+    pass to the assembler, create the common config, and a list of
+    args to add to the apiDockerCall.
 
-    If a config arg's value is True, it will be treated as a boolean switch and only the key will be passed.
+    If a config arg's value is True, it will be treated as a boolean
+    switch and only the key will be passed.
 
     Parameters
     ----------
@@ -260,14 +281,16 @@ def parseConfigFile(config_file_path):
     list[str]
         the parsed CLI args
     """
-    cfg = ConfigParser()
-    cfg.read(config_file_path)
-
-    result = []
-    for section_name, section_obj in cfg.items():
-        for arg_name, arg_value in section_obj.items():
-            result.append(arg_name)
-            if arg_value.lower() != "true":
-                result.append(arg_value)
-    logger.info("Parsed " + config_file_path + ". Got args: " + str(result))
-    return result
+    config = ConfigParser()
+    config.read(config_file_path)
+    common_config = config["common"]
+    if assembler in ['masurca', 'novoplasty']:
+        assembler_params = config[assembler]
+    else:
+        assembler_params = []
+        if assembler in config:
+            for arg_name, arg_value in config[assembler].items():
+                assembler_params.append(arg_name)
+                if arg_value.lower() != "true":
+                    assembler_params.append(arg_value)
+    return common_config, assembler_params

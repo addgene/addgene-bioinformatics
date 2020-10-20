@@ -15,13 +15,17 @@ class MasurcaJob(Job):
     """
     Accepts paired-end Illumina reads for assembly using MaSuRCA.
     """
-    def __init__(self, read_one_file_id, read_two_file_id,
-                 parent_rv={},
-                 read_one_file_name="R1.fastq.gz",
-                 read_two_file_name="R2.fastq.gz",
-                 config_file_name="assemble.cfg",
-                 threads="1",
-                 *args, **kwargs):
+
+    def __init__(
+        self,
+        read_one_file_id,
+        read_two_file_id,
+        config_file_id,
+        config_file_name,
+        parent_rv={},
+        *args,
+        **kwargs
+    ):
         """
         Parameters
         ----------
@@ -31,16 +35,18 @@ class MasurcaJob(Job):
         read_two_file_id : toil.fileStore.FileID
             id of the file in the file store containing FASTQ Illumina
             short right paired reads
+        config_file_id : toil.fileStore.FileID
+            id of the file in the file store containing assembler args
+        config_file_name : str
+            name of the file in the file store containing assembler args
         parent_rv : dict
             dictionary of return values from the parent job
         """
         super(MasurcaJob, self).__init__(*args, **kwargs)
         self.read_one_file_id = read_one_file_id
-        self.read_one_file_name = read_one_file_name
         self.read_two_file_id = read_two_file_id
-        self.read_two_file_name = read_two_file_name
+        self.config_file_id = config_file_id
         self.config_file_name = config_file_name
-        self.threads = threads
         self.parent_rv = parent_rv
 
     def run(self, fileStore):
@@ -59,20 +65,29 @@ class MasurcaJob(Job):
         contigs_file_name = "final.genome.scf.fasta"  # Final assembly scaffolds file
 
         try:
+            # Read the config file from the file store into the local
+            # temporary directory, and parse
+            config_file_path = utilities.readGlobalFile(
+                fileStore, self.config_file_id, self.config_file_name
+            )
+            common_config, assembler_params = utilities.parseConfigFile(
+                config_file_path, "masurca"
+            )
+
             # Read the read files from the file store into the local
             # temporary directory
             read_one_file_path = utilities.readGlobalFile(
-                fileStore, self.read_one_file_id, self.read_one_file_name)
+                fileStore, self.read_one_file_id, common_config["read_one_file_name"]
+            )
             read_two_file_path = utilities.readGlobalFile(
-                fileStore, self.read_two_file_id, self.read_two_file_name)
+                fileStore, self.read_two_file_id, common_config["read_two_file_name"]
+            )
 
             # Write the MaSuRCA config file into the local temporary
             # directory
             working_dir = fileStore.localTempDir
-            logger.info("Handling configuration file {0}".format(
-                self.config_file_name))
-            with open(os.path.join(working_dir,
-                                   self.config_file_name), 'w+') as f:
+            logger.info("Handling configuration file {0}".format(assembler_params['config_file_name']))
+            with open(os.path.join(working_dir, assembler_params['config_file_name']), "w+") as f:
                 config = """
 # Input file for 'masurca' command to create 'assemble.sh'.
 # --------------------------------------------------------------------------------
@@ -166,9 +181,9 @@ SOAP_ASSEMBLY = 0
 END
 # --------------------------------------------------------------------------------
                  """.format(
-                     read_one_file_path=read_one_file_path,
-                     read_two_file_path=read_two_file_path,
-                     threads=self.threads,
+                    read_one_file_path=read_one_file_path,
+                    read_two_file_path=read_two_file_path,
+                    threads=assembler_params['threads'],
                 )
                 f.write(config)
 
@@ -176,16 +191,19 @@ END
             # the container, and use the path as the working directory in
             # the container, then call MaSuRCA
             # TODO: Specify the container on construction
-            image = "ralatsdio/masurca:v3.3.1"
+            image = "ralatsdio/masurca:v3.4.1"
             logger.info("Calling image {0}".format(image))
+            parameters = ["masurca.sh", assembler_params['config_file_name'],],
+            logger.info("Using parameters {0}".format(str(parameters)))
+            logger.info(config)
+            import pdb; pdb.set_trace()
             apiDockerCall(
                 self,
                 image=image,
-                volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
+                volumes={working_dir: {"bind": working_dir, "mode": "rw"}},
                 working_dir=working_dir,
-                parameters=["masurca.sh",
-                            self.config_file_name,
-                            ])
+                parameters=parameters,
+            )
 
             # Write the CABOG stdout, super read code stderr, and
             # final assembly scaffolds FASTA files from the local
@@ -195,7 +213,8 @@ END
             ca2_file_id = utilities.writeGlobalFile(fileStore, ca2_file_name)
             sr1_file_id = utilities.writeGlobalFile(fileStore, sr1_file_name)
             contigs_file_id = utilities.writeGlobalFile(
-                fileStore, "CA", contigs_file_name)
+                fileStore, "CA", contigs_file_name
+            )
 
         except Exception as exc:
             # Ensure expectred return values on exceptions
@@ -208,27 +227,12 @@ END
 
         # Return file ids and names for export
         masurca_rv = {
-            'masurca_rv': {
-                'ca0_file': {
-                    'id': ca0_file_id,
-                    'name': ca0_file_name,
-                },
-                'ca1_file': {
-                    'id': ca1_file_id,
-                    'name': ca1_file_name,
-                },
-                'ca2_file': {
-                    'id': ca2_file_id,
-                    'name': ca2_file_name,
-                },
-                'sr1_file': {
-                    'id': sr1_file_id,
-                    'name': sr1_file_name,
-                },
-                'contigs_file': {
-                    'id': contigs_file_id,
-                    'name': contigs_file_name,
-                },
+            "masurca_rv": {
+                "ca0_file": {"id": ca0_file_id, "name": ca0_file_name,},
+                "ca1_file": {"id": ca1_file_id, "name": ca1_file_name,},
+                "ca2_file": {"id": ca2_file_id, "name": ca2_file_name,},
+                "sr1_file": {"id": sr1_file_id, "name": sr1_file_name,},
+                "contigs_file": {"id": contigs_file_id, "name": contigs_file_name,},
             }
         }
         masurca_rv.update(self.parent_rv)
@@ -240,24 +244,47 @@ if __name__ == "__main__":
     """
     Assemble reads corresponding to a single well.
     """
-    # Parse FASTQ data path, plate and well specification, and output
-    # directory, making the output directory if needed
+    # Parse FASTQ data path, plate and well specification,
+    # configuration path and file, and output directory, making the
+    # output directory if needed
     parser = ArgumentParser()
     Job.Runner.addToilOptions(parser)
     cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-4]
     cmps.extend(["dat", "miscellaneous"])
-    parser.add_argument('-d', '--data-path',
-                        default=os.sep + os.path.join(*cmps),
-                        help="path containing plate and well FASTQ source")
-    parser.add_argument('-s', '--source-scheme',
-                        default="file",
-                        help="scheme used for the source URL")
-    parser.add_argument('-p', '--plate-spec', default="A11967A_sW0154",
-                        help="the plate specification")
-    parser.add_argument('-w', '--well-spec', default="B01",
-                        help="the well specification")
-    parser.add_argument('-o', '--output-directory', default=None,
-                        help="the directory containing all output files")
+    parser.add_argument(
+        "-d",
+        "--data-path",
+        default=os.sep + os.path.join(*cmps),
+        help="path containing plate and well FASTQ source",
+    )
+    parser.add_argument(
+        "-s", "--source-scheme", default="file", help="scheme used for the source URL"
+    )
+    parser.add_argument(
+        "-p", "--plate-spec", default="A11967A_sW0154", help="the plate specification"
+    )
+    parser.add_argument(
+        "-w", "--well-spec", default="B01", help="the well specification"
+    )
+    cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-1]
+    parser.add_argument(
+        "-c",
+        "--config-path",
+        default=os.sep + os.path.join(*cmps),
+        help="path to a .ini file with args to be passed to the assembler",
+    )
+    parser.add_argument(
+        "-f",
+        "--config-file",
+        default="Assembler.ini",
+        help="path to a .ini file with args to be passed to the assembler",
+    )
+    parser.add_argument(
+        "-o",
+        "--output-directory",
+        default=None,
+        help="the directory containing all output files",
+    )
     options = parser.parse_args()
     if options.output_directory is None:
         options.output_directory = options.plate_spec + "_" + options.well_spec
@@ -270,14 +297,25 @@ if __name__ == "__main__":
 
             # Import the local read files into the file store
             read_one_file_ids, read_two_file_ids = utilities.importReadFiles(
-                toil, options.data_path, options.plate_spec,
-                [options.well_spec], options.source_scheme)
+                toil,
+                options.data_path,
+                options.plate_spec,
+                [options.well_spec],
+                options.source_scheme,
+            )
+
+            # Import local config file into the file store
+            config_file_id = utilities.importConfigFile(
+                toil, os.path.join(options.config_path, options.config_file)
+            )
 
             # Construct and start the MaSuRCA job
             masurca_job = MasurcaJob(
                 read_one_file_ids[0],
                 read_two_file_ids[0],
-                )
+                config_file_id,
+                options.config_file,
+            )
             masurca_rv = toil.start(masurca_job)
 
         else:
@@ -286,6 +324,4 @@ if __name__ == "__main__":
             masurca_rv = toil.restart(masurca_job)
 
         # Export all MaSuRCA output files from the file store
-        utilities.exportFiles(
-            toil, options.output_directory, masurca_rv['masurca_rv']
-        )
+        utilities.exportFiles(toil, options.output_directory, masurca_rv["masurca_rv"])

@@ -1,8 +1,9 @@
+# TODO: Clean up
 A11967A_*
 clean*
 kmc_input.txt
-
-# TODO: Clean up
+*.csv
+*.tar.gz
 .rerun
 CA_dir.txt
 ESTIMATED_GENOME_SIZE.txt
@@ -13,6 +14,7 @@ contig*
 create_mega-reads.err
 environment.sh
 guillaume*
+hybrid*
 k_u_hash_0
 log_Toil.txt
 meanAndStdevByPrefix.pe.txt
@@ -24,3 +26,8 @@ random_seq*
 repetitive_seq*
 super*
 work1*
+scratch/
+test/
+test_spades_assembly/
+trial_wgsim_assembly/
+trial_seqwell_assembly*/

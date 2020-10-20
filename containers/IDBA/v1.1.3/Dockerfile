@@ -28,8 +28,9 @@ RUN cd $INSTALL_PFX && \
     git clone https://github.com/ralatsdc/idba.git && \
     cd idba && \
     git checkout $CSC_VER && \
-    ./build.sh # && \
-    # ln -s $INSTALL_PFX/csc/csc $INSTALL_PFX/bin
+    ./build.sh && \
+    cd $INSTALL_PFX && \
+    find $INSTALL_PFX/idba/bin -maxdepth 1 -type f -perm -111 -exec ln -s {} $INSTALL_PFX/bin \;
 
 ##### Configuration ############################################################
 

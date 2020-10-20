@@ -16,13 +16,14 @@ class NovoplastyJob(Job):
     """
     Accepts paired-end Illumina reads for assembly using NOVOPlasty.
     """
+
     def __init__(
         self,
         read_one_file_id,
         read_two_file_id,
+        config_file_id,
+        config_file_name,
         parent_rv={},
-        read_one_file_name="R1.fastq.gz",
-        read_two_file_name="R2.fastq.gz",
         *args,
         **kwargs
     ):
@@ -35,14 +36,18 @@ class NovoplastyJob(Job):
         read_two_file_id : toil.fileStore.FileID
             id of the file in the file store containing FASTQ Illumina
             short right paired reads
+        config_file_id : toil.fileStore.FileID
+            id of the file in the file store containing assembler args
+        config_file_name : str
+            name of the file in the file store containing assembler args
         parent_rv : dict
             dictionary of return values from the parent job
         """
         super(NovoplastyJob, self).__init__(*args, **kwargs)
         self.read_one_file_id = read_one_file_id
-        self.read_one_file_name = read_one_file_name
         self.read_two_file_id = read_two_file_id
-        self.read_two_file_name = read_two_file_name
+        self.config_file_id = config_file_id
+        self.config_file_name = config_file_name
         self.parent_rv = parent_rv
 
     def run(self, fileStore):
@@ -56,25 +61,35 @@ class NovoplastyJob(Job):
         # Expected output file names
         project_name = "Toil"
         log_file_name = "log_{0}.txt".format(project_name)
-        contigs_file_name = "Circularized_assembly_1_{0}.fasta".format(
-            project_name)
+        contigs_file_name = "Circularized_assembly_1_{0}.fasta".format(project_name)
 
         try:
+            # Read the config file from the file store into the local
+            # temporary directory, and parse
+            config_file_path = utilities.readGlobalFile(
+                fileStore, self.config_file_id, self.config_file_name
+            )
+            common_config, assembler_params = utilities.parseConfigFile(
+                config_file_path, "novoplasty"
+            )
+
             # Read the read files from the file store into the local
             # temporary directory
             read_one_file_path = utilities.readGlobalFile(
-                fileStore, self.read_one_file_id, self.read_one_file_name
+                fileStore, self.read_one_file_id, common_config["read_one_file_name"]
             )
             read_two_file_path = utilities.readGlobalFile(
-                fileStore, self.read_two_file_id, self.read_two_file_name
+                fileStore, self.read_two_file_id, common_config["read_two_file_name"]
             )
 
             # Select a read sequence as the seed, and write it
             # into the local temporary directory
             working_dir = fileStore.localTempDir
-            seed_file_path = os.path.join(working_dir, "Seed.fasta")
-            with open(seed_file_path, 'w+') as f:
-                with gzip.open(read_one_file_path, 'rt') as g:
+            seed_file_path = os.path.join(
+                working_dir, assembler_params["seed_file_name"]
+            )
+            with open(seed_file_path, "w+") as f:
+                with gzip.open(read_one_file_path, "rt") as g:
                     do_write = False
                     for line in g:
                         if line[0] == "@":
@@ -86,10 +101,14 @@ class NovoplastyJob(Job):
 
             # Write the NOVOPlasty config file into the local temporary
             # directory
-            config_file_name = "config.txt"
-            logger.info("Handling configuration file {0}".format(
-                config_file_name))
-            with open(os.path.join(working_dir, config_file_name), 'w+') as f:
+            logger.info(
+                "Handling configuration file {0}".format(
+                    assembler_params["config_file_name"]
+                )
+            )
+            with open(
+                os.path.join(working_dir, assembler_params["config_file_name"]), "w+"
+            ) as f:
                 config = """Project:
 -----------------------
 Project name          = {project_name}
@@ -127,10 +146,10 @@ Insert Range          = 1.9
 Insert Range strict   = 1.3,
 Use Quality Scores    = no
                  """.format(
-                     project_name=project_name,
-                     seed_file_path=seed_file_path,
-                     read_one_file_path=read_one_file_path,
-                     read_two_file_path=read_two_file_path,
+                    project_name=project_name,
+                    seed_file_path=seed_file_path,
+                    read_one_file_path=read_one_file_path,
+                    read_two_file_path=read_two_file_path,
                 )
                 f.write(config)
 
@@ -143,7 +162,7 @@ Use Quality Scores    = no
             apiDockerCall(
                 self,
                 image=image,
-                volumes={working_dir: {'bind': working_dir, 'mode': 'rw'}},
+                volumes={working_dir: {"bind": working_dir, "mode": "rw"}},
                 working_dir=working_dir,
                 parameters=[
                     "perl",
@@ -155,10 +174,8 @@ Use Quality Scores    = no
 
             # Write the log, and contigs FASTA files from the local temporary
             # directory into the file store
-            log_file_id = utilities.writeGlobalFile(
-                fileStore, log_file_name)
-            contigs_file_id = utilities.writeGlobalFile(
-                fileStore, contigs_file_name)
+            log_file_id = utilities.writeGlobalFile(fileStore, log_file_name)
+            contigs_file_id = utilities.writeGlobalFile(fileStore, contigs_file_name)
 
         except Exception as exc:
             # Ensure expectred return values on exceptions
@@ -168,15 +185,9 @@ Use Quality Scores    = no
 
         # Return file ids and names for export
         novoplasty_rv = {
-            'novoplasty_rv': {
-                'log_file': {
-                    'id': log_file_id,
-                    'name': log_file_name,
-                },
-                'contigs_file': {
-                    'id': contigs_file_id,
-                    'name': contigs_file_name,
-                },
+            "novoplasty_rv": {
+                "log_file": {"id": log_file_id, "name": log_file_name,},
+                "contigs_file": {"id": contigs_file_id, "name": contigs_file_name,},
             }
         }
         novoplasty_rv.update(self.parent_rv)
@@ -188,28 +199,47 @@ if __name__ == "__main__":
     """
     Assemble reads corresponding to a single well.
     """
-    # Parse FASTQ data path, plate and well specification, and output
-    # directory, making the output directory if needed
+    # Parse FASTQ data path, plate and well specification,
+    # configuration path and file, and output directory, making the
+    # output directory if needed
     parser = ArgumentParser()
     Job.Runner.addToilOptions(parser)
     cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-4]
     cmps.extend(["dat", "miscellaneous"])
     parser.add_argument(
-        '-d', '--data-path',
+        "-d",
+        "--data-path",
         default=os.sep + os.path.join(*cmps),
-        help="path containing plate and well FASTQ source")
+        help="path containing plate and well FASTQ source",
+    )
     parser.add_argument(
-        '-s', '--source-scheme',
-        default="file", help="scheme used for the source URL")
+        "-s", "--source-scheme", default="file", help="scheme used for the source URL"
+    )
     parser.add_argument(
-        '-p', '--plate-spec',
-        default="A11967A_sW0154", help="the plate specification")
+        "-p", "--plate-spec", default="A11967A_sW0154", help="the plate specification"
+    )
     parser.add_argument(
-        '-w', '--well-spec',
-        default="A01", help="the well specification")
+        "-w", "--well-spec", default="A01", help="the well specification"
+    )
+    cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-1]
     parser.add_argument(
-        '-o', '--output-directory',
-        default=None, help="the directory containing all output files")
+        "-c",
+        "--config-path",
+        default=os.sep + os.path.join(*cmps),
+        help="path to a .ini file with args to be passed to the assembler",
+    )
+    parser.add_argument(
+        "-f",
+        "--config-file",
+        default="Assembler.ini",
+        help="path to a .ini file with args to be passed to the assembler",
+    )
+    parser.add_argument(
+        "-o",
+        "--output-directory",
+        default=None,
+        help="the directory containing all output files",
+    )
     options = parser.parse_args()
     if options.output_directory is None:
         options.output_directory = options.plate_spec + "_" + options.well_spec
@@ -221,7 +251,6 @@ if __name__ == "__main__":
         if not toil.options.restart:
 
             # Import the local read files into the file store
-
             read_one_file_ids, read_two_file_ids = utilities.importReadFiles(
                 toil,
                 options.data_path,
@@ -230,9 +259,17 @@ if __name__ == "__main__":
                 options.source_scheme,
             )
 
+            # Import local config file into the file store
+            config_file_id = utilities.importConfigFile(
+                toil, os.path.join(options.config_path, options.config_file)
+            )
+
             # Construct and start the NOVOPlasty job
             novoplasty_job = NovoplastyJob(
-                read_one_file_ids[0], read_two_file_ids[0]
+                read_one_file_ids[0],
+                read_two_file_ids[0],
+                config_file_id,
+                options.config_file,
             )
             novoplasty_rv = toil.start(novoplasty_job)
 
@@ -243,5 +280,5 @@ if __name__ == "__main__":
 
         # Export all NOVOPlasty output files from the file store
         utilities.exportFiles(
-            toil, options.output_directory, novoplasty_rv['novoplasty_rv']
+            toil, options.output_directory, novoplasty_rv["novoplasty_rv"]
         )
