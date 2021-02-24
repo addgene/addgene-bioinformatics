@@ -1,6 +1,6 @@
-awscli==1.16.266
-biopython==1.75
-ipython==7.15.0
-matplotlib==3.2.2
-scikit-learn==0.23.0
-toil[aws,encryption,cwl,wdl]==3.20.0
+awscli==1.19.14
+biopython==1.78
+ipython==7.16.1
+matplotlib==3.3.4
+scikit-learn==0.24.1
+toil[aws,mesos,google,encryption,cwl]==5.2.0
