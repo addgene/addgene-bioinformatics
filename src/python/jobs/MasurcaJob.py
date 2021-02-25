@@ -181,8 +181,8 @@ SOAP_ASSEMBLY = 0
 END
 # --------------------------------------------------------------------------------
                  """.format(
-                    read_one_file_path=read_one_file_path,
-                    read_two_file_path=read_two_file_path,
+                    read_one_file_path=os.path.basename(read_one_file_path),
+                    read_two_file_path=os.path.basename(read_two_file_path),
                     threads=assembler_params['threads'],
                 )
                 f.write(config)
@@ -191,7 +191,7 @@ END
             # the container, and use the path as the working directory in
             # the container, then call MaSuRCA
             # TODO: Specify the container on construction
-            image = "ralatsdio/masurca:v3.4.1"
+            image = "ralatsdio/masurca:v3.3.1"
             logger.info("Calling image {0}".format(image))
             parameters = ["masurca.sh", assembler_params['config_file_name'],],
             logger.info("Using parameters {0}".format(str(parameters)))
