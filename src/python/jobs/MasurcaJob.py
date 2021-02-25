@@ -196,7 +196,6 @@ END
             parameters = ["masurca.sh", assembler_params['config_file_name'],],
             logger.info("Using parameters {0}".format(str(parameters)))
             logger.info(config)
-            import pdb; pdb.set_trace()
             apiDockerCall(
                 self,
                 image=image,
