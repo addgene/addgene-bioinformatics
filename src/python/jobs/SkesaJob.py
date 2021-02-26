@@ -85,7 +85,7 @@ class SkesaJob(Job):
             # the container, and use the path as the working directory in
             # the container, then call SKESA
             # TODO: Specify the container on construction
-            image = "ralatsdio/skesa:v2.3.0"
+            image = "ralatsdio/skesa:v2.4.0"
             working_dir = fileStore.localTempDir
             logger.info("Calling image {0}".format(image))
             parameters = [
