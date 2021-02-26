@@ -45,7 +45,7 @@ class ToilTestCase(unittest.TestCase):
             os.mkdir(self.test_directory_ab)
 
         self.plate_spec_b = "A11967B_sW0154"
-        self.well_specs = ["G05", "G06"]
+        self.well_specs = ["G04", "G06"]
 
         self.actual_directory_bg = self.plate_spec_b
         self.test_directory_bg = self.actual_directory_bg + "_TEST"
@@ -59,6 +59,8 @@ class ToilTestCase(unittest.TestCase):
         self.test_spades_fasta = "contigs.fasta"
         self.test_unicycler_fasta = "assembly.fasta"
 
+        self.test_apc_fasta = "apc.1.fa"
+
         self.actual_masurca_fasta = "assembly_masurca.fasta"
         self.actual_novoplasty_fasta = "assembly_novoplasty.fasta"
         self.actual_shovill_fasta = "assembly_shovill.fasta"
@@ -66,7 +68,7 @@ class ToilTestCase(unittest.TestCase):
         self.actual_spades_fasta = "assembly_spades.fasta"
         self.actual_unicycler_fasta = "assembly_unicycler.fasta"
 
-        self.apc_fasta = "apc.1.fa"
+        self.actual_apc_fasta = "apc_spades.1.fa"
 
     def tearDown(self):
         if os.path.exists(self.test_directory_aa):
@@ -90,7 +92,9 @@ class ToilTestCase(unittest.TestCase):
 
     def _import_contigs_file(self, toil):
         contigs_file_id = utilities.importContigsFile(
-            toil, os.path.abspath(self.output_directory_ab)
+            toil,
+            os.path.abspath(self.output_directory_ab),
+            file_name="assembly_spades.fasta",
         )
         return contigs_file_id
 
@@ -305,9 +309,9 @@ class JobsTestCase(ToilTestCase):
 
         self._assert_true_cmp_fasta(
             self.test_directory_ab,
-            self.apc_fasta,
+            self.test_apc_fasta,
             self.actual_directory_ab,
-            self.apc_fasta,
+            self.actual_apc_fasta,
         )
 
 
@@ -349,9 +353,9 @@ class WellAssemblyJobTestCase(ToilTestCase):
         )
         self._assert_true_cmp_fasta(
             self.test_directory_ab,
-            self.apc_fasta,
+            self.test_apc_fasta,
             self.actual_directory_ab,
-            self.apc_fasta,
+            self.actual_apc_fasta,
         )
 
 
@@ -395,13 +399,13 @@ class PlateAssemblyJobTestCase(ToilTestCase):
                 os.path.join(self.test_directory_bg, well_spec),
                 self.test_spades_fasta,
                 os.path.join(self.actual_directory_bg, well_spec),
-                self.test_spades_fasta,
+                self.actual_spades_fasta,
             )
             self._assert_true_cmp_fasta(
                 os.path.join(self.test_directory_bg, well_spec),
-                self.apc_fasta,
+                self.test_apc_fasta,
                 os.path.join(self.actual_directory_bg, well_spec),
-                self.apc_fasta,
+                self.actual_apc_fasta,
             )
 
 
@@ -418,7 +422,11 @@ if __name__ == "__main__":
     jobsTestSuite.addTest(JobsTestCase("test_unicycler_job"))
     jobsTestSuite.addTest(JobsTestCase("test_apc_job"))
 
-    testSuites = unittest.TestSuite([jobsTestSuite,])
+    testSuites = unittest.TestSuite(
+        [
+            jobsTestSuite,
+        ]
+    )
 
     wellAssemblyJobTestSuite = unittest.TestLoader().loadTestsFromTestCase(
         WellAssemblyJobTestCase
@@ -429,7 +437,11 @@ if __name__ == "__main__":
     )
 
     testSuites = unittest.TestSuite(
-        [jobsTestSuite, wellAssemblyJobTestSuite, plateAssemblyJobTestSuite,]
+        [
+            jobsTestSuite,
+            wellAssemblyJobTestSuite,
+            plateAssemblyJobTestSuite,
+        ]
     )
 
     unittest.TextTestRunner(verbosity=2).run(testSuites)
