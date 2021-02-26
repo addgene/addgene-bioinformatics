@@ -116,9 +116,10 @@ Type                  = mito
 Genome Range          = 1500-60000
 K-mer                 = 121
 Max memory            = 3
-Extended log          =
-Save assembled reads  =
+Extended log          = 0
+Save assembled reads  = no
 Seed Input            = {seed_file_path}
+Extend seed directly  = no
 Reference sequence    =
 Variance detection    =
 Chloroplast sequence  =
@@ -142,8 +143,6 @@ PCR-free              =
 Optional:
 -----------------------
 Insert size auto      = yes
-Insert Range          = 1.9
-Insert Range strict   = 1.3,
 Use Quality Scores    = no
                  """.format(
                     project_name=project_name,
@@ -157,7 +156,7 @@ Use Quality Scores    = no
             # the container, and use the path as the working directory in
             # the container, then call NOVOPlasty
             # TODO: Specify the container on construction
-            image = "ralatsdio/novoplasty:v3.7.0"
+            image = "ralatsdio/novoplasty:v4.2"
             logger.info("Calling image {0}".format(image))
             apiDockerCall(
                 self,
