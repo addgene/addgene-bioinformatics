@@ -90,7 +90,7 @@ class ShovillJob(Job):
             # the container, and use the path as the working directory in
             # the container, then call shovill
             # TODO: Specify the container on construction
-            image = "ralatsdio/shovill:v1.0.9"
+            image = "ralatsdio/shovill:v1.1.0"
             working_dir = fileStore.localTempDir
             logger.info("Calling image {0}".format(image))
             parameters = [
