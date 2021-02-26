@@ -89,7 +89,7 @@ class UnicyclerJob(Job):
             # the container, and use the path as the working directory in
             # the container, then call Unicycler
             # TODO: Specify the container on construction
-            image = "ralatsdio/unicycler:v0.4.7"
+            image = "ralatsdio/unicycler:v0.4.8"
             working_dir = fileStore.localTempDir
             logger.info("Calling image {0}".format(image))
             parameters = [
