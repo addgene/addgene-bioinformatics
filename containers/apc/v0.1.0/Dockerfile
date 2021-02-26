@@ -1,11 +1,11 @@
 ##### Base image ###############################################################
 
-FROM ralatsdio/biocontainers:v1.1.0
+FROM ralatsdio/biocontainers:v1.2.0
 
 ##### Metadata #################################################################
 
 LABEL base_image="ralatsdio/biocontainers"
-LABEL version="1.1.0"
+LABEL version="1.2.0"
 LABEL software="apc"
 LABEL software.version="v0.1.0"
 LABEL about.summary="Perl script to test each sequence in a multi-fasta file for overlapping ends"

@@ -1,11 +1,11 @@
 ##### Base image ###############################################################
 
-FROM ralatsdio/biocontainers:v1.1.0
+FROM ralatsdio/biocontainers:v1.2.0
 
 ##### Metadata #################################################################
 
 LABEL base_image="ralatsdio/biocontainers"
-LABEL version="1.1.0"
+LABEL version="1.2.0"
 LABEL software="SPADE"
 LABEL software.version="v0.1.0"
 LABEL about.summary="Explore various periodic repeat regions comprehensively from large genomic and protein data resources"

@@ -1,11 +1,11 @@
 ##### Base image ###############################################################
 
-FROM ralatsdio/biocontainers:v1.1.0
+FROM ralatsdio/biocontainers:v1.2.0
 
 ##### Metadata #################################################################
 
 LABEL base.image="ralatsdio/biocontainers"
-LABEL version="1.1.0"
+LABEL version="1.2.0"
 LABEL software="KMC"
 LABEL software.version="v3.1.1"
 LABEL about.summary="A disk-based programm for counting k-mers from (possibly gzipped) FASTQ/FASTA files"

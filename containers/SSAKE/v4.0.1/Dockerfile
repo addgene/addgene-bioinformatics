@@ -1,11 +1,11 @@
 ##### Base image ###############################################################
 
-FROM ralatsdio/biocontainers:v1.1.0
+FROM ralatsdio/biocontainers:v1.2.0
 
 ##### Metadata #################################################################
 
 LABEL base.image="ralatsdio/biocontainers"
-LABEL version="1.1.0"
+LABEL version="1.2.0"
 LABEL software="SSAKE"
 LABEL software.version="v4.0.1"
 LABEL about.summary="Genome assembly with short sequence reads"
