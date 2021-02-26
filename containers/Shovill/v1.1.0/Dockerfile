@@ -32,7 +32,7 @@ RUN apt-get update && \
         libncurses5-dev \
         libpthread-stubs0-dev \
         libssl-dev \
-        openjdk-9-jre \
+        openjdk-11-jre \
         pigz && \
     apt-get clean && \
     apt-get purge && \
