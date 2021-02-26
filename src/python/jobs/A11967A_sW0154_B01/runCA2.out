@@ -1,0 +1,43 @@
+----------------------------------------START Thu Feb 25 20:51:18 2021
+/home/biodocker/CA8/Linux-amd64/bin/bogart  -O /var/folders/s1/cryt_6x14nz5qnv2p7ymvpbj45l3v9/T/node-abd5163a-a8f6-42ff-9349-608c4c935d0e-190070690681122/tmplrgxjikx/a439e36c-b374-4fbd-b4ec-67804abc5139/CA/genome.ovlStore  -G /var/folders/s1/cryt_6x14nz5qnv2p7ymvpbj45l3v9/T/node-abd5163a-a8f6-42ff-9349-608c4c935d0e-190070690681122/tmplrgxjikx/a439e36c-b374-4fbd-b4ec-67804abc5139/CA/genome.gkpStore  -T /var/folders/s1/cryt_6x14nz5qnv2p7ymvpbj45l3v9/T/node-abd5163a-a8f6-42ff-9349-608c4c935d0e-190070690681122/tmplrgxjikx/a439e36c-b374-4fbd-b4ec-67804abc5139/CA/genome.tigStore  -B 10000  -eg 0.015  -Eg 1000  -em 0.025  -Em 1000  -o /var/folders/s1/cryt_6x14nz5qnv2p7ymvpbj45l3v9/T/node-abd5163a-a8f6-42ff-9349-608c4c935d0e-190070690681122/tmplrgxjikx/a439e36c-b374-4fbd-b4ec-67804abc5139/CA/4-unitigger/genome  > /var/folders/s1/cryt_6x14nz5qnv2p7ymvpbj45l3v9/T/node-abd5163a-a8f6-42ff-9349-608c4c935d0e-190070690681122/tmplrgxjikx/a439e36c-b374-4fbd-b4ec-67804abc5139/CA/4-unitigger/unitigger.err 2>&1
+----------------------------------------END Thu Feb 25 20:51:18 2021 (0 seconds)
+----------------------------------------START Thu Feb 25 20:51:18 2021
+/home/biodocker/CA8/Linux-amd64/bin/gatekeeper  -P /var/folders/s1/cryt_6x14nz5qnv2p7ymvpbj45l3v9/T/node-abd5163a-a8f6-42ff-9349-608c4c935d0e-190070690681122/tmplrgxjikx/a439e36c-b374-4fbd-b4ec-67804abc5139/CA/4-unitigger/genome.partitioning  /var/folders/s1/cryt_6x14nz5qnv2p7ymvpbj45l3v9/T/node-abd5163a-a8f6-42ff-9349-608c4c935d0e-190070690681122/tmplrgxjikx/a439e36c-b374-4fbd-b4ec-67804abc5139/CA/genome.gkpStore > /var/folders/s1/cryt_6x14nz5qnv2p7ymvpbj45l3v9/T/node-abd5163a-a8f6-42ff-9349-608c4c935d0e-190070690681122/tmplrgxjikx/a439e36c-b374-4fbd-b4ec-67804abc5139/CA/5-consensus/genome.partitioned.err 2>&1
+----------------------------------------END Thu Feb 25 20:51:18 2021 (0 seconds)
+----------------------------------------START CONCURRENT Thu Feb 25 20:51:18 2021
+/var/folders/s1/cryt_6x14nz5qnv2p7ymvpbj45l3v9/T/node-abd5163a-a8f6-42ff-9349-608c4c935d0e-190070690681122/tmplrgxjikx/a439e36c-b374-4fbd-b4ec-67804abc5139/CA/5-consensus/consensus.sh 1 > /dev/null 2>&1
+----------------------------------------END CONCURRENT Thu Feb 25 20:51:19 2021 (1 seconds)
+----------------------------------------START Thu Feb 25 20:51:19 2021
+/home/biodocker/CA8/Linux-amd64/bin/tigStore -g /var/folders/s1/cryt_6x14nz5qnv2p7ymvpbj45l3v9/T/node-abd5163a-a8f6-42ff-9349-608c4c935d0e-190070690681122/tmplrgxjikx/a439e36c-b374-4fbd-b4ec-67804abc5139/CA/genome.gkpStore -t /var/folders/s1/cryt_6x14nz5qnv2p7ymvpbj45l3v9/T/node-abd5163a-a8f6-42ff-9349-608c4c935d0e-190070690681122/tmplrgxjikx/a439e36c-b374-4fbd-b4ec-67804abc5139/CA/genome.tigStore 2 -N -R /var/folders/s1/cryt_6x14nz5qnv2p7ymvpbj45l3v9/T/node-abd5163a-a8f6-42ff-9349-608c4c935d0e-190070690681122/tmplrgxjikx/a439e36c-b374-4fbd-b4ec-67804abc5139/CA/5-consensus/genome.fixes > genome.fixes.err 2>&1
+----------------------------------------END Thu Feb 25 20:51:19 2021 (0 seconds)
+----------------------------------------START Thu Feb 25 20:51:19 2021
+/home/biodocker/CA8/Linux-amd64/bin/tigStore \
+ -g /var/folders/s1/cryt_6x14nz5qnv2p7ymvpbj45l3v9/T/node-abd5163a-a8f6-42ff-9349-608c4c935d0e-190070690681122/tmplrgxjikx/a439e36c-b374-4fbd-b4ec-67804abc5139/CA/genome.gkpStore \
+ -t /var/folders/s1/cryt_6x14nz5qnv2p7ymvpbj45l3v9/T/node-abd5163a-a8f6-42ff-9349-608c4c935d0e-190070690681122/tmplrgxjikx/a439e36c-b374-4fbd-b4ec-67804abc5139/CA/5-consensus-insert-sizes/genome.tigStore 3 \
+ -d matepair -U \
+> /var/folders/s1/cryt_6x14nz5qnv2p7ymvpbj45l3v9/T/node-abd5163a-a8f6-42ff-9349-608c4c935d0e-190070690681122/tmplrgxjikx/a439e36c-b374-4fbd-b4ec-67804abc5139/CA/5-consensus-insert-sizes/estimates.out 2>&1
+----------------------------------------END Thu Feb 25 20:51:19 2021 (0 seconds)
+----------------------------------------START Thu Feb 25 20:51:19 2021
+/home/biodocker/CA8/Linux-amd64/bin/gatekeeper \
+ --edit /var/folders/s1/cryt_6x14nz5qnv2p7ymvpbj45l3v9/T/node-abd5163a-a8f6-42ff-9349-608c4c935d0e-190070690681122/tmplrgxjikx/a439e36c-b374-4fbd-b4ec-67804abc5139/CA/5-consensus-insert-sizes/genome.tigStore.distupdate \
+        /var/folders/s1/cryt_6x14nz5qnv2p7ymvpbj45l3v9/T/node-abd5163a-a8f6-42ff-9349-608c4c935d0e-190070690681122/tmplrgxjikx/a439e36c-b374-4fbd-b4ec-67804abc5139/CA/genome.gkpStore \
+> /var/folders/s1/cryt_6x14nz5qnv2p7ymvpbj45l3v9/T/node-abd5163a-a8f6-42ff-9349-608c4c935d0e-190070690681122/tmplrgxjikx/a439e36c-b374-4fbd-b4ec-67804abc5139/CA/5-consensus-insert-sizes/updates.err 2>&1
+----------------------------------------END Thu Feb 25 20:51:19 2021 (0 seconds)
+----------------------------------------START Thu Feb 25 20:51:19 2021
+/home/biodocker/CA8/Linux-amd64/bin/computeCoverageStat \
+ -g /var/folders/s1/cryt_6x14nz5qnv2p7ymvpbj45l3v9/T/node-abd5163a-a8f6-42ff-9349-608c4c935d0e-190070690681122/tmplrgxjikx/a439e36c-b374-4fbd-b4ec-67804abc5139/CA/genome.gkpStore \
+ -t /var/folders/s1/cryt_6x14nz5qnv2p7ymvpbj45l3v9/T/node-abd5163a-a8f6-42ff-9349-608c4c935d0e-190070690681122/tmplrgxjikx/a439e36c-b374-4fbd-b4ec-67804abc5139/CA/genome.tigStore 5 \
+ -s 0 \
+ -o /var/folders/s1/cryt_6x14nz5qnv2p7ymvpbj45l3v9/T/node-abd5163a-a8f6-42ff-9349-608c4c935d0e-190070690681122/tmplrgxjikx/a439e36c-b374-4fbd-b4ec-67804abc5139/CA/5-consensus-coverage-stat/genome \
+> /var/folders/s1/cryt_6x14nz5qnv2p7ymvpbj45l3v9/T/node-abd5163a-a8f6-42ff-9349-608c4c935d0e-190070690681122/tmplrgxjikx/a439e36c-b374-4fbd-b4ec-67804abc5139/CA/5-consensus-coverage-stat/computeCoverageStat.err 2>&1
+----------------------------------------END Thu Feb 25 20:51:19 2021 (0 seconds)
+----------------------------------------START Thu Feb 25 20:51:19 2021
+/home/biodocker/CA8/Linux-amd64/bin/markRepeatUnique \
+ -g /var/folders/s1/cryt_6x14nz5qnv2p7ymvpbj45l3v9/T/node-abd5163a-a8f6-42ff-9349-608c4c935d0e-190070690681122/tmplrgxjikx/a439e36c-b374-4fbd-b4ec-67804abc5139/CA/genome.gkpStore \
+ -t /var/folders/s1/cryt_6x14nz5qnv2p7ymvpbj45l3v9/T/node-abd5163a-a8f6-42ff-9349-608c4c935d0e-190070690681122/tmplrgxjikx/a439e36c-b374-4fbd-b4ec-67804abc5139/CA/genome.tigStore 5 \
+ -j 1 \
+ -k 5 \
+ -o /var/folders/s1/cryt_6x14nz5qnv2p7ymvpbj45l3v9/T/node-abd5163a-a8f6-42ff-9349-608c4c935d0e-190070690681122/tmplrgxjikx/a439e36c-b374-4fbd-b4ec-67804abc5139/CA/5-consensus-coverage-stat/genome.markRepeatUnique \
+> /var/folders/s1/cryt_6x14nz5qnv2p7ymvpbj45l3v9/T/node-abd5163a-a8f6-42ff-9349-608c4c935d0e-190070690681122/tmplrgxjikx/a439e36c-b374-4fbd-b4ec-67804abc5139/CA/5-consensus-coverage-stat/markRepeatUnique.err 2>&1
+----------------------------------------END Thu Feb 25 20:51:19 2021 (0 seconds)
+Stop requested before 'scaffolder'.
