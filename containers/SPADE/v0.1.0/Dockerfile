@@ -23,11 +23,10 @@ USER root
 ENV INSTALL_PFX=/home/biodocker
 
 # Install Python requirements
-RUN pip install --upgrade pip && \
-    pip install matplotlib==2.2.3 && \
-    pip install seaborn==0.8.1 && \
-    pip install weblogo==3.6.0 && \
-    pip install biopython
+RUN conda install -y matplotlib==2.2.3 && \
+    conda install -y seaborn==0.8.1 && \
+    conda install -y weblogo==3.6.0 && \
+    conda install -y biopython
 
 # Install MAFFT 7.455
 ENV MAFFT_VER=cf201901
