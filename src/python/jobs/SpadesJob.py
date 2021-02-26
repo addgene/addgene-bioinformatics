@@ -90,7 +90,7 @@ class SpadesJob(Job):
             # the container, and use the path as the working directory in
             # the container, then call spades.py
             # TODO: Specify the container on construction
-            image = "ralatsdio/spades:v3.13.1"
+            image = "ralatsdio/spades:v3.15.1"
             working_dir = fileStore.localTempDir
             logger.info("Calling image {0}".format(image))
             parameters = [
