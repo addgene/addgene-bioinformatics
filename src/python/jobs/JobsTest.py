@@ -78,9 +78,15 @@ class ToilTestCase(unittest.TestCase):
         if os.path.exists(self.test_directory_bg):
             shutil.rmtree(self.test_directory_bg)
 
-    def _import_read_files(self, toil, well_specs):
+    def _import_read_files_plate_spec_a(self, toil, well_specs):
         read_one_file_ids, read_two_file_ids = utilities.importReadFiles(
             toil, self.data_path, self.plate_spec_a, well_specs
+        )
+        return read_one_file_ids, read_two_file_ids
+
+    def _import_read_files_plate_spec_b(self, toil, well_specs):
+        read_one_file_ids, read_two_file_ids = utilities.importReadFiles(
+            toil, self.data_path, self.plate_spec_b, well_specs
         )
         return read_one_file_ids, read_two_file_ids
 
@@ -115,7 +121,7 @@ class JobsTestCase(ToilTestCase):
 
         with Toil(options) as toil:
 
-            read_one_file_ids, read_two_file_ids = self._import_read_files(
+            read_one_file_ids, read_two_file_ids = self._import_read_files_plate_spec_a(
                 toil, [self.well_spec_b]
             )
 
@@ -146,7 +152,7 @@ class JobsTestCase(ToilTestCase):
 
         with Toil(options) as toil:
 
-            read_one_file_ids, read_two_file_ids = self._import_read_files(
+            read_one_file_ids, read_two_file_ids = self._import_read_files_plate_spec_a(
                 toil, [self.well_spec_a]
             )
 
@@ -177,7 +183,7 @@ class JobsTestCase(ToilTestCase):
 
         with Toil(options) as toil:
 
-            read_one_file_ids, read_two_file_ids = self._import_read_files(
+            read_one_file_ids, read_two_file_ids = self._import_read_files_plate_spec_a(
                 toil, [self.well_spec_b]
             )
 
@@ -209,7 +215,7 @@ class JobsTestCase(ToilTestCase):
 
         with Toil(options) as toil:
 
-            read_one_file_ids, read_two_file_ids = self._import_read_files(
+            read_one_file_ids, read_two_file_ids = self._import_read_files_plate_spec_a(
                 toil, [self.well_spec_b]
             )
 
@@ -238,7 +244,7 @@ class JobsTestCase(ToilTestCase):
 
         with Toil(options) as toil:
 
-            read_one_file_ids, read_two_file_ids = self._import_read_files(
+            read_one_file_ids, read_two_file_ids = self._import_read_files_plate_spec_a(
                 toil, [self.well_spec_b]
             )
 
@@ -268,7 +274,7 @@ class JobsTestCase(ToilTestCase):
 
         with Toil(options) as toil:
 
-            read_one_file_ids, read_two_file_ids = self._import_read_files(
+            read_one_file_ids, read_two_file_ids = self._import_read_files_plate_spec_a(
                 toil, [self.well_spec_b]
             )
 
@@ -322,7 +328,7 @@ class WellAssemblyJobTestCase(ToilTestCase):
 
         with Toil(options) as toil:
 
-            read_one_file_ids, read_two_file_ids = self._import_read_files(
+            read_one_file_ids, read_two_file_ids = self._import_read_files_plate_spec_a(
                 toil, [self.well_spec_b]
             )
 
@@ -366,7 +372,7 @@ class PlateAssemblyJobTestCase(ToilTestCase):
 
         with Toil(options) as toil:
 
-            read_one_file_ids, read_two_file_ids = self._import_read_files(
+            read_one_file_ids, read_two_file_ids = self._import_read_files_plate_spec_b(
                 toil, self.well_specs
             )
 

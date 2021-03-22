@@ -135,9 +135,18 @@ class SpadesJob(Job):
         # Return file ids and names for export
         spades_rv = {
             "spades_rv": {
-                "warnings_file": {"id": warnings_file_id, "name": warnings_file_name,},
-                "spades_file": {"id": spades_file_id, "name": spades_file_name,},
-                "contigs_file": {"id": contigs_file_id, "name": contigs_file_name,},
+                "warnings_file": {
+                    "id": warnings_file_id,
+                    "name": warnings_file_name,
+                },
+                "spades_file": {
+                    "id": spades_file_id,
+                    "name": spades_file_name,
+                },
+                "contigs_file": {
+                    "id": contigs_file_id,
+                    "name": contigs_file_name,
+                },
             }
         }
         spades_rv.update(self.parent_rv)

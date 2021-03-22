@@ -185,8 +185,14 @@ Use Quality Scores    = no
         # Return file ids and names for export
         novoplasty_rv = {
             "novoplasty_rv": {
-                "log_file": {"id": log_file_id, "name": log_file_name,},
-                "contigs_file": {"id": contigs_file_id, "name": contigs_file_name,},
+                "log_file": {
+                    "id": log_file_id,
+                    "name": log_file_name,
+                },
+                "contigs_file": {
+                    "id": contigs_file_id,
+                    "name": contigs_file_name,
+                },
             }
         }
         novoplasty_rv.update(self.parent_rv)

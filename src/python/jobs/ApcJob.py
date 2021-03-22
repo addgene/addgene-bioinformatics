@@ -96,8 +96,14 @@ class ApcJob(Job):
         # Return file ids and names for export
         apc_rv = {
             "apc_rv": {
-                "log_file": {"id": log_file_id, "name": log_file_name,},
-                "sequence_file": {"id": sequence_file_id, "name": sequence_file_name,},
+                "log_file": {
+                    "id": log_file_id,
+                    "name": log_file_name,
+                },
+                "sequence_file": {
+                    "id": sequence_file_id,
+                    "name": sequence_file_name,
+                },
             }
         }
         apc_rv.update(self.parent_rv)
@@ -151,7 +157,9 @@ if __name__ == "__main__":
             )
 
             # Construct and start the APC job
-            apc_job = ApcJob(contigs_file_id,)
+            apc_job = ApcJob(
+                contigs_file_id,
+            )
             apc_rv = toil.start(apc_job)
 
         else:
