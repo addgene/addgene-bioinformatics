@@ -118,7 +118,7 @@ if __name__ == "__main__":
         "-s", "--source-scheme", default="file", help="scheme used for the source URL"
     )
     parser.add_argument(
-        "-p", "--plate-spec", default="A11967B_sW0154", help="the plate specification"
+        "-l", "--plate-spec", default="A11967B_sW0154", help="the plate specification"
     )
     parser.add_argument(
         "-a",

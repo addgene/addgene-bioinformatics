@@ -1,11 +1,11 @@
 ##### Base image ###############################################################
 
-FROM ralatsdio/biocontainers:v1.1.0
+FROM ralatsdio/biocontainers:v1.2.0
 
 ##### Metadata #################################################################
 
 LABEL base.image="ralatsdio/biocontainers"
-LABEL container.version="1.1.0"
+LABEL container.version="1.2.0"
 LABEL software="Shovill"
 LABEL software.version="1.1.0"
 LABEL about.summary="Faster than SPAdes de novo DBG genome assembler (with assembler options!)"
@@ -32,7 +32,7 @@ RUN apt-get update && \
         libncurses5-dev \
         libpthread-stubs0-dev \
         libssl-dev \
-        openjdk-9-jre \
+        openjdk-11-jre \
         pigz && \
     apt-get clean && \
     apt-get purge && \

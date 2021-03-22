@@ -89,7 +89,10 @@ class MasurcaJob(Job):
             logger.info("Handling configuration file {0}".format(assembler_params['config_file_name']))
             with open(os.path.join(working_dir, assembler_params['config_file_name']), "w+") as f:
                 config = """
+# --------------------------------------------------------------------------------
 # Input file for 'masurca' command to create 'assemble.sh'.
+# --------------------------------------------------------------------------------
+DATA
 # --------------------------------------------------------------------------------
 # DATA is specified as type (PE, JUMP, OTHER, PACBIO) and 5 fields:
 #   1) two_letter_prefix
@@ -103,33 +106,35 @@ class MasurcaJob(Job):
 # and specify NEGATIVE mean. Reverse reads are optional for PE
 # libraries and mandatory for JUMP libraries. Any OTHER sequence data
 # (454, Sanger, Ion torrent, etc) must be first converted into Celera
-# Assembler compatible .frg files (see
-# http://wgs-assembler.sourceforge.com)
-DATA
+# Assembler compatible .frg files (see http://wgs-assembler.sourceforge.com)
+#
 # Illumina paired end reads supplied as:
 #   <two-character prefix> <fragment mean> <fragment stdev> <forward_reads> <reverse_reads>
 # If single-end, do not specify <reverse_reads>
+# If mean/stdev are unknown use 500 and 50 -- these are safe values that will work for most runs
 # MUST HAVE Illumina paired end reads to use MaSuRCA
 PE = pe 500 50 {read_one_file_path} {read_two_file_path}
-#
 # Illumina mate pair reads supplied as:
 #   <two-character prefix> <fragment mean> <fragment stdev> <forward_reads> <reverse_reads>
-#JUMP = sh 3600 200  /FULL_PATH/short_1.fastq  /FULL_PATH/short_2.fastq
-#
-# Pacbio OR Nanopore reads must be in a single fasta or fastq file
-# with absolute path, can be gzipped. If you have both types of reads
+#JUMP = sh 3600 200 /FULL_PATH/short_1.fastq /FULL_PATH/short_2.fastq
+# Pacbio OR nanopore reads must be in a single fasta or fastq file
+# with absolute path, can be gzipped.  If you have both types of reads
 # supply them both as NANOPORE type.
 #PACBIO = /FULL_PATH/pacbio.fa
 #NANOPORE = /FULL_PATH/nanopore.fa
-#
-# Other reads (Sanger, 454, etc) one frg file, concatenate your frg
-# files into one if you have many
+# Legacy reads (Sanger, 454, etc) in one frg file, concatenate your
+# frg files into one if you have many
 #OTHER = /FULL_PATH/file.frg
+# synteny-assisted assembly, concatenate all reference genomes into
+# one reference.fa; works for Illumina-only data
+#REFERENCE = /FULL_PATH/nanopore.fa
 END
 # --------------------------------------------------------------------------------
 PARAMETERS
-# Set this to 1 if your Illumina jumping library reads are shorter
-# than 100bp
+# --------------------------------------------------------------------------------
+# PLEASE READ all comments to essential parameters below, and set the
+# parameters according to your project.  Set this to 1 if your
+# Illumina jumping library reads are shorter than 100bp
 EXTEND_JUMP_READS = 0
 # This is k-mer size for deBruijn graph values between 25 and 127 are
 # supported, auto will compute the optimal size based on the read data
@@ -137,9 +142,9 @@ EXTEND_JUMP_READS = 0
 GRAPH_KMER_SIZE = auto
 # Set this to 1 for all Illumina-only assemblies, or set this to 0 if
 # you have more than 15x coverage by long reads (Pacbio or Nanopore)
-# or any other long reads/mate pairs (Illumina MP, Sanger, 454, etc).
-USE_LINKING_MATES = 1
-# Specifies whether to run mega-reads correction on the grid
+# or any other long reads/mate pairs (Illumina MP, Sanger, 454, etc)
+USE_LINKING_MATES = 0
+# Specifies whether to run the assembly on the grid
 USE_GRID = 0
 # Specifies grid engine to use SGE or SLURM
 GRID_ENGINE = SGE
@@ -148,41 +153,46 @@ GRID_ENGINE = SGE
 GRID_QUEUE = all.q
 # Batch size in the amount of long read sequence for each batch on the
 # grid
-GRID_BATCH_SIZE = 300000000
+GRID_BATCH_SIZE = 500000000
 # Use at most this much coverage by the longest Pacbio or Nanopore
-# reads, discard the rest of the reads
+# reads, discard the rest of the reads. Can increase this to 30 or 35
+# if your long reads reads have N50<7000bp
 LHE_COVERAGE = 25
-# Set to 1 to only do one pass of mega-reads, for faster but worse
-# quality assembly
-MEGA_READS_ONE_PASS = 0
 # This parameter is useful if you have too many Illumina jumping
 # library mates. Typically set it to 60 for bacteria and 300 for the
 # other organisms
 LIMIT_JUMP_COVERAGE = 300
-# These are the additional parameters to Celera Assembler. Do not
+# These are the additional parameters to Celera Assembler; do not
 # worry about performance, number or processors or batch sizes --
-# these are computed automatically. Set cgwErrorRate=0.25 for bacteria
-# and 0.1<=cgwErrorRate<=0.15 for other organisms.
+# these are computed automatically.  CABOG ASSEMBLY ONLY: set
+# cgwErrorRate=0.25 for bacteria and 0.1<=cgwErrorRate<=0.15 for other
+# organisms.
 CA_PARAMETERS = cgwErrorRate=0.15
-# Minimum count k-mers used in error correction 1 means all k-mers are
-# used. One can increase to 2 if Illumina coverage > 100
-KMER_COUNT_THRESHOLD = 1
-# Whether to attempt to close gaps in scaffolds with Illumina data
+# CABOG ASSEMBLY ONLY: whether to attempt to close gaps in scaffolds
+# with Illumina or long read data
 CLOSE_GAPS = 1
-# Auto-detected number of cpus to use
+# Number of cpus to use, set this to the number of CPUs/threads per
+# node you will be using
 NUM_THREADS = {threads}
 # This is mandatory jellyfish hash size -- a safe value is
-# estimated_genome_size*estimated_coverage
-JF_SIZE = 2000000
-# Set this to 1 to use SOAPdenovo contigging/scaffolding
-# module. Assembly will be worse but will run faster. Useful for very
-# large (> 5Gbp) genomes from Illumina-only data.
+# estimated_genome_size*20
+JF_SIZE = 200000000
+# ILLUMINA ONLY. Set this to 1 to use SOAPdenovo
+# contigging/scaffolding module. Assembly will be worse but will run
+# faster. Useful for very large (>=8Gbp) genomes from Illumina-only
+# data
 SOAP_ASSEMBLY = 0
+# If you are doing Hybrid Illumina paired end + Nanopore/PacBio
+# assembly ONLY (no Illumina mate pairs or OTHER frg files). Set this
+# to 1 to use Flye assembler for final assembly of corrected
+# mega-reads. A lot faster than CABOG, AND QUALITY IS THE SAME OR
+# BETTER. DO NOT use if you have less than 20x coverage by long reads.
+FLYE_ASSEMBLY = 0
 END
 # --------------------------------------------------------------------------------
                  """.format(
-                    read_one_file_path=read_one_file_path,
-                    read_two_file_path=read_two_file_path,
+                    read_one_file_path=os.path.basename(read_one_file_path),
+                    read_two_file_path=os.path.basename(read_two_file_path),
                     threads=assembler_params['threads'],
                 )
                 f.write(config)
@@ -191,12 +201,11 @@ END
             # the container, and use the path as the working directory in
             # the container, then call MaSuRCA
             # TODO: Specify the container on construction
-            image = "ralatsdio/masurca:v3.4.1"
+            image = "ralatsdio/masurca:v4.0.1"
             logger.info("Calling image {0}".format(image))
             parameters = ["masurca.sh", assembler_params['config_file_name'],],
             logger.info("Using parameters {0}".format(str(parameters)))
             logger.info(config)
-            import pdb; pdb.set_trace()
             apiDockerCall(
                 self,
                 image=image,
@@ -261,7 +270,7 @@ if __name__ == "__main__":
         "-s", "--source-scheme", default="file", help="scheme used for the source URL"
     )
     parser.add_argument(
-        "-p", "--plate-spec", default="A11967A_sW0154", help="the plate specification"
+        "-l", "--plate-spec", default="A11967A_sW0154", help="the plate specification"
     )
     parser.add_argument(
         "-w", "--well-spec", default="B01", help="the well specification"

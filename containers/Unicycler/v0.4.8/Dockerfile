@@ -1,11 +1,11 @@
 ##### Base image ###############################################################
 
-FROM ralatsdio/biocontainers:v1.1.0
+FROM ralatsdio/biocontainers:v1.2.0
 
 ##### Metadata #################################################################
 
 LABEL base.image="ralatsdio/biocontainers"
-LABEL container.version="1.1.0"
+LABEL container.version="1.2.0"
 LABEL software="Unicycler"
 LABEL software.version="0.4.8"
 LABEL about.summary="Unicycler is an assembly pipeline for bacterial genomes"

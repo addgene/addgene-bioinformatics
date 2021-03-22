@@ -1,0 +1,5 @@
+----------------------------------------START Thu Feb 25 20:51:13 2021
+/home/biodocker/CA8/Linux-amd64/bin/gatekeeper  -o /var/folders/s1/cryt_6x14nz5qnv2p7ymvpbj45l3v9/T/node-abd5163a-a8f6-42ff-9349-608c4c935d0e-190070690681122/tmplrgxjikx/a439e36c-b374-4fbd-b4ec-67804abc5139/CA/genome.gkpStore.BUILDING  /var/folders/s1/cryt_6x14nz5qnv2p7ymvpbj45l3v9/T/node-abd5163a-a8f6-42ff-9349-608c4c935d0e-190070690681122/tmplrgxjikx/a439e36c-b374-4fbd-b4ec-67804abc5139/superReadSequences_shr.frg > /var/folders/s1/cryt_6x14nz5qnv2p7ymvpbj45l3v9/T/node-abd5163a-a8f6-42ff-9349-608c4c935d0e-190070690681122/tmplrgxjikx/a439e36c-b374-4fbd-b4ec-67804abc5139/CA/genome.gkpStore.err 2>&1
+----------------------------------------END Thu Feb 25 20:51:13 2021 (0 seconds)
+numFrags = 322
+Stop requested after 'initialstorebuilding'.

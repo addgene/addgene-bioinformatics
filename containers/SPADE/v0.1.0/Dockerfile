@@ -1,15 +1,15 @@
 ##### Base image ###############################################################
 
-FROM ralatsdio/biocontainers:v1.1.0
+FROM ralatsdio/biocontainers:v1.2.0
 
 ##### Metadata #################################################################
 
 LABEL base_image="ralatsdio/biocontainers"
-LABEL version="1.1.0"
+LABEL version="1.2.0"
 LABEL software="SPADE"
 LABEL software.version="v0.1.0"
 LABEL about.summary="Explore various periodic repeat regions comprehensively from large genomic and protein data resources"
-LABEL about.home="git@github.com:ralatsdc/SPADE.git"
+LABEL about.home="https://git@github.com:ralatsdc/SPADE.git"
 LABEL about.provides="SPADE.py v0.1.0"
 LABEL about.license_file="GNU General Public License v3.0"
 LABEL about.license="https://github.com/ralatsdc/SPADE/blob/master/LICENSE"
@@ -23,11 +23,10 @@ USER root
 ENV INSTALL_PFX=/home/biodocker
 
 # Install Python requirements
-RUN pip install --upgrade pip && \
-    pip install matplotlib==2.2.3 && \
-    pip install seaborn==0.8.1 && \
-    pip install weblogo==3.6.0 && \
-    pip install biopython
+RUN conda install -y matplotlib==2.2.3 && \
+    conda install -y seaborn==0.8.1 && \
+    conda install -y weblogo==3.6.0 && \
+    conda install -y biopython
 
 # Install MAFFT 7.455
 ENV MAFFT_VER=cf201901

@@ -1,15 +1,15 @@
 ##### Base image ###############################################################
 
-FROM ralatsdio/biocontainers:v1.1.0
+FROM ralatsdio/biocontainers:v1.2.0
 
 ##### Metadata #################################################################
 
 LABEL base_image="ralatsdio/biocontainers"
-LABEL version="1.1.0"
+LABEL version="1.2.0"
 LABEL software="REPdenovo"
 LABEL software.version="v0.1.0"
 LABEL about.summary="Designed for constructing repeats directly from sequence reads"
-LABEL about.home="git@github.com:ralatsdc/REPdenovo.git"
+LABEL about.home="https://git@github.com:ralatsdc/REPdenovo.git"
 LABEL about.provides="main.py v0.1.0"
 LABEL about.license_file="MIT License"
 LABEL about.license="https://github.com/ralatsdc/REPdenovo/blob/master/LICENSE"
