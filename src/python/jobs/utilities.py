@@ -138,6 +138,29 @@ def importContigsFile(toil, data_path, file_name="contigs.fasta", scheme="file")
     return contigs_file_id
 
 
+def importAdaptersFile(toil, adapters_path, scheme="file"):
+    """
+    Import the contigs source from the data path containing the FASTA
+    source.
+
+    Parameters
+    ----------
+    adapters_path : str
+        path containing the adapters file
+    file_name : str
+        name of adapters file
+    scheme : str
+        scheme used for the source URL
+
+    Returns
+    -------
+    str
+        id of the imported contigs file in the file store
+    """
+    adapters_file_id = importFile(toil, adapters_path, scheme)
+    return adapters_file_id
+
+
 def readGlobalFile(fileStore, file_id, *cmps):
     """
     Read the file corresponding to the specified id from the file
@@ -288,6 +311,12 @@ def parseConfigFile(config_file_path, assembler):
     common_config = config["common"]
     if assembler in ["masurca", "novoplasty"]:
         assembler_params = config[assembler]
+        print(assembler_params.popitem())
+    elif assembler in ["bbduk", "bbnorm", "bbmerge"]:
+        assembler_params = []
+        if assembler in config:
+            for arg_name, arg_value in config[assembler].items():
+                assembler_params.append("=".join([arg_name, arg_value]))
     else:
         assembler_params = []
         if assembler in config:
