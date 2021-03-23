@@ -311,7 +311,6 @@ def parseConfigFile(config_file_path, assembler):
     common_config = config["common"]
     if assembler in ["masurca", "novoplasty"]:
         assembler_params = config[assembler]
-        print(assembler_params.popitem())
     elif assembler in ["bbduk", "bbnorm", "bbmerge"]:
         assembler_params = []
         if assembler in config:
