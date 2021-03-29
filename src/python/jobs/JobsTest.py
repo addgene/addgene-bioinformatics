@@ -67,7 +67,8 @@ class ToilTestCase(unittest.TestCase):
 
         self.test_bbduk_fastq1 = "output1.fastq"
         self.test_bbduk_fastq2 = "output2.fastq"
-        self.test_bbnorm_fastq = "output1.fastq"
+        self.test_bbnorm_fastq1 = "output1.fastq"
+        self.test_bbnorm_fastq2 = "output2.fastq"
         self.test_bbmerge_outu1 = "unmerged1.fastq"
         self.test_bbmerge_outu2 = "unmerged2.fastq"
         self.test_bbmerge_fastq = "merged.fastq"
@@ -83,7 +84,8 @@ class ToilTestCase(unittest.TestCase):
 
         self.actual_bbduk_fastq1 = "bbduk1.fastq"
         self.actual_bbduk_fastq2 = "bbduk2.fastq"
-        self.actual_bbnorm_fastq = "bbnorm.fastq"
+        self.actual_bbnorm_fastq1 = "bbnorm1.fastq"
+        self.actual_bbnorm_fastq2 = "bbnorm2.fastq"
         self.actual_bbmerge_outu1 = "bbmergeoutu1.fastq"
         self.actual_bbmerge_outu2 = "bbmergeoutu2.fastq"
         self.actual_bbmerge_fastq = "bbmerge.fastq"
@@ -399,6 +401,7 @@ class JobsTestCase(ToilTestCase):
 
             bbnorm_job = BBNormJob(
                 read_one_file_ids[0],
+                read_two_file_ids[0],
                 config_file_id,
                 self.config_file,
             )
@@ -408,9 +411,16 @@ class JobsTestCase(ToilTestCase):
 
         self._assert_true_cmp_fasta(
             self.test_directory_ab,
-            self.test_bbnorm_fastq,
+            self.test_bbnorm_fastq1,
             self.actual_directory_ab,
-            self.actual_bbnorm_fastq,
+            self.actual_bbnorm_fastq1,
+        )
+
+        self._assert_true_cmp_fasta(
+            self.test_directory_ab,
+            self.test_bbnorm_fastq2,
+            self.actual_directory_ab,
+            self.actual_bbnorm_fastq2,
         )
 
     def test_bbmerge(self):
