@@ -14,7 +14,8 @@ logger = logging.getLogger(__name__)
 class BBNormJob(Job):
     def __init__(
         self,
-        read_file_id,
+        read_one_file_id,
+        read_two_file_id,
         config_file_id,
         config_file_name,
         parent_rv={},
@@ -25,9 +26,12 @@ class BBNormJob(Job):
         """
         Parameters
         ----------
-        read_file_id : toil.fileStore.FileID
+        read_one_file_id : toil.fileStore.FileID
             id of the file in the file store containing FASTQ Illumina
             short left paired reads
+        read_two_file_id : toil.fileStore.FileID
+            id of the file in the file store containing FASTQ Illumina
+            short right paired reads
         config_file_id : toil.fileStore.FileID
             id of the file in the file store containing BBNorm args
         config_file_name : str
@@ -36,7 +40,8 @@ class BBNormJob(Job):
             dictionary of return values from the parent job
         """
         super(BBNormJob, self).__init__(*args, **kwargs)
-        self.read_file_id = read_file_id
+        self.read_one_file_id = read_one_file_id
+        self.read_two_file_id = read_two_file_id
         self.config_file_id = config_file_id
         self.config_file_name = config_file_name
         self.parent_rv = parent_rv
@@ -49,7 +54,8 @@ class BBNormJob(Job):
             file ids and names of BBNorm output files
         """
         # Expected output file names
-        out_file_name = "output.fastq"
+        out1_file_name = "output1.fastq"
+        out2_file_name = "output2.fastq"
 
         try:
             # Read the config file from the file store into the local
@@ -63,8 +69,11 @@ class BBNormJob(Job):
 
             # Read the read files from the file store into the local
             # temporary directory
-            read_file_path = utilities.readGlobalFile(
-                fileStore, self.read_file_id, common_config["read_one_file_name"]
+            read_one_file_path = utilities.readGlobalFile(
+                fileStore, self.read_one_file_id, common_config["read_one_file_name"]
+            )
+            read_two_file_path = utilities.readGlobalFile(
+                fileStore, self.read_two_file_id, common_config["read_two_file_name"]
             )
 
             # Mount the Toil local temporary directory to the same path in
@@ -78,8 +87,10 @@ class BBNormJob(Job):
             # Define BBNorm command
             parameters = [
                 "bbnorm.sh",
-                f"in={read_file_path}",
-                f"out={out_file_name}",
+                f"in={read_one_file_path}",
+                f"in2={read_two_file_path}",
+                f"out={out1_file_name}",
+                f"out2={out2_file_name}",
             ]
 
             if len(bbnorm_params) > 0:
@@ -96,7 +107,8 @@ class BBNormJob(Job):
 
             # Write the BBNorm output file
             # from the local temporary directory into the file store
-            out_file_id = utilities.writeGlobalFile(fileStore, out_file_name)
+            out1_file_id = utilities.writeGlobalFile(fileStore, out1_file_name)
+            out2_file_id = utilities.writeGlobalFile(fileStore, out2_file_name)
 
         except Exception as exc:
             # Ensure expected return values on exceptions
@@ -106,9 +118,13 @@ class BBNormJob(Job):
         # Return file ids and names for export
         bbnorm_rv = {
             "bbnorm_rv": {
-                "out_file": {
-                    "id": out_file_id,
-                    "name": out_file_name,
+                "out1_file": {
+                    "id": out1_file_id,
+                    "name": out1_file_name,
+                },
+                "out2_file": {
+                    "id": out2_file_id,
+                    "name": out2_file_name,
                 },
             }
         }
@@ -173,7 +189,6 @@ if __name__ == "__main__":
         if not toil.options.restart:
 
             # Import the local read files into the file store
-            # Only read one is used in BBNorm
             read_one_file_ids, read_two_file_ids = utilities.importReadFiles(
                 toil,
                 options.data_path,
@@ -190,6 +205,7 @@ if __name__ == "__main__":
             # Construct and start the BBNorm job
             bbnorm_job = BBNormJob(
                 read_one_file_ids[0],
+                read_two_file_ids[0],
                 config_file_id,
                 options.config_file,
             )

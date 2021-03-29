@@ -2007,9 +2007,11 @@ def BBDuk(inp_fq_one_fNm,
         image, command=command, volumes=volumes, working_dir=working_dir,
     )
 
-def BBNorm(inp_fq_fNm,
-            outp_fNm = "output1.fastq",
-            target = "100",
+def BBNorm(inp_fq_one_fNm,
+           inp_fq_two_fNm,
+           outp_fNm = "output1.fastq",
+           outp2_fNm = "output2.fastq",
+           target = "100",
             mindepth = "6",
             threads = "8",
             qin = "33",
@@ -2141,8 +2143,10 @@ def BBNorm(inp_fq_fNm,
 
     # Define BBNorm command
     command = " ".join(["bbnorm.sh",
-                        f'in={inp_fq_fNm}',
+                        f'in={inp_fq_one_fNm}',
+                        f'in2={inp_fq_two_fNm}',
                         f'out={outp_fNm}',
+                        f'out2={outp_fNm}',
                         f'target={target}',
                         f'mindepth={mindepth}',
                         f'threads={threads}',
@@ -2407,11 +2411,3 @@ def BBMerge(inp_fq_one_fNm,
     return client.containers.run(
         image, command=command, volumes=volumes, working_dir=working_dir,
     )
-
-# BBMerge("dat/miscellaneous/A11967A_sW0154_FASTQ/A11967A_sW0154_A01_R1_001.fastq.gz",
-#         "dat/miscellaneous/A11967A_sW0154_FASTQ/A11967A_sW0154_A01_R2_001.fastq.gz")
-
-# BBDuk("dat/miscellaneous/A11967A_sW0154_FASTQ/A11967A_sW0154_A01_R1_001.fastq.gz",
-#         "dat/miscellaneous/A11967A_sW0154_FASTQ/A11967A_sW0154_A01_R2_001.fastq.gz")
-
-# BBNorm("dat/miscellaneous/A11967A_sW0154_FASTQ/A11967A_sW0154_A01_R1_001.fastq.gz")
