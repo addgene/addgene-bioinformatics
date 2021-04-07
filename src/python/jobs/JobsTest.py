@@ -91,6 +91,7 @@ class ToilTestCase(unittest.TestCase):
         self.actual_shovill_fasta = "assembly_shovill.fasta"
         self.actual_skesa_fasta = "assembly_skesa.fasta"
         self.actual_spades_fasta = "assembly_spades.fasta"
+        self.actual_well_spades_fasta = "well_assembly_spades.fasta"
         self.actual_unicycler_fasta = "assembly_unicycler.fasta"
 
         self.actual_bbduk_fastq1 = "bbduk1.fastq"
@@ -105,16 +106,17 @@ class ToilTestCase(unittest.TestCase):
         self.actual_bbmerge_fastq_chained = "bbmerge_chained.fastq"
 
         self.actual_apc_fasta = "apc_spades.1.fa"
+        self.actual_well_apc_fasta = "well_apc_spades.1.fa"
 
     def tearDown(self):
         if os.path.exists(self.test_directory_bbtools):
             shutil.rmtree(self.test_directory_bbtools)
-        if os.path.exists(self.test_directory_aa):
-            shutil.rmtree(self.test_directory_aa)
-        if os.path.exists(self.test_directory_ab):
-            shutil.rmtree(self.test_directory_ab)
-        if os.path.exists(self.test_directory_bg):
-            shutil.rmtree(self.test_directory_bg)
+        # if os.path.exists(self.test_directory_aa):
+        #     shutil.rmtree(self.test_directory_aa)
+        # if os.path.exists(self.test_directory_ab):
+        #     shutil.rmtree(self.test_directory_ab)
+        # if os.path.exists(self.test_directory_bg):
+        #     shutil.rmtree(self.test_directory_bg)
 
     def _import_read_files(self, toil, plate_spec, well_specs):
         read_one_file_ids, read_two_file_ids = utilities.importReadFiles(
@@ -531,13 +533,13 @@ class WellAssemblyJobTestCase(ToilTestCase):
             self.test_directory_ab,
             self.test_spades_fasta,
             self.actual_directory_ab,
-            self.actual_spades_fasta,
+            self.actual_well_spades_fasta,
         )
         self._assert_true_cmp_fasta(
             self.test_directory_ab,
             self.test_apc_fasta,
             self.actual_directory_ab,
-            self.actual_apc_fasta,
+            self.actual_well_apc_fasta,
         )
 
 

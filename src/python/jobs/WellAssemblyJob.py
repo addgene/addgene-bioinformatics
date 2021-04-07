@@ -28,17 +28,17 @@ class WellAssemblyJob(Job):
     """
 
     def __init__(
-        self,
-        read_one_file_id,
-        read_two_file_id,
-        assembler,
-        config_file_id,
-        config_file_name,
-        adapters_file_id,
-        adapters_file_name,
-        output_directory,
-        *args,
-        **kwargs
+            self,
+            read_one_file_id,
+            read_two_file_id,
+            assembler,
+            config_file_id,
+            config_file_name,
+            adapters_file_id,
+            adapters_file_name,
+            output_directory,
+            *args,
+            **kwargs
     ):
         """
         Parameters
@@ -159,7 +159,8 @@ class WellAssemblyJob(Job):
                     self.config_file_id,
                     self.config_file_name,
                     self.output_directory,
-                    bbmerge_job.rv("bbmerge_rv", "merged_file", "id"),
+                    merged_file_id=bbmerge_job.rv("bbmerge_rv", "merged_file", "id"),
+                    chained_job=True,
                     parent_rv=bbmerge_job.rv(),
                 )
                 apc_job = ApcJob(
@@ -169,10 +170,10 @@ class WellAssemblyJob(Job):
 
                 final_job = (
                     self.addChild(bbduk_job)
-                    .addChild(bbnorm_job)
-                    .addChild(bbmerge_job)
-                    .addChild(spades_job)
-                    .addChild(apc_job)
+                        .addChild(bbnorm_job)
+                        .addChild(bbmerge_job)
+                        .addChild(spades_job)
+                        .addChild(apc_job)
                 )
 
             elif self.assembler == "unicycler":
@@ -206,9 +207,9 @@ class WellAssemblyJob(Job):
                 )
                 final_job = (
                     self.addChild(bbduk_job)
-                    .addChild(bbnorm_job)
-                    .addChild(unicycler_job)
-                    .addChild(apc_job)
+                        .addChild(bbnorm_job)
+                        .addChild(unicycler_job)
+                        .addChild(apc_job)
                 )
 
             # Assign assembler return values
