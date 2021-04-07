@@ -18,6 +18,7 @@ class BBNormJob(Job):
         read_two_file_id,
         config_file_id,
         config_file_name,
+        chained_job=False,
         parent_rv={},
         *args,
         **kwargs,
@@ -44,6 +45,7 @@ class BBNormJob(Job):
         self.read_two_file_id = read_two_file_id
         self.config_file_id = config_file_id
         self.config_file_name = config_file_name
+        self.chained_job = chained_job
         self.parent_rv = parent_rv
 
     def run(self, fileStore):
@@ -54,8 +56,8 @@ class BBNormJob(Job):
             file ids and names of BBNorm output files
         """
         # Expected output file names
-        out1_file_name = "output1.fastq"
-        out2_file_name = "output2.fastq"
+        out1_file_name = "bbnorm_output1.fastq"
+        out2_file_name = "bbnorm_output2.fastq"
 
         try:
             # Read the config file from the file store into the local
@@ -67,14 +69,37 @@ class BBNormJob(Job):
                 config_file_path, "bbnorm"
             )
 
-            # Read the read files from the file store into the local
-            # temporary directory
-            read_one_file_path = utilities.readGlobalFile(
-                fileStore, self.read_one_file_id, common_config["read_one_file_name"]
-            )
-            read_two_file_path = utilities.readGlobalFile(
-                fileStore, self.read_two_file_id, common_config["read_two_file_name"]
-            )
+            if self.chained_job:
+                # Get BBDuk config for input path
+                common_config, bbduk_params = utilities.parseConfigFile(
+                    config_file_path, "bbduk"
+                )
+
+                # Read the read files from the file store into the local
+                # temporary directory
+                read_one_file_path = utilities.readGlobalFile(
+                    fileStore, self.read_one_file_id, bbduk_params["read_one_file_name"]
+                )
+                read_two_file_path = utilities.readGlobalFile(
+                    fileStore, self.read_two_file_id, bbduk_params["read_two_file_name"]
+                )
+            else:
+                # Read the read files from the file store into the local
+                # temporary directory
+                read_one_file_path = utilities.readGlobalFile(
+                    fileStore,
+                    self.read_one_file_id,
+                    common_config["read_one_file_name"],
+                )
+                read_two_file_path = utilities.readGlobalFile(
+                    fileStore,
+                    self.read_two_file_id,
+                    common_config["read_two_file_name"],
+                )
+
+            # Read the output filenames from the config file
+            out1_file_name = bbnorm_params["read_one_file_name"]
+            out2_file_name = bbnorm_params["read_two_file_name"]
 
             # Mount the Toil local temporary directory to the same path in
             # the container, and use the path as the working directory in
@@ -94,7 +119,9 @@ class BBNormJob(Job):
             ]
 
             if len(bbnorm_params) > 0:
-                parameters.extend(bbnorm_params)
+                for arg, value in bbnorm_params.items():
+                    if arg != "read_one_file_name" and arg != "read_two_file_name":
+                        parameters.append(value)
 
             logger.info("Using parameters {0}".format(str(parameters)))
             apiDockerCall(
@@ -113,7 +140,8 @@ class BBNormJob(Job):
         except Exception as exc:
             # Ensure expected return values on exceptions
             logger.info("Calling image {0} failed: {1}".format(image, exc))
-            out_file_id = None
+            out1_file_id = None
+            out2_file_id = None
 
         # Return file ids and names for export
         bbnorm_rv = {

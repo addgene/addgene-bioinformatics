@@ -312,10 +312,17 @@ def parseConfigFile(config_file_path, assembler):
     if assembler in ["masurca", "novoplasty"]:
         assembler_params = config[assembler]
     elif assembler in ["bbduk", "bbnorm", "bbmerge"]:
-        assembler_params = []
+        assembler_params = {}
         if assembler in config:
             for arg_name, arg_value in config[assembler].items():
-                assembler_params.append("=".join([arg_name, arg_value]))
+                if (
+                    arg_name == "read_one_file_name"
+                    or arg_name == "read_two_file_name"
+                    or arg_name == "merged_read_file_name"
+                ):
+                    assembler_params[arg_name] = arg_value
+                else:
+                    assembler_params[arg_name] = "=".join([arg_name, arg_value])
     else:
         assembler_params = []
         if assembler in config:

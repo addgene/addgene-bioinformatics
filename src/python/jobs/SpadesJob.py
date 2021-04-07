@@ -24,6 +24,7 @@ class SpadesJob(Job):
         config_file_id,
         config_file_name,
         output_directory,
+        merged_file_id=None,
         parent_rv={},
         *args,
         **kwargs
@@ -52,6 +53,7 @@ class SpadesJob(Job):
         self.config_file_id = config_file_id
         self.config_file_name = config_file_name
         self.output_directory = output_directory
+        self.merged_file_id = merged_file_id
         self.parent_rv = parent_rv
 
     def run(self, fileStore):
@@ -77,14 +79,25 @@ class SpadesJob(Job):
                 config_file_path, "spades"
             )
 
+            # Get BBMerge config for input path
+            common_config, bbmerge_params = utilities.parseConfigFile(
+                config_file_path, "bbmerge"
+            )
+
             # Read the read files from the file store into the local
             # temporary directory
             read_one_file_path = utilities.readGlobalFile(
-                fileStore, self.read_one_file_id, common_config["read_one_file_name"]
+                fileStore, self.read_one_file_id, bbmerge_params["read_one_file_name"]
             )
             read_two_file_path = utilities.readGlobalFile(
-                fileStore, self.read_two_file_id, common_config["read_two_file_name"]
+                fileStore, self.read_two_file_id, bbmerge_params["read_two_file_name"]
             )
+            if self.merged_file_id:
+                merged_file_path = utilities.readGlobalFile(
+                    fileStore,
+                    self.merged_file_id,
+                    bbmerge_params["merged_read_file_name"],
+                )
 
             # Mount the Toil local temporary directory to the same path in
             # the container, and use the path as the working directory in
@@ -102,6 +115,9 @@ class SpadesJob(Job):
                 "-o",
                 os.path.join(working_dir, self.output_directory),
             ]
+            if self.merged_file_id:
+                parameters.extend(["--merged", merged_file_path])
+
             if len(assembler_params) > 0:
                 parameters.extend(assembler_params)
             logger.info("Using parameters {0}".format(str(parameters)))

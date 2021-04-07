@@ -18,6 +18,7 @@ class BBMergeJob(Job):
         read_two_file_id,
         config_file_id,
         config_file_name,
+        chained_job=False,
         parent_rv={},
         *args,
         **kwargs,
@@ -44,6 +45,7 @@ class BBMergeJob(Job):
         self.read_two_file_id = read_two_file_id
         self.config_file_id = config_file_id
         self.config_file_name = config_file_name
+        self.chained_job = chained_job
         self.parent_rv = parent_rv
 
     def run(self, fileStore):
@@ -68,14 +70,42 @@ class BBMergeJob(Job):
                 config_file_path, "bbmerge"
             )
 
-            # Read the read files from the file store into the local
-            # temporary directory
-            read_one_file_path = utilities.readGlobalFile(
-                fileStore, self.read_one_file_id, common_config["read_one_file_name"]
-            )
-            read_two_file_path = utilities.readGlobalFile(
-                fileStore, self.read_two_file_id, common_config["read_two_file_name"]
-            )
+            if self.chained_job:
+                # Get BBNorm config for input path
+                common_config, bbnorm_params = utilities.parseConfigFile(
+                    config_file_path, "bbnorm"
+                )
+
+                # Read the read files from the file store into the local
+                # temporary directory
+                read_one_file_path = utilities.readGlobalFile(
+                    fileStore,
+                    self.read_one_file_id,
+                    bbnorm_params["read_one_file_name"],
+                )
+                read_two_file_path = utilities.readGlobalFile(
+                    fileStore,
+                    self.read_two_file_id,
+                    bbnorm_params["read_two_file_name"],
+                )
+            else:
+                # Read the read files from the file store into the local
+                # temporary directory
+                read_one_file_path = utilities.readGlobalFile(
+                    fileStore,
+                    self.read_one_file_id,
+                    common_config["read_one_file_name"],
+                )
+                read_two_file_path = utilities.readGlobalFile(
+                    fileStore,
+                    self.read_two_file_id,
+                    common_config["read_two_file_name"],
+                )
+
+            # Read the output filenames from the config file
+            outu1_file_name = bbmerge_params["read_one_file_name"]
+            outu2_file_name = bbmerge_params["read_two_file_name"]
+            out_file_name = bbmerge_params["merged_read_file_name"]
 
             # Mount the Toil local temporary directory to the same path in
             # the container, and use the path as the working directory in
@@ -96,7 +126,13 @@ class BBMergeJob(Job):
             ]
 
             if len(bbmerge_params) > 0:
-                parameters.extend(bbmerge_params)
+                for arg, value in bbmerge_params.items():
+                    if (
+                        arg != "read_one_file_name"
+                        and arg != "read_two_file_name"
+                        and arg != "merged_read_file_name"
+                    ):
+                        parameters.append(value)
 
             logger.info("Using parameters {0}".format(str(parameters)))
             apiDockerCall(

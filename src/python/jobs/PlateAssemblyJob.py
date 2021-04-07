@@ -31,6 +31,8 @@ class PlateAssemblyJob(Job):
         assembler,
         config_file_id,
         config_file_name,
+        adapters_file_id,
+        adapters_file_name,
         *args,
         **kwargs
     ):
@@ -65,6 +67,8 @@ class PlateAssemblyJob(Job):
         self.assembler = assembler
         self.config_file_id = config_file_id
         self.config_file_name = config_file_name
+        self.adapters_file_id = adapters_file_id
+        self.adapters_file_name = adapters_file_name
 
     def run(self, fileStore):
         """
@@ -90,6 +94,8 @@ class PlateAssemblyJob(Job):
                         self.assembler,
                         self.config_file_id,
                         self.config_file_name,
+                        self.adapters_file_id,
+                        self.adapters_file_name,
                         self.plate_spec + "_" + self.well_specs[iW],
                     )
                 ).rv()
@@ -139,6 +145,16 @@ if __name__ == "__main__":
         "--config-file",
         default="Assembler.ini",
         help="path to a .ini file with args to be passed to the assembler",
+    )
+    parser.add_argument(
+        "--adapters-path",
+        default=os.sep + os.path.join(*cmps),
+        help="path to a .fa file with adapters to be passed to bbtools",
+    )
+    parser.add_argument(
+        "--adapters-file",
+        default="adapters.fa",
+        help="path to a .fa file with adapters to be passed to bbtools",
     )
     parser.add_argument(
         "-o",
@@ -220,6 +236,11 @@ if __name__ == "__main__":
                 toil, os.path.join(options.config_path, options.config_file)
             )
 
+            # Import local adapters file into the file store
+            adapters_file_id = utilities.importAdaptersFile(
+                toil, os.path.join(options.adapters_path, options.adapters_file)
+            )
+
             # Construct and start the plate assembly job
             plate_assembly_job = PlateAssemblyJob(
                 well_specs,
@@ -229,6 +250,8 @@ if __name__ == "__main__":
                 options.assembler,
                 config_file_id,
                 options.config_file,
+                adapters_file_id,
+                options.adapters_file,
             )
             well_assembly_rvs = toil.start(plate_assembly_job)
 

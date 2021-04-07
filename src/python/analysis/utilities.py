@@ -7,7 +7,7 @@ import re
 
 from Bio import Align
 from Bio import SeqIO
-from Bio.Alphabet import IUPAC
+# from Bio.Alphabet import IUPAC
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 import docker
@@ -85,27 +85,26 @@ def create_r_seq_w_rep(k_mer_len=25, k_mer_cnt=[2 ** (n + 1) for n in range(8)])
 # error_rate=0.020, standard_deviation=50, indel_fraction=0.15,
 # indel_extended_prob=0.30, and random_seed=0, then move to utilities
 def simulate_paired_reads(
-    seq,
-    seq_nm,
-    number_pairs=25000,
-    len_first_read=250,
-    len_second_read=250,
-    outer_distance=500,
+        seq,
+        seq_nm,
+        number_pairs=25000,
+        len_first_read=250,
+        len_second_read=250,
+        outer_distance=500,
 ):
     rd1_seq_rcds = []
     rd2_seq_rcds = []
     seq_len = len(seq)
     for iP in range(number_pairs):
-
         # Create a random rotation of the sequence
         i_seq = random.randint(0, seq_len)
-        r_seq = seq[seq_len - i_seq : seq_len] + seq[0 : seq_len - i_seq]
+        r_seq = seq[seq_len - i_seq: seq_len] + seq[0: seq_len - i_seq]
 
         # Create the first read starting from a random index, and
         # setting random PHRED quality scores
         i_rd1 = random.randint(0, seq_len - outer_distance - 1)
         rd1_seq_rcd = SeqRecord(
-            r_seq[i_rd1 : i_rd1 + len_first_read],
+            r_seq[i_rd1: i_rd1 + len_first_read],
             id=str(iP),
             name="one",
             description="first read of read pair",
@@ -120,7 +119,7 @@ def simulate_paired_reads(
         # scores
         i_rd2 = i_rd1 + outer_distance - len_second_read
         rd2_seq_rcd = SeqRecord(
-            r_seq[i_rd2 + len_second_read : i_rd2 : -1],
+            r_seq[i_rd2 + len_second_read: i_rd2: -1],
             id=str(iP),
             name="two",
             description="second read of read pair",
@@ -141,16 +140,15 @@ def simulate_unpaired_reads(seq, seq_nm, number_pairs=25000, len_read=500):
     rd_seq_rcds = []
     seq_len = len(seq)
     for iP in range(number_pairs):
-
         # Create a random rotation of the sequence
         i_seq = random.randint(0, seq_len)
-        r_seq = seq[seq_len - i_seq : seq_len] + seq[0 : seq_len - i_seq]
+        r_seq = seq[seq_len - i_seq: seq_len] + seq[0: seq_len - i_seq]
 
         # Create the read starting from a random index, and
         # setting random PHRED quality scores
         i_rd = random.randint(0, seq_len - len_read - 1)
         rd_seq_rcd = SeqRecord(
-            r_seq[i_rd : i_rd + len_read],
+            r_seq[i_rd: i_rd + len_read],
             id=str(iP),
             name="unpaired",
             description="unpaired read",
@@ -227,7 +225,7 @@ def count_k_mers_in_seq(seq, seq_id=0, k_mer_len=25, k_mers=None):
         k_mers = {}
     seq_len = len(seq)
     for i_seq in range(seq_len - k_mer_len + 1):
-        k_mer = str(seq[i_seq : i_seq + k_mer_len])
+        k_mer = str(seq[i_seq: i_seq + k_mer_len])
         if k_mer not in k_mers:
             k_mers[k_mer] = {}
             k_mers[k_mer]["src"] = set([seq_id])
@@ -450,12 +448,12 @@ def rotate_seqs(a_seq, o_seq):
 
 # TODO: Complete in order to validate use of wgsim
 def simulate_paired_reads_wgsim(
-    seq,
-    seq_nm,
-    number_pairs=25000,
-    len_first_read=250,
-    len_second_read=250,
-    outer_distance=750,
+        seq,
+        seq_nm,
+        number_pairs=25000,
+        len_first_read=250,
+        len_second_read=250,
+        outer_distance=750,
 ):
     seq_rcd = SeqRecord(seq, id="0", name="base", description="reference")
     seq_fNm = seq_nm + ".fasta"
@@ -483,14 +481,14 @@ def simulate_paired_reads_wgsim(
 
 
 def kmc(
-    read_file_names,
-    database_file_name,
-    k_mer_length=25,
-    signature_length=9,
-    count_min=2,
-    max_count=255,
-    count_max=1e9,
-    canonical_form=True,
+        read_file_names,
+        database_file_name,
+        k_mer_length=25,
+        signature_length=9,
+        count_min=2,
+        max_count=255,
+        count_max=1e9,
+        canonical_form=True,
 ):
     """
     Counts k-mers.
@@ -569,7 +567,7 @@ def kmc(
     if not canonical_form:
         command = " ".join([command, "-b"])
     command = " ".join(
-        [command, read_format, input_str, database_file_name, working_dir,]
+        [command, read_format, input_str, database_file_name, working_dir, ]
     )
 
     # Run the command in the Docker image
@@ -580,14 +578,14 @@ def kmc(
 
 
 def kmc_transform(
-    inp_database_file_name,
-    operation,
-    out_database_file_name,
-    inp_count_min=2,
-    inp_count_max=1e9,
-    out_count_min=2,
-    out_count_max=1e9,
-    is_sorted=False,
+        inp_database_file_name,
+        operation,
+        out_database_file_name,
+        inp_count_min=2,
+        inp_count_max=1e9,
+        out_count_min=2,
+        out_count_max=1e9,
+        is_sorted=False,
 ):
     """
     Transforms single input database to output (text file or KMC database).
@@ -677,18 +675,18 @@ def kmc_transform(
 
 # TODO: Validate
 def kmc_simple(
-    inp_database_file_name_a,
-    operation,
-    inp_database_file_name_b,
-    out_database_file_name,
-    inp_count_min_a=2,
-    inp_count_max_a=1e9,
-    inp_count_min_b=2,
-    inp_count_max_b=1e9,
-    out_count_min=2,
-    out_max_count=255,
-    out_count_max=1e9,
-    out_calc_mode="",
+        inp_database_file_name_a,
+        operation,
+        inp_database_file_name_b,
+        out_database_file_name,
+        inp_count_min_a=2,
+        inp_count_max_a=1e9,
+        inp_count_min_b=2,
+        inp_count_max_b=1e9,
+        out_count_min=2,
+        out_max_count=255,
+        out_count_max=1e9,
+        out_calc_mode="",
 ):
     """
     Performs set operation on two input KMC databases.
@@ -878,15 +876,15 @@ def kmc_complex():
 
 # TODO: Validate
 def kmc_filter(
-    inp_database_file_name,
-    inp_read_file_name,
-    out_read_file_name,
-    trim_reads=False,
-    hard_mask=False,
-    inp_db_count_min=2,
-    inp_db_count_max=1e9,
-    inp_rd_count_min=2,
-    inp_rd_count_max=1e9,
+        inp_database_file_name,
+        inp_read_file_name,
+        out_read_file_name,
+        trim_reads=False,
+        hard_mask=False,
+        inp_db_count_min=2,
+        inp_db_count_max=1e9,
+        inp_rd_count_min=2,
+        inp_rd_count_max=1e9,
 ):
     """
     Filters out reads with too small number of k-mers.
@@ -1063,21 +1061,21 @@ def get_bio_read_format(read_file_name):
 
 
 def wgsim(
-    inp_fa_fNm,
-    out_fq_one_fNm,
-    out_fq_two_fNm,
-    error_rate=0.020,
-    outer_distance=500,
-    standard_deviation=50,
-    number_pairs=1000000,
-    len_first_read=70,
-    len_second_read=70,
-    mutation_rate=0.0010,
-    indel_fraction=0.15,
-    indel_extended_prob=0.30,
-    random_seed=0,
-    ambiguous_base_frac=0.05,
-    haplotype_mode=False,
+        inp_fa_fNm,
+        out_fq_one_fNm,
+        out_fq_two_fNm,
+        error_rate=0.020,
+        outer_distance=500,
+        standard_deviation=50,
+        number_pairs=1000000,
+        len_first_read=70,
+        len_second_read=70,
+        mutation_rate=0.0010,
+        indel_fraction=0.15,
+        indel_extended_prob=0.30,
+        random_seed=0,
+        ambiguous_base_frac=0.05,
+        haplotype_mode=False,
 ):
     """
     Simulating sequence reads from a reference genome.
@@ -1124,7 +1122,7 @@ def wgsim(
     )
     if haplotype_mode:
         command = " ".join([command, "-h"])
-    command = " ".join([command, inp_fa_fNm, out_fq_one_fNm, out_fq_two_fNm,])
+    command = " ".join([command, inp_fa_fNm, out_fq_one_fNm, out_fq_two_fNm, ])
 
     # Run the command in the Docker image
     client = docker.from_env()
@@ -1134,24 +1132,24 @@ def wgsim(
 
 
 def ssake(
-    inp_fq_one_fNm,
-    inp_fq_two_fNm,
-    out_base_fNm,
-    fragment_len,
-    phred_threshold=20,  # -x
-    n_consec_bases=70,  # -n
-    ascii_offset=33,  # -d
-    min_coverage=5,  # -w
-    n_ovrlap_bases=20,  # -m
-    n_reads_to_call=2,  # -o
-    base_ratio=0.7,  # -r
-    n_bases_to_trim=0,  # -t
-    contig_size=100,  # -z
-    do_track_cvrg=0,  # -c
-    do_ignore_mppng=0,  # -y
-    do_ignore_headr=0,  # -k
-    do_break_ties=0,  # -q
-    do_run_verbose=0,
+        inp_fq_one_fNm,
+        inp_fq_two_fNm,
+        out_base_fNm,
+        fragment_len,
+        phred_threshold=20,  # -x
+        n_consec_bases=70,  # -n
+        ascii_offset=33,  # -d
+        min_coverage=5,  # -w
+        n_ovrlap_bases=20,  # -m
+        n_reads_to_call=2,  # -o
+        base_ratio=0.7,  # -r
+        n_bases_to_trim=0,  # -t
+        contig_size=100,  # -z
+        do_track_cvrg=0,  # -c
+        do_ignore_mppng=0,  # -y
+        do_ignore_headr=0,  # -k
+        do_break_ties=0,  # -q
+        do_run_verbose=0,
 ):  # -v
     """
     Run a simple pipeline using SSAKE to assemble reads in a docker
@@ -1416,7 +1414,7 @@ def spades(inp_fq_one_fNm, inp_fq_two_fNm, out_dir, *args, **kwargs):
     volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
 
     # Define SPAdes command
-    command = " ".join(["spades.py", "-1", inp_fq_one_fNm, "-2", inp_fq_two_fNm,])
+    command = " ".join(["spades.py", "-1", inp_fq_one_fNm, "-2", inp_fq_two_fNm, ])
     # TODO: Resolve
     """
     if trusted_contigs_fNm is not None:
@@ -1426,11 +1424,11 @@ def spades(inp_fq_one_fNm, inp_fq_two_fNm, out_dir, *args, **kwargs):
              ]
         )
     """
-    command = " ".join([command, "-o", out_dir,])
+    command = " ".join([command, "-o", out_dir, ])
     for arg in args:
-        command = " ".join([command, arg,])
+        command = " ".join([command, arg, ])
     for key, val in kwargs.items():
-        command = " ".join([command, "--" + key.replace("_", "-"), str(val),])
+        command = " ".join([command, "--" + key.replace("_", "-"), str(val), ])
 
     # Run the command in the Docker image
     client = docker.from_env()
@@ -1471,7 +1469,7 @@ def apc(base_file_name, contigs_file_name):
     volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
 
     # Define apc command
-    command = " ".join(["apc.pl", "-b", base_file_name, contigs_file_name,])
+    command = " ".join(["apc.pl", "-b", base_file_name, contigs_file_name, ])
 
     # Run the command in the Docker image
     client = docker.from_env()
@@ -1482,7 +1480,7 @@ def apc(base_file_name, contigs_file_name):
 
 
 def unicycler(
-    inp_fq_one_fNm, inp_fq_two_fNm, out_dir, *args, inp_fq_lng_fNm=None, **kwargs
+        inp_fq_one_fNm, inp_fq_two_fNm, out_dir, *args, inp_fq_lng_fNm=None, **kwargs
 ):
     """
     Run Unicycler assembly pipeline v0.4.8 in a docker container.
@@ -1645,25 +1643,25 @@ def idba(inp_fq_one_fNm, inp_fq_two_fNm, out_dir, *args, inp_fq_lng_fNm=None, **
     )
     return command
 
+
 def BBDuk(inp_fq_one_fNm,
           inp_fq_two_fNm,
-          outp_fNm = "output1.fastq",
-          outp2_fNm = "output2.fastq",
-          ktrimright = "t",
-          k = "27",
-          hdist = "1",
-          edist = "0",
-          ref = "adapters.fa",
-          qtrim = "rl",
-          trimq = "25",
-          minlength = "30",
-          trimbyoverlap = "t",
-          minoverlap = "24",
-          ordered = "t",
-          qin = "33",
+          outp_fNm="output1.fastq",
+          outp2_fNm="output2.fastq",
+          ktrimright="t",
+          k="27",
+          hdist="1",
+          edist="0",
+          ref="adapters.fa",
+          qtrim="rl",
+          trimq="25",
+          minlength="30",
+          trimbyoverlap="t",
+          minoverlap="24",
+          ordered="t",
+          qin="33",
           *args,
           **kwargs):
-
     """
     Compares reads to the kmers in a reference dataset, optionally
     allowing an edit distance. Splits the reads into two outputs - those that
@@ -2001,23 +1999,23 @@ def BBDuk(inp_fq_one_fNm,
     for arg in args:
         command = " ".join([command, arg])
     for key, val in kwargs.items():
-        command = " ".join([command, "--" + key.replace("_", "-"), str(val),])
+        command = " ".join([command, "--" + key.replace("_", "-"), str(val), ])
 
     return client.containers.run(
         image, command=command, volumes=volumes, working_dir=working_dir,
     )
 
+
 def BBNorm(inp_fq_one_fNm,
            inp_fq_two_fNm,
-           outp_fNm = "output1.fastq",
-           outp2_fNm = "output2.fastq",
-           target = "100",
-            mindepth = "6",
-            threads = "8",
-            qin = "33",
-            *args,
-            **kwargs):
-
+           outp_fNm="output1.fastq",
+           outp2_fNm="output2.fastq",
+           target="100",
+           mindepth="6",
+           threads="8",
+           qin="33",
+           *args,
+           **kwargs):
     """
     Description:  Normalizes read depth based on kmer counts.
     Can also error-correct, bin reads by kmer depth, and generate a kmer depth histogram.
@@ -2132,7 +2130,7 @@ def BBNorm(inp_fq_one_fNm,
         -da                     Disable assertions.
     """
 
-# Run the command in the Docker image
+    # Run the command in the Docker image
     image = "ralatsdio/bbtools:v38.90"
 
     client = docker.from_env()
@@ -2146,7 +2144,7 @@ def BBNorm(inp_fq_one_fNm,
                         f'in={inp_fq_one_fNm}',
                         f'in2={inp_fq_two_fNm}',
                         f'out={outp_fNm}',
-                        f'out2={outp_fNm}',
+                        f'out2={outp2_fNm}',
                         f'target={target}',
                         f'mindepth={mindepth}',
                         f'threads={threads}',
@@ -2155,22 +2153,22 @@ def BBNorm(inp_fq_one_fNm,
     for arg in args:
         command = " ".join([command, arg])
     for key, val in kwargs.items():
-        command = " ".join([command, "--" + key.replace("_", "-"), str(val),])
+        command = " ".join([command, "--" + key.replace("_", "-"), str(val), ])
 
     return client.containers.run(
         image, command=command, volumes=volumes, working_dir=working_dir,
     )
 
-def BBMerge(inp_fq_one_fNm,
-              inp_fq_two_fNm,
-              outp_fNm = "merged.fastq",
-              outpu1_fNm = "unmerged1.fastq",
-              outpu2_fNm = "unmerged2.fastq",
-              strictness = "vloose=t",
-              qin = "33",
-              *args,
-              **kwargs):
 
+def BBMerge(inp_fq_one_fNm,
+            inp_fq_two_fNm,
+            outp_fNm="merged.fastq",
+            outpu1_fNm="unmerged1.fastq",
+            outpu2_fNm="unmerged2.fastq",
+            strictness="vloose=t",
+            qin="33",
+            *args,
+            **kwargs):
     """
     Description:  Merges paired reads into single reads by overlap detection.
     With sufficient coverage, can merge nonoverlapping reads by kmer extension.
@@ -2406,8 +2404,46 @@ def BBMerge(inp_fq_one_fNm,
     for arg in args:
         command = " ".join([command, arg])
     for key, val in kwargs.items():
-        command = " ".join([command, "--" + key.replace("_", "-"), str(val),])
+        command = " ".join([command, "--" + key.replace("_", "-"), str(val), ])
 
     return client.containers.run(
         image, command=command, volumes=volumes, working_dir=working_dir,
     )
+
+
+# Using BBTools BBMap reformat.sh to split interleaved reads into two separated fastq files
+def BBSplit(inp_fq_fNm,
+            *args,
+            **kwargs):
+    # Run the command in the Docker image
+    image = "ralatsdio/bbtools:v38.90"
+
+    client = docker.from_env()
+
+    hosting_dir = os.getcwd()
+    working_dir = "/data"
+    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
+
+    basename = inp_fq_fNm.split('.', 1)
+
+    outp1_fNm = f'{basename[0]}_R1.{basename[1]}'
+    outp2_fNm = f'{basename[0]}_R2.{basename[1]}'
+
+    # Define BBMerge command
+    command = " ".join(["reformat.sh",
+                        f'in={inp_fq_fNm}',
+                        f'out1={outp1_fNm}',
+                        f'out2={outp2_fNm}',
+                        ])
+
+    for arg in args:
+        command = " ".join([command, arg])
+    for key, val in kwargs.items():
+        command = " ".join([command, "--" + key.replace("_", "-"), str(val), ])
+
+    return client.containers.run(
+        image, command=command, volumes=volumes, working_dir=working_dir,
+    )
+
+
+BBMerge("bbnorm1.fastq", "bbnorm2.fastq")

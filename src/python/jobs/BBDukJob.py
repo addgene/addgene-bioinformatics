@@ -62,8 +62,8 @@ class BBDukJob(Job):
             file ids and names of bbduk output files
         """
         # Expected output file names
-        out1_file_name = "output1.fastq"
-        out2_file_name = "output2.fastq"
+        out1_file_name = "bbduk_output1.fastq"
+        out2_file_name = "bbduk_output2.fastq"
 
         try:
             # Read the config file from the file store into the local
@@ -90,6 +90,10 @@ class BBDukJob(Job):
                 fileStore, self.read_two_file_id, common_config["read_two_file_name"]
             )
 
+            # Read the output filenames from the config file
+            out1_file_name = bbduk_params["read_one_file_name"]
+            out2_file_name = bbduk_params["read_two_file_name"]
+
             # Mount the Toil local temporary directory to the same path in
             # the container, and use the path as the working directory in
             # the container, then call bbduk.sh
@@ -109,7 +113,9 @@ class BBDukJob(Job):
             ]
 
             if len(bbduk_params) > 0:
-                parameters.extend(bbduk_params)
+                for arg, value in bbduk_params.items():
+                    if arg != "read_one_file_name" and arg != "read_two_file_name":
+                        parameters.append(value)
 
             logger.info("Using parameters {0}".format(str(parameters)))
             apiDockerCall(
