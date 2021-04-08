@@ -111,12 +111,12 @@ class ToilTestCase(unittest.TestCase):
     def tearDown(self):
         if os.path.exists(self.test_directory_bbtools):
             shutil.rmtree(self.test_directory_bbtools)
-        # if os.path.exists(self.test_directory_aa):
-        #     shutil.rmtree(self.test_directory_aa)
-        # if os.path.exists(self.test_directory_ab):
-        #     shutil.rmtree(self.test_directory_ab)
-        # if os.path.exists(self.test_directory_bg):
-        #     shutil.rmtree(self.test_directory_bg)
+        if os.path.exists(self.test_directory_aa):
+            shutil.rmtree(self.test_directory_aa)
+        if os.path.exists(self.test_directory_ab):
+            shutil.rmtree(self.test_directory_ab)
+        if os.path.exists(self.test_directory_bg):
+            shutil.rmtree(self.test_directory_bg)
 
     def _import_read_files(self, toil, plate_spec, well_specs):
         read_one_file_ids, read_two_file_ids = utilities.importReadFiles(
