@@ -154,7 +154,7 @@ class ToilTestCase(unittest.TestCase):
         self.assertTrue(test_lines[1:] == actual_lines[1:])
 
     def _assert_true_cmp_sorted_fasta(
-            self, test_directory, test_fasta, actual_directory, actual_fasta
+        self, test_directory, test_fasta, actual_directory, actual_fasta
     ):
         with open(os.path.join(test_directory, test_fasta), "r") as f:
             test_lines = f.readlines()

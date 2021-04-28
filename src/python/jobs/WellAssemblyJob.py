@@ -1,7 +1,6 @@
 from argparse import ArgumentParser
 import logging
 import os
-from xmlrpc.client import Boolean
 
 from toil.job import Job
 from toil.common import Toil
@@ -29,18 +28,18 @@ class WellAssemblyJob(Job):
     """
 
     def __init__(
-            self,
-            read_one_file_id,
-            read_two_file_id,
-            assembler,
-            config_file_id,
-            config_file_name,
-            adapters_file_id,
-            adapters_file_name,
-            output_directory,
-            preprocessing=True,
-            *args,
-            **kwargs
+        self,
+        read_one_file_id,
+        read_two_file_id,
+        assembler,
+        config_file_id,
+        config_file_name,
+        adapters_file_id,
+        adapters_file_name,
+        output_directory,
+        preprocessing=True,
+        *args,
+        **kwargs
     ):
         """
         Parameters
@@ -164,7 +163,9 @@ class WellAssemblyJob(Job):
                         self.config_file_id,
                         self.config_file_name,
                         self.output_directory,
-                        merged_file_id=bbmerge_job.rv("bbmerge_rv", "merged_file", "id"),
+                        merged_file_id=bbmerge_job.rv(
+                            "bbmerge_rv", "merged_file", "id"
+                        ),
                         chained_job=True,
                         parent_rv=bbmerge_job.rv(),
                     )
@@ -175,10 +176,10 @@ class WellAssemblyJob(Job):
 
                     final_job = (
                         self.addChild(bbduk_job)
-                            .addChild(bbnorm_job)
-                            .addChild(bbmerge_job)
-                            .addChild(spades_job)
-                            .addChild(apc_job)
+                        .addChild(bbnorm_job)
+                        .addChild(bbmerge_job)
+                        .addChild(spades_job)
+                        .addChild(apc_job)
                     )
 
                 else:
@@ -195,10 +196,7 @@ class WellAssemblyJob(Job):
                         parent_rv=spades_job.rv(),
                     )
 
-                    final_job = (
-                        self.addChild(spades_job)
-                            .addChild(apc_job)
-                    )
+                    final_job = self.addChild(spades_job).addChild(apc_job)
 
             elif self.assembler == "unicycler":
 
@@ -233,9 +231,9 @@ class WellAssemblyJob(Job):
                     )
                     final_job = (
                         self.addChild(bbduk_job)
-                            .addChild(bbnorm_job)
-                            .addChild(unicycler_job)
-                            .addChild(apc_job)
+                        .addChild(bbnorm_job)
+                        .addChild(unicycler_job)
+                        .addChild(apc_job)
                     )
                 else:
                     unicycler_job = UnicyclerJob(
@@ -249,11 +247,7 @@ class WellAssemblyJob(Job):
                         unicycler_job.rv("unicycler_rv", "contigs_file", "id"),
                         parent_rv=unicycler_job.rv(),
                     )
-                    final_job = (
-                        self.addChild(unicycler_job)
-                            .addChild(apc_job)
-                    )
-
+                    final_job = self.addChild(unicycler_job).addChild(apc_job)
 
             # Assign assembler return values
             assembler_rv = final_job.rv()
@@ -334,7 +328,9 @@ if __name__ == "__main__":
         default=None,
         help="the directory containing all output files",
     )
-    parser.add_argument('--no-preprocessing', dest='preprocessing', action='store_false')
+    parser.add_argument(
+        "--no-preprocessing", dest="preprocessing", action="store_false"
+    )
     parser.set_defaults(preprocessing=True)
 
     options = parser.parse_args()
@@ -376,7 +372,7 @@ if __name__ == "__main__":
                 adapters_file_id,
                 options.adapters_file,
                 options.output_directory,
-                preprocessing=options.preprocessing
+                preprocessing=options.preprocessing,
             )
             well_assembly_rv = toil.start(well_assembly_job)
 

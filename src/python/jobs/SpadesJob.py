@@ -90,10 +90,14 @@ class SpadesJob(Job):
                 # Read the read files from the file store into the local
                 # temporary directory
                 read_one_file_path = utilities.readGlobalFile(
-                    fileStore, self.read_one_file_id, bbmerge_params["read_one_file_name"]
+                    fileStore,
+                    self.read_one_file_id,
+                    bbmerge_params["read_one_file_name"],
                 )
                 read_two_file_path = utilities.readGlobalFile(
-                    fileStore, self.read_two_file_id, bbmerge_params["read_two_file_name"]
+                    fileStore,
+                    self.read_two_file_id,
+                    bbmerge_params["read_two_file_name"],
                 )
                 if self.merged_file_id:
                     merged_file_path = utilities.readGlobalFile(

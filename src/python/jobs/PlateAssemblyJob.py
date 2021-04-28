@@ -99,7 +99,7 @@ class PlateAssemblyJob(Job):
                         self.adapters_file_id,
                         self.adapters_file_name,
                         self.plate_spec + "_" + self.well_specs[iW],
-                        preprocessing=self.preprocessing
+                        preprocessing=self.preprocessing,
                     )
                 ).rv()
             )
@@ -165,7 +165,9 @@ if __name__ == "__main__":
         default=None,
         help="the directory containing all output files",
     )
-    parser.add_argument('--no-preprocessing', dest='preprocessing', action='store_false')
+    parser.add_argument(
+        "--no-preprocessing", dest="preprocessing", action="store_false"
+    )
     parser.set_defaults(preprocessing=True)
 
     # Define and make the output directory, if needed
@@ -257,7 +259,7 @@ if __name__ == "__main__":
                 options.config_file,
                 adapters_file_id,
                 options.adapters_file,
-                preprocessing=options.preprocessing
+                preprocessing=options.preprocessing,
             )
             well_assembly_rvs = toil.start(plate_assembly_job)
 
