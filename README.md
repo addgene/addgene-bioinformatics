@@ -59,8 +59,8 @@ $ python src/python/jobs/PlateAssemblyJob.py pajfs
 ## Run a well or sample plate assembly job locally with data imported from S3:
 
 ```shell
-$ python src/python/jobs/WellAssemblyJob.py  -s s3 -d addgene-sequencing-data/2018/FASTQ -p A11935X_sW0148 -w A01 wajfs
-$ python src/python/jobs/PlateAssemblyJob.py -s s3 -d addgene-sequencing-data/2018/FASTQ -p A11935X_sW0148 pajfs
+$ python src/python/jobs/WellAssemblyJob.py  -s s3 -d addgene-sequencing-data/2018/FASTQ -l A11935X_sW0148 -w A01 wajfs
+$ python src/python/jobs/PlateAssemblyJob.py -s s3 -d addgene-sequencing-data/2018/FASTQ -l A11935X_sW0148 pajfs
 ```
 
 ## Run one of the jobs on EC2
@@ -103,8 +103,8 @@ $ python PlateAssemblyJob.py --data-directory miscellaneous --plate-spec A11967B
 
 ```bash
 $ cd python/src/toil
-$ python WellAssemblyJob.py  -s s3 -d addgene-sequencing-data/2018/FASTQ -p A11935X_sW0148 -w A01 wajfs
-$ python PlateAssemblyJob.py -s s3 -d addgene-sequencing-data/2018/FASTQ -p A11935X_sW0148 pajfs
+$ python WellAssemblyJob.py  -s s3 -d addgene-sequencing-data/2018/FASTQ -l A11935X_sW0148 -w A01 wajfs
+$ python PlateAssemblyJob.py -s s3 -d addgene-sequencing-data/2018/FASTQ -l A11935X_sW0148 pajfs
 ```
 
 ### Run the default or a larger plate assembly job using auto-scaling with an S3 file store:
