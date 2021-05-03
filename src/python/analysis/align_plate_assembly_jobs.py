@@ -633,16 +633,16 @@ if __name__ == "__main__":
         print(
             "    Assembled (nonzero length): {:.1f}%".format(
                 100
-                * sum(cp_sequences["assembler_sequence_len"] > 0)
-                / len(cp_sequences["assembler_sequence_len"])
+                * sum(cp_sequences["assembler_sequence_len"][qc_valid_index] > 0)
+                / len(cp_sequences["assembler_sequence_len"][qc_valid_index])
             )
         )
         if assembler in ASSEMBLERS_REQUIRING_APC:
             print(
                 "    Circularized (nonzero length): {:.1f}%".format(
                     100
-                    * sum(cp_sequences["circularizer_sequence_len"] > 0)
-                    / sum(cp_sequences["assembler_sequence_len"] > 0)
+                    * sum(cp_sequences["circularizer_sequence_len"][qc_valid_index] > 0)
+                    / sum(cp_sequences["assembler_sequence_len"][qc_valid_index] > 0)
                 )
             )
 
@@ -663,7 +663,7 @@ if __name__ == "__main__":
                         * (1.0 + fraction_aligned)
                     )
                 )
-                / len(cp_sequences["assembler_sequence_len"][qc_valid_index]),
+                / len(cp_sequences["assembler_sequence_len"][qc_valid_index] > 0),
             )
         )
         if assembler in ASSEMBLERS_REQUIRING_APC:
@@ -683,7 +683,7 @@ if __name__ == "__main__":
                             * (1.0 + fraction_aligned)
                         )
                     )
-                    / sum(cp_sequences["assembler_sequence_len"][qc_valid_index] > 0),
+                    / sum(cp_sequences["circularizer_sequence_len"][qc_valid_index] > 0),
                 )
             )
 
