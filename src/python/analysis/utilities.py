@@ -2444,6 +2444,3 @@ def BBSplit(inp_fq_fNm,
     return client.containers.run(
         image, command=command, volumes=volumes, working_dir=working_dir,
     )
-
-
-BBMerge("bbnorm1.fastq", "bbnorm2.fastq")
