@@ -225,15 +225,10 @@ class WellAssemblyJob(Job):
                         self.config_file_name,
                         self.output_directory,
                     )
-                    apc_job = ApcJob(
-                        unicycler_job.rv("unicycler_rv", "contigs_file", "id"),
-                        parent_rv=unicycler_job.rv(),
-                    )
                     final_job = (
                         self.addChild(bbduk_job)
                         .addChild(bbnorm_job)
                         .addChild(unicycler_job)
-                        .addChild(apc_job)
                     )
                 else:
                     unicycler_job = UnicyclerJob(
@@ -243,11 +238,8 @@ class WellAssemblyJob(Job):
                         self.config_file_name,
                         self.output_directory,
                     )
-                    apc_job = ApcJob(
-                        unicycler_job.rv("unicycler_rv", "contigs_file", "id"),
-                        parent_rv=unicycler_job.rv(),
-                    )
-                    final_job = self.addChild(unicycler_job).addChild(apc_job)
+
+                    final_job = self.addChild(unicycler_job)
 
             # Assign assembler return values
             assembler_rv = final_job.rv()

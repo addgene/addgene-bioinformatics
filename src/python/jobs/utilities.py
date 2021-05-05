@@ -5,7 +5,7 @@ from configparser import ConfigParser
 logger = logging.getLogger(__name__)
 
 ASSEMBLERS_TO_RUN = ["masurca", "novoplasty", "shovill", "skesa", "spades", "unicycler"]
-ASSEMBLERS_REQUIRING_APC = ["masurca", "shovill", "skesa", "spades", "unicycler"]
+ASSEMBLERS_REQUIRING_APC = ["masurca", "shovill", "skesa", "spades"]
 
 
 def importFile(toil, source_path, scheme="file"):
