@@ -23,6 +23,7 @@ class NovoplastyJob(Job):
         read_two_file_id,
         config_file_id,
         config_file_name,
+        chained_job=False,
         parent_rv={},
         *args,
         **kwargs
@@ -48,6 +49,7 @@ class NovoplastyJob(Job):
         self.read_two_file_id = read_two_file_id
         self.config_file_id = config_file_id
         self.config_file_name = config_file_name
+        self.chained_job = chained_job
         self.parent_rv = parent_rv
 
     def run(self, fileStore):
@@ -73,31 +75,56 @@ class NovoplastyJob(Job):
                 config_file_path, "novoplasty"
             )
 
-            # Read the read files from the file store into the local
-            # temporary directory
-            read_one_file_path = utilities.readGlobalFile(
-                fileStore, self.read_one_file_id, common_config["read_one_file_name"]
-            )
-            read_two_file_path = utilities.readGlobalFile(
-                fileStore, self.read_two_file_id, common_config["read_two_file_name"]
-            )
-
             # Select a read sequence as the seed, and write it
             # into the local temporary directory
             working_dir = fileStore.localTempDir
             seed_file_path = os.path.join(
                 working_dir, assembler_params["seed_file_name"]
             )
-            with open(seed_file_path, "w+") as f:
-                with gzip.open(read_one_file_path, "rt") as g:
-                    do_write = False
-                    for line in g:
-                        if line[0] == "@":
-                            do_write = True
-                        if line[0] == "+":
-                            break
-                        if do_write:
-                            f.write(line)
+
+            if self.chained_job:
+                # Get BBMerge config for input path
+                common_config, bbnorm_params = utilities.parseConfigFile(
+                    config_file_path, "bbnorm"
+                )
+                # Read the read files from the file store into the local
+                # temporary directory
+                read_one_file_path = utilities.readGlobalFile(
+                    fileStore, self.read_one_file_id, bbnorm_params["read_one_file_name"]
+                )
+                read_two_file_path = utilities.readGlobalFile(
+                    fileStore, self.read_two_file_id, bbnorm_params["read_two_file_name"]
+                )
+                with open(seed_file_path, "w+") as f:
+                    with open(read_one_file_path, "rt") as g:
+                        do_write = False
+                        for line in g:
+                            if line[0] == "@":
+                                do_write = True
+                            if line[0] == "+":
+                                break
+                            if do_write:
+                                f.write(line)
+
+            else:
+                # Read the read files from the file store into the local
+                # temporary directory
+                read_one_file_path = utilities.readGlobalFile(
+                    fileStore, self.read_one_file_id, common_config["read_one_file_name"]
+                )
+                read_two_file_path = utilities.readGlobalFile(
+                    fileStore, self.read_two_file_id, common_config["read_two_file_name"]
+                )
+                with open(seed_file_path, "w+") as f:
+                    with gzip.open(read_one_file_path, "rt") as g:
+                        do_write = False
+                        for line in g:
+                            if line[0] == "@":
+                                do_write = True
+                            if line[0] == "+":
+                                break
+                            if do_write:
+                                f.write(line)
 
             # Write the NOVOPlasty config file into the local temporary
             # directory
