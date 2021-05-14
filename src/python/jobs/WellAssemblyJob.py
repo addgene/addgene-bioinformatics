@@ -119,7 +119,7 @@ class WellAssemblyJob(Job):
                         self.config_file_id,
                         self.config_file_name,
                         chained_job=True,
-                        parent_rv=bbduk_job.rv(),
+                        parent_rv=bbnorm_job.rv(),
                     )
                     final_job = (
                         self.addChild(bbduk_job)
