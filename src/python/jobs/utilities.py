@@ -252,7 +252,7 @@ def exportFiles(toil, output_directory, job_rv):
 
 
 def exportWellAssemblyFiles(
-    toil, assembler, output_directory, well_specs, well_assembly_rvs
+    toil, assembler, output_directory, well_specs, well_assembly_rvs, well_maximum
 ):
     """
     Export the assembler output files, and the apc output files, if
@@ -273,6 +273,12 @@ def exportWellAssemblyFiles(
     """
     nW = len(well_specs)
     for iW in range(nW):
+
+        # Option for limiting number of wells in plate
+        if well_maximum:
+            if iW >= well_maximum:
+                break
+
         well_output_directory = os.path.join(output_directory, well_specs[iW])
         if not os.path.exists(well_output_directory):
             os.makedirs(well_output_directory)

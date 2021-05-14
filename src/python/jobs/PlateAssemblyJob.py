@@ -34,6 +34,7 @@ class PlateAssemblyJob(Job):
         adapters_file_id,
         adapters_file_name,
         preprocessing=True,
+        max_wells=None,
         *args,
         **kwargs
     ):
@@ -71,6 +72,7 @@ class PlateAssemblyJob(Job):
         self.adapters_file_id = adapters_file_id
         self.adapters_file_name = adapters_file_name
         self.preprocessing = preprocessing
+        self.max_wells = max_wells
 
     def run(self, fileStore):
         """
@@ -82,6 +84,12 @@ class PlateAssemblyJob(Job):
         well_assembly_rvs = []
         nW = len(self.well_specs)
         for iW in range(nW):
+
+            # Option for limiting number of wells in plate
+            if self.max_wells:
+                if iW >= self.max_wells:
+                    break
+
             logger.info(
                 "Creating well assembly job {0}".format(
                     self.plate_spec + "_" + self.well_specs[iW]
@@ -164,6 +172,13 @@ if __name__ == "__main__":
         "--output-directory",
         default=None,
         help="the directory containing all output files",
+    )
+    parser.add_argument(
+        "-w",
+        "--well-maximum",
+        type=int,
+        default=None,
+        help="the maximum number of wells processed. Set None for all wells",
     )
     parser.add_argument(
         "--no-preprocessing", dest="preprocessing", action="store_false"
@@ -260,6 +275,7 @@ if __name__ == "__main__":
                 adapters_file_id,
                 options.adapters_file,
                 preprocessing=options.preprocessing,
+                max_wells=options.well_maximum
             )
             well_assembly_rvs = toil.start(plate_assembly_job)
 
@@ -276,4 +292,5 @@ if __name__ == "__main__":
             options.output_directory,
             well_specs,
             well_assembly_rvs,
+            options.well_maximum
         )

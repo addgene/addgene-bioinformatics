@@ -125,7 +125,7 @@ else
     # PLATES="$PLATES A11988A_sW0155"
 
 fi
-    
+
 # Process each plate
 for PLATE in $PLATES; do
 
@@ -146,7 +146,9 @@ for PLATE in $PLATES; do
        -s s3 -d addgene-sequencing-data/2018/FASTQ \
        -l $PLATE \
        -a $ASSEMBLER \
-       pajfs
+       pajfs \
+       --defaultMemory 4.0G \
+       -w 48
     fi
 
 
