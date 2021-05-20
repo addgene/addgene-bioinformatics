@@ -19,6 +19,7 @@ class BBNormJob(Job):
         config_file_id,
         config_file_name,
         chained_job=False,
+        memory="2g",
         parent_rv={},
         *args,
         **kwargs,
@@ -47,6 +48,7 @@ class BBNormJob(Job):
         self.config_file_name = config_file_name
         self.chained_job = chained_job
         self.parent_rv = parent_rv
+        self.memory = memory
 
     def run(self, fileStore):
         """
@@ -116,6 +118,7 @@ class BBNormJob(Job):
                 f"in2={read_two_file_path}",
                 f"out={out1_file_name}",
                 f"out2={out2_file_name}",
+                f"-Xmx{self.memory}"
             ]
 
             if len(bbnorm_params) > 0:
