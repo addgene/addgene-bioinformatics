@@ -90,11 +90,11 @@ class PlateAssemblyJob(Job):
                 if iW >= self.max_wells:
                     break
 
-            logger.info(
-                "Creating well assembly job {0}".format(
-                    self.plate_spec + "_" + self.well_specs[iW]
-                )
-            )
+            logger.info(f"""Creating WellAssemblyJob: 
+                            Assembler: {self.assembler} 
+                            Well: {self.plate_spec}_{self.well_specs[iW]}
+                            Preprocessing: {self.preprocessing}
+                        """)
             # Note that exceptions are caught in the well assembly job
             well_assembly_rvs.append(
                 self.addChild(
