@@ -20,6 +20,7 @@ class BBNormJob(Job):
         config_file_name,
         chained_job=False,
         maxmem="2g",
+        merged_file_id=None,
         parent_rv={},
         *args,
         **kwargs,
@@ -48,6 +49,7 @@ class BBNormJob(Job):
         self.config_file_name = config_file_name
         self.chained_job = chained_job
         self.parent_rv = parent_rv
+        self.merged_file_id = merged_file_id
         self.maxmem = maxmem
 
     def run(self, fileStore):
@@ -112,14 +114,23 @@ class BBNormJob(Job):
             logger.info("Calling image {0}".format(image))
 
             # Define BBNorm command
-            parameters = [
-                "bbnorm.sh",
-                f"in={read_one_file_path}",
-                f"in2={read_two_file_path}",
-                f"out={out1_file_name}",
-                f"out2={out2_file_name}",
-                f"-Xmx{self.maxmem}"
-            ]
+            if not self.merged_file_id:
+                parameters = [
+                    "bbnorm.sh",
+                    f"in={read_one_file_path}",
+                    f"in2={read_two_file_path}",
+                    f"out={out1_file_name}",
+                    f"out2={out2_file_name}",
+                    f"-Xmx{self.maxmem}"
+                ]
+            else:
+                parameters = [
+                    "bbnorm.sh",
+                    f"in={self.merged_file_id}",
+                    f"out={out1_file_name}",
+                    f"out2={out2_file_name}",
+                    f"-Xmx{self.maxmem}"
+                ]
 
             if len(bbnorm_params) > 0:
                 for arg, value in bbnorm_params.items():
