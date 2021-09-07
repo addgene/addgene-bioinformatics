@@ -335,8 +335,8 @@ class WellAssemblyJob(Job):
 
                     final_job = (
                         self.addChild(bbduk_job)
-                            .addChild(bbmerge_job)
                             .addChild(bbnorm_job)
+                            .addChild(bbmerge_job)
                             .addChild(spades_job)
                             .addChild(apc_job)
                     )
