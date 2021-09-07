@@ -290,6 +290,7 @@ class WellAssemblyJob(Job):
 
                 elif self.preprocessing == "nextflow":
 
+                    ## BBTools preprocessing
                     bbduk_job = BBDukJob(
                         self.read_one_file_id,
                         self.read_two_file_id,
@@ -298,7 +299,7 @@ class WellAssemblyJob(Job):
                         self.adapters_file_id,
                         self.adapters_file_name,
                     )
-                    bbmerge_job = BBMergeJob(
+                    bbnorm_job = BBNormJob(
                         bbduk_job.rv("bbduk_rv", "out1_file", "id"),
                         bbduk_job.rv("bbduk_rv", "out2_file", "id"),
                         self.config_file_id,
@@ -306,18 +307,13 @@ class WellAssemblyJob(Job):
                         chained_job=True,
                         parent_rv=bbduk_job.rv(),
                     )
-
-                    # Unmerged files are not used in BBNorm; only the merged file is normalized
-                    bbnorm_job = BBNormJob(
-                        bbmerge_job.rv("bbmerge_rv", "outu1_file", "id"),
-                        bbmerge_job.rv("bbmerge_rv", "outu2_file", "id"),
+                    bbmerge_job = BBMergeJob(
+                        bbnorm_job.rv("bbnorm_rv", "out1_file", "id"),
+                        bbnorm_job.rv("bbnorm_rv", "out2_file", "id"),
                         self.config_file_id,
                         self.config_file_name,
                         chained_job=True,
-                        merged_file_id=bbmerge_job.rv(
-                            "bbmerge_rv", "merged_file", "id"
-                        ),
-                        parent_rv=bbmerge_job.rv(),
+                        parent_rv=bbnorm_job.rv(),
                     )
 
                     spades_job = SpadesJob(
@@ -326,7 +322,7 @@ class WellAssemblyJob(Job):
                         self.config_file_id,
                         self.config_file_name,
                         self.output_directory,
-                        merged_file_id=bbnorm_job.rv(
+                        merged_file_id=bbmerge_job.rv(
                             "bbmerge_rv", "merged_file", "id"
                         ),
                         chained_job=True,
