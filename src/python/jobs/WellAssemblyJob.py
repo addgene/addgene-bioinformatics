@@ -326,7 +326,7 @@ class WellAssemblyJob(Job):
                             "bbmerge_rv", "merged_file", "id"
                         ),
                         chained_job=True,
-                        parent_rv=bbnorm_job.rv(),
+                        parent_rv=bbmerge_job.rv(),
                     )
                     apc_job = ApcJob(
                         spades_job.rv("spades_rv", "contigs_file", "id"),
