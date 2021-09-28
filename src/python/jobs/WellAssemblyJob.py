@@ -97,7 +97,7 @@ class WellAssemblyJob(Job):
 
             elif self.assembler == "novoplasty":
 
-                if self.preprocessing:
+                if self.preprocessing == "bbnorm":
                     ## BBTools preprocessing
                     bbduk_job = BBDukJob(
                         self.read_one_file_id,
