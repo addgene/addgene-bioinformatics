@@ -97,39 +97,6 @@ class WellAssemblyJob(Job):
 
             elif self.assembler == "novoplasty":
 
-                if self.preprocessing == "bbnorm":
-                    ## BBTools preprocessing
-                    bbduk_job = BBDukJob(
-                        self.read_one_file_id,
-                        self.read_two_file_id,
-                        self.config_file_id,
-                        self.config_file_name,
-                        self.adapters_file_id,
-                        self.adapters_file_name,
-                    )
-                    bbnorm_job = BBNormJob(
-                        bbduk_job.rv("bbduk_rv", "out1_file", "id"),
-                        bbduk_job.rv("bbduk_rv", "out2_file", "id"),
-                        self.config_file_id,
-                        self.config_file_name,
-                        chained_job=True,
-                        parent_rv=bbduk_job.rv(),
-                    )
-                    novoplasty_job = NovoplastyJob(
-                        bbnorm_job.rv("bbnorm_rv", "out1_file", "id"),
-                        bbnorm_job.rv("bbnorm_rv", "out2_file", "id"),
-                        self.config_file_id,
-                        self.config_file_name,
-                        chained_job=True,
-                        parent_rv=bbnorm_job.rv(),
-                    )
-                    final_job = (
-                        self.addChild(bbduk_job)
-                            .addChild(bbnorm_job)
-                            .addChild(novoplasty_job)
-                    )
-
-                else:
                     novoplasty_job = NovoplastyJob(
                         self.read_one_file_id,
                         self.read_two_file_id,
