@@ -120,3 +120,10 @@ $ python PlateAssemblyJob.py --data-directory miscellaneous --plate-spec A11967A
 ```shell
 $ toil destroy-cluster --zone us-east-1a assembly-cluster
 ```
+
+### Update python dependencies
+
+```shell
+pip install pip-tools
+pip-compile -U
+```
