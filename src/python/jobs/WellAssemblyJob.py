@@ -379,7 +379,7 @@ class WellAssemblyJob(Job):
             assembler_rv = {self.assembler: {}}
 
         # Return file ids, and names for export
-        return final_job.rv()
+        return assembler_rv
 
 
 if __name__ == "__main__":
