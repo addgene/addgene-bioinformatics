@@ -12,6 +12,11 @@ logger = logging.getLogger(__name__)
 
 
 class BBMergeJob(Job):
+    """
+    Accepts paired-end Illumina reads for BBMerge
+    (https://jgi.doe.gov/data-and-tools/bbtools/bb-tools-user-guide/bbmerge-guide/)
+    """
+
     def __init__(
         self,
         read_one_file_id,

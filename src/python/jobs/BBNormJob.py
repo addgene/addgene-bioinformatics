@@ -12,6 +12,11 @@ logger = logging.getLogger(__name__)
 
 
 class BBNormJob(Job):
+    """
+    Accepts paired-end Illumina reads for BBNorm
+    (https://jgi.doe.gov/data-and-tools/bbtools/bb-tools-user-guide/bbnorm-guide/)
+    """
+
     def __init__(
         self,
         read_one_file_id,
@@ -118,7 +123,7 @@ class BBNormJob(Job):
                 f"in2={read_two_file_path}",
                 f"out={out1_file_name}",
                 f"out2={out2_file_name}",
-                f"-Xmx{self.maxmem}"
+                f"-Xmx{self.maxmem}",
             ]
 
             if len(bbnorm_params) > 0:
