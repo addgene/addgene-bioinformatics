@@ -80,6 +80,34 @@ class WellAssemblyJob(Job):
             the return values of the SpadesJob and ApcJob
         """
         try:
+            if self.preprocessing:
+
+                ## BBTools preprocessing - defined here for all assemblers, although not all assemblers use all preprocessing jobs
+                bbduk_job = BBDukJob(
+                    self.read_one_file_id,
+                    self.read_two_file_id,
+                    self.config_file_id,
+                    self.config_file_name,
+                    self.adapters_file_id,
+                    self.adapters_file_name,
+                )
+                bbnorm_job = BBNormJob(
+                    bbduk_job.rv("bbduk_rv", "out1_file", "id"),
+                    bbduk_job.rv("bbduk_rv", "out2_file", "id"),
+                    self.config_file_id,
+                    self.config_file_name,
+                    chained_job=True,
+                    parent_rv=bbduk_job.rv(),
+                )
+                bbmerge_job = BBMergeJob(
+                    bbnorm_job.rv("bbnorm_rv", "out1_file", "id"),
+                    bbnorm_job.rv("bbnorm_rv", "out2_file", "id"),
+                    self.config_file_id,
+                    self.config_file_name,
+                    chained_job=True,
+                    parent_rv=bbnorm_job.rv(),
+                )
+
             if self.assembler == "masurca":
                 masurca_job = MasurcaJob(
                     self.read_one_file_id,
@@ -96,23 +124,7 @@ class WellAssemblyJob(Job):
             elif self.assembler == "novoplasty":
 
                 if self.preprocessing:
-                    ## BBTools preprocessing
-                    bbduk_job = BBDukJob(
-                        self.read_one_file_id,
-                        self.read_two_file_id,
-                        self.config_file_id,
-                        self.config_file_name,
-                        self.adapters_file_id,
-                        self.adapters_file_name,
-                    )
-                    bbnorm_job = BBNormJob(
-                        bbduk_job.rv("bbduk_rv", "out1_file", "id"),
-                        bbduk_job.rv("bbduk_rv", "out2_file", "id"),
-                        self.config_file_id,
-                        self.config_file_name,
-                        chained_job=True,
-                        parent_rv=bbduk_job.rv(),
-                    )
+
                     novoplasty_job = NovoplastyJob(
                         bbnorm_job.rv("bbnorm_rv", "out1_file", "id"),
                         bbnorm_job.rv("bbnorm_rv", "out2_file", "id"),
@@ -167,31 +179,7 @@ class WellAssemblyJob(Job):
             elif self.assembler == "spades":
 
                 if self.preprocessing:
-                    ## BBTools preprocessing
-                    bbduk_job = BBDukJob(
-                        self.read_one_file_id,
-                        self.read_two_file_id,
-                        self.config_file_id,
-                        self.config_file_name,
-                        self.adapters_file_id,
-                        self.adapters_file_name,
-                    )
-                    bbnorm_job = BBNormJob(
-                        bbduk_job.rv("bbduk_rv", "out1_file", "id"),
-                        bbduk_job.rv("bbduk_rv", "out2_file", "id"),
-                        self.config_file_id,
-                        self.config_file_name,
-                        chained_job=True,
-                        parent_rv=bbduk_job.rv(),
-                    )
-                    bbmerge_job = BBMergeJob(
-                        bbnorm_job.rv("bbnorm_rv", "out1_file", "id"),
-                        bbnorm_job.rv("bbnorm_rv", "out2_file", "id"),
-                        self.config_file_id,
-                        self.config_file_name,
-                        chained_job=True,
-                        parent_rv=bbnorm_job.rv(),
-                    )
+
                     spades_job = SpadesJob(
                         bbmerge_job.rv("bbmerge_rv", "outu1_file", "id"),
                         bbmerge_job.rv("bbmerge_rv", "outu2_file", "id"),
@@ -236,23 +224,7 @@ class WellAssemblyJob(Job):
             elif self.assembler == "unicycler":
 
                 if self.preprocessing:
-                    ## BBTools preprocessing
-                    bbduk_job = BBDukJob(
-                        self.read_one_file_id,
-                        self.read_two_file_id,
-                        self.config_file_id,
-                        self.config_file_name,
-                        self.adapters_file_id,
-                        self.adapters_file_name,
-                    )
-                    bbnorm_job = BBNormJob(
-                        bbduk_job.rv("bbduk_rv", "out1_file", "id"),
-                        bbduk_job.rv("bbduk_rv", "out2_file", "id"),
-                        self.config_file_id,
-                        self.config_file_name,
-                        chained_job=True,
-                        parent_rv=bbduk_job.rv(),
-                    )
+
                     unicycler_job = UnicyclerJob(
                         bbnorm_job.rv("bbnorm_rv", "out1_file", "id"),
                         bbnorm_job.rv("bbnorm_rv", "out2_file", "id"),
