@@ -321,11 +321,7 @@ def parseConfigFile(config_file_path, assembler):
         assembler_params = {}
         if assembler in config:
             for arg_name, arg_value in config[assembler].items():
-                if (
-                    arg_name == "read_one_file_name"
-                    or arg_name == "read_two_file_name"
-                    or arg_name == "merged_read_file_name"
-                ):
+                if arg_name in ["read_one_file_name", "read_two_file_name", "merged_read_file_name"]:
                     assembler_params[arg_name] = arg_value
                 else:
                     assembler_params[arg_name] = "=".join([arg_name, arg_value])
