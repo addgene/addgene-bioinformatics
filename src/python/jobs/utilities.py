@@ -5,7 +5,7 @@ from configparser import ConfigParser
 logger = logging.getLogger(__name__)
 
 ASSEMBLERS_TO_RUN = ["masurca", "novoplasty", "shovill", "skesa", "spades", "unicycler"]
-ASSEMBLERS_REQUIRING_APC = ["masurca", "shovill", "skesa", "spades", "unicycler"]
+ASSEMBLERS_REQUIRING_APC = ["masurca", "shovill", "skesa", "spades"]
 
 
 def importFile(toil, source_path, scheme="file"):
@@ -138,6 +138,29 @@ def importContigsFile(toil, data_path, file_name="contigs.fasta", scheme="file")
     return contigs_file_id
 
 
+def importAdaptersFile(toil, adapters_path, scheme="file"):
+    """
+    Import the contigs source from the data path containing the FASTA
+    source.
+
+    Parameters
+    ----------
+    adapters_path : str
+        path containing the adapters file
+    file_name : str
+        name of adapters file
+    scheme : str
+        scheme used for the source URL
+
+    Returns
+    -------
+    str
+        id of the imported contigs file in the file store
+    """
+    adapters_file_id = importFile(toil, adapters_path, scheme)
+    return adapters_file_id
+
+
 def readGlobalFile(fileStore, file_id, *cmps):
     """
     Read the file corresponding to the specified id from the file
@@ -229,7 +252,7 @@ def exportFiles(toil, output_directory, job_rv):
 
 
 def exportWellAssemblyFiles(
-    toil, assembler, output_directory, well_specs, well_assembly_rvs
+    toil, assembler, output_directory, well_specs, well_assembly_rvs, well_maximum
 ):
     """
     Export the assembler output files, and the apc output files, if
@@ -250,6 +273,12 @@ def exportWellAssemblyFiles(
     """
     nW = len(well_specs)
     for iW in range(nW):
+
+        # Option for limiting number of wells in plate
+        if well_maximum:
+            if iW >= well_maximum:
+                break
+
         well_output_directory = os.path.join(output_directory, well_specs[iW])
         if not os.path.exists(well_output_directory):
             os.makedirs(well_output_directory)
@@ -288,6 +317,14 @@ def parseConfigFile(config_file_path, assembler):
     common_config = config["common"]
     if assembler in ["masurca", "novoplasty"]:
         assembler_params = config[assembler]
+    elif assembler in ["bbduk", "bbnorm", "bbmerge"]:
+        assembler_params = {}
+        if assembler in config:
+            for arg_name, arg_value in config[assembler].items():
+                if arg_name in ["read_one_file_name", "read_two_file_name", "merged_read_file_name"]:
+                    assembler_params[arg_name] = arg_value
+                else:
+                    assembler_params[arg_name] = "=".join([arg_name, arg_value])
     else:
         assembler_params = []
         if assembler in config:

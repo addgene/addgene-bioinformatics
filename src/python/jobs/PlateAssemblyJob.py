@@ -31,6 +31,10 @@ class PlateAssemblyJob(Job):
         assembler,
         config_file_id,
         config_file_name,
+        adapters_file_id,
+        adapters_file_name,
+        preprocessing=True,
+        max_wells=None,
         *args,
         **kwargs
     ):
@@ -65,6 +69,10 @@ class PlateAssemblyJob(Job):
         self.assembler = assembler
         self.config_file_id = config_file_id
         self.config_file_name = config_file_name
+        self.adapters_file_id = adapters_file_id
+        self.adapters_file_name = adapters_file_name
+        self.preprocessing = preprocessing
+        self.max_wells = max_wells
 
     def run(self, fileStore):
         """
@@ -76,11 +84,17 @@ class PlateAssemblyJob(Job):
         well_assembly_rvs = []
         nW = len(self.well_specs)
         for iW in range(nW):
-            logger.info(
-                "Creating well assembly job {0}".format(
-                    self.plate_spec + "_" + self.well_specs[iW]
-                )
-            )
+
+            # Option for limiting number of wells in plate
+            if self.max_wells:
+                if iW >= self.max_wells:
+                    break
+
+            logger.info(f"""Creating WellAssemblyJob: 
+                            Assembler: {self.assembler} 
+                            Well: {self.plate_spec}_{self.well_specs[iW]}
+                            Preprocessing: {self.preprocessing}
+                        """)
             # Note that exceptions are caught in the well assembly job
             well_assembly_rvs.append(
                 self.addChild(
@@ -90,7 +104,10 @@ class PlateAssemblyJob(Job):
                         self.assembler,
                         self.config_file_id,
                         self.config_file_name,
+                        self.adapters_file_id,
+                        self.adapters_file_name,
                         self.plate_spec + "_" + self.well_specs[iW],
+                        preprocessing=self.preprocessing,
                     )
                 ).rv()
             )
@@ -141,11 +158,32 @@ if __name__ == "__main__":
         help="path to a .ini file with args to be passed to the assembler",
     )
     parser.add_argument(
+        "--adapters-path",
+        default=os.sep + os.path.join(*cmps),
+        help="path to a .fa file with adapters to be passed to bbtools",
+    )
+    parser.add_argument(
+        "--adapters-file",
+        default="adapters.fa",
+        help="path to a .fa file with adapters to be passed to bbtools",
+    )
+    parser.add_argument(
         "-o",
         "--output-directory",
         default=None,
         help="the directory containing all output files",
     )
+    parser.add_argument(
+        "-w",
+        "--well-maximum",
+        type=int,
+        default=None,
+        help="the maximum number of wells processed. Set None for all wells",
+    )
+    parser.add_argument(
+        "--no-preprocessing", dest="preprocessing", action="store_false"
+    )
+    parser.set_defaults(preprocessing=True)
 
     # Define and make the output directory, if needed
     options = parser.parse_args()
@@ -220,6 +258,11 @@ if __name__ == "__main__":
                 toil, os.path.join(options.config_path, options.config_file)
             )
 
+            # Import local adapters file into the file store
+            adapters_file_id = utilities.importAdaptersFile(
+                toil, os.path.join(options.adapters_path, options.adapters_file)
+            )
+
             # Construct and start the plate assembly job
             plate_assembly_job = PlateAssemblyJob(
                 well_specs,
@@ -229,6 +272,10 @@ if __name__ == "__main__":
                 options.assembler,
                 config_file_id,
                 options.config_file,
+                adapters_file_id,
+                options.adapters_file,
+                preprocessing=options.preprocessing,
+                max_wells=options.well_maximum
             )
             well_assembly_rvs = toil.start(plate_assembly_job)
 
@@ -245,4 +292,5 @@ if __name__ == "__main__":
             options.output_directory,
             well_specs,
             well_assembly_rvs,
+            options.well_maximum
         )

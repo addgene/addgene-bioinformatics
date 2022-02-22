@@ -6,7 +6,6 @@ import pickle
 import sys
 
 from Bio import SeqIO
-from Bio.Alphabet import IUPAC
 from Bio.Seq import Seq
 
 from matplotlib import pyplot as plt
@@ -241,7 +240,6 @@ def align_cp_to_qc_sequences(
                             cp_sequence_fNm,
                         ),
                         "fasta",
-                        IUPAC.unambiguous_dna,
                     )
                 ).seq
                 cp_reverse_complement = cp_sequence.complement()[::-1]
@@ -252,8 +250,8 @@ def align_cp_to_qc_sequences(
                 )
 
             except Exception as e:
-                cp_sequence = Seq("", IUPAC.unambiguous_dna)
-                cp_reverse_complement = Seq("", IUPAC.unambiguous_dna)
+                cp_sequence = Seq("")
+                cp_reverse_complement = Seq("")
 
                 cp_sequence_score = 0
                 cp_reverse_complement_score = 0
@@ -274,8 +272,8 @@ def align_cp_to_qc_sequences(
             # Note: apc is not called after every assembler
             cp_sequences[plate][well]["apc"] = {}
 
-            apc_sequence = Seq("", IUPAC.unambiguous_dna)
-            apc_reverse_complement = Seq("", IUPAC.unambiguous_dna)
+            apc_sequence = Seq("")
+            apc_reverse_complement = Seq("")
 
             apc_sequence_score = 0
             apc_reverse_complement_score = 0
@@ -292,7 +290,6 @@ def align_cp_to_qc_sequences(
                                 "apc.1.fa",
                             ),
                             "fasta",
-                            IUPAC.unambiguous_dna,
                         )
                     ).seq
                     apc_reverse_complement = apc_sequence.complement()[::-1]
@@ -305,8 +302,8 @@ def align_cp_to_qc_sequences(
                     )
 
                 except Exception as e:
-                    apc_sequence = Seq("", IUPAC.unambiguous_dna)
-                    apc_reverse_complement = Seq("", IUPAC.unambiguous_dna)
+                    apc_sequence = Seq("")
+                    apc_reverse_complement = Seq("")
 
                     apc_sequence_score = 0
                     apc_reverse_complement_score = 0
@@ -402,7 +399,7 @@ def accumulate_alignment_scores(assembler, cp_sequences):
                 )
             )
 
-            if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
+            if assembler in ASSEMBLERS_REQUIRING_APC:
                 circularizer_sequence_len.append(len(sequences["apc"]["sequence"]))
 
                 circularizer_maximum_score.append(
@@ -430,7 +427,7 @@ def accumulate_alignment_scores(assembler, cp_sequences):
     assembler_valid_score[assembler_valid_index] = assembler_maximum_score[
         assembler_valid_index
     ]
-    if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
+    if assembler in ASSEMBLERS_REQUIRING_APC:
         circularizer_valid_index = circularizer_sequence_len > 0
         circularizer_valid_score[circularizer_valid_index] = circularizer_maximum_score[
             circularizer_valid_index
@@ -491,7 +488,7 @@ def plot_alignment_scores(assembler, cp_sequences):
     )
 
     # Compute and plot circularizer score
-    if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
+    if assembler in ASSEMBLERS_REQUIRING_APC:
         circularizer_valid_index = cp_sequences["circularizer_valid_index"]
         circularizer_valid_score = 100.0 * (
             1
@@ -539,7 +536,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-d",
         "--assembler-data-directory",
-        default=os.path.join(base_dir, "addgene-assembler-data", "results-2020-01-16"),
+        default=os.path.join(base_dir, "addgene-assembler-data"),
         help="directory containing assembler run directory",
     )
     parser.add_argument(
@@ -551,7 +548,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-q",
         "--qc-sequences-file",
-        default="2018_QC_Sequences.csv",
+        default="QC_Sequences.csv",
         help="file containing QC sequences",
     )
     parser.add_argument(
@@ -636,16 +633,16 @@ if __name__ == "__main__":
         print(
             "    Assembled (nonzero length): {:.1f}%".format(
                 100
-                * sum(cp_sequences["assembler_sequence_len"] > 0)
-                / len(cp_sequences["assembler_sequence_len"])
+                * sum(cp_sequences["assembler_sequence_len"][qc_valid_index] > 0)
+                / len(cp_sequences["assembler_sequence_len"][qc_valid_index])
             )
         )
-        if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
+        if assembler in ASSEMBLERS_REQUIRING_APC:
             print(
                 "    Circularized (nonzero length): {:.1f}%".format(
                     100
-                    * sum(cp_sequences["circularizer_sequence_len"] > 0)
-                    / sum(cp_sequences["assembler_sequence_len"] > 0)
+                    * sum(cp_sequences["circularizer_sequence_len"][qc_valid_index] > 0)
+                    / sum(cp_sequences["assembler_sequence_len"][qc_valid_index] > 0)
                 )
             )
 
@@ -666,10 +663,10 @@ if __name__ == "__main__":
                         * (1.0 + fraction_aligned)
                     )
                 )
-                / len(cp_sequences["assembler_sequence_len"][qc_valid_index]),
+                / len(cp_sequences["assembler_sequence_len"][qc_valid_index] > 0),
             )
         )
-        if assembler in utilities.ASSEMBLERS_REQUIRING_APC:
+        if assembler in ASSEMBLERS_REQUIRING_APC:
             print(
                 "    Circularized assembly aligned (within {:.1f}%): {:.1f}%".format(
                     100 * fraction_aligned,
@@ -686,10 +683,11 @@ if __name__ == "__main__":
                             * (1.0 + fraction_aligned)
                         )
                     )
-                    / sum(cp_sequences["assembler_sequence_len"][qc_valid_index] > 0),
+                    / sum(cp_sequences["circularizer_sequence_len"][qc_valid_index] > 0),
                 )
             )
 
+    """
     if assembler != "seqwell":
         print("")
         print("Assembler: any")
@@ -919,3 +917,4 @@ if __name__ == "__main__":
                 ),
             )
         )
+    """

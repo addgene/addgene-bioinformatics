@@ -86,8 +86,14 @@ class MasurcaJob(Job):
             # Write the MaSuRCA config file into the local temporary
             # directory
             working_dir = fileStore.localTempDir
-            logger.info("Handling configuration file {0}".format(assembler_params['config_file_name']))
-            with open(os.path.join(working_dir, assembler_params['config_file_name']), "w+") as f:
+            logger.info(
+                "Handling configuration file {0}".format(
+                    assembler_params["config_file_name"]
+                )
+            )
+            with open(
+                os.path.join(working_dir, assembler_params["config_file_name"]), "w+"
+            ) as f:
                 config = """
 # --------------------------------------------------------------------------------
 # Input file for 'masurca' command to create 'assemble.sh'.
@@ -193,7 +199,7 @@ END
                  """.format(
                     read_one_file_path=os.path.basename(read_one_file_path),
                     read_two_file_path=os.path.basename(read_two_file_path),
-                    threads=assembler_params['threads'],
+                    threads=assembler_params["threads"],
                 )
                 f.write(config)
 
@@ -203,7 +209,12 @@ END
             # TODO: Specify the container on construction
             image = "ralatsdio/masurca:v4.0.1"
             logger.info("Calling image {0}".format(image))
-            parameters = ["masurca.sh", assembler_params['config_file_name'],],
+            parameters = (
+                [
+                    "masurca.sh",
+                    assembler_params["config_file_name"],
+                ],
+            )
             logger.info("Using parameters {0}".format(str(parameters)))
             logger.info(config)
             apiDockerCall(
@@ -237,11 +248,26 @@ END
         # Return file ids and names for export
         masurca_rv = {
             "masurca_rv": {
-                "ca0_file": {"id": ca0_file_id, "name": ca0_file_name,},
-                "ca1_file": {"id": ca1_file_id, "name": ca1_file_name,},
-                "ca2_file": {"id": ca2_file_id, "name": ca2_file_name,},
-                "sr1_file": {"id": sr1_file_id, "name": sr1_file_name,},
-                "contigs_file": {"id": contigs_file_id, "name": contigs_file_name,},
+                "ca0_file": {
+                    "id": ca0_file_id,
+                    "name": ca0_file_name,
+                },
+                "ca1_file": {
+                    "id": ca1_file_id,
+                    "name": ca1_file_name,
+                },
+                "ca2_file": {
+                    "id": ca2_file_id,
+                    "name": ca2_file_name,
+                },
+                "sr1_file": {
+                    "id": sr1_file_id,
+                    "name": sr1_file_name,
+                },
+                "contigs_file": {
+                    "id": contigs_file_id,
+                    "name": contigs_file_name,
+                },
             }
         }
         masurca_rv.update(self.parent_rv)

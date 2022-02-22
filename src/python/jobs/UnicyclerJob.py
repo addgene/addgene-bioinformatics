@@ -76,13 +76,17 @@ class UnicyclerJob(Job):
                 config_file_path, "unicycler"
             )
 
-            # Read the read files from the file store into the local
+            # Get BBNorm config for input path
+            common_config, bbnorm_params = utilities.parseConfigFile(
+                config_file_path, "bbnorm"
+            )
+
             # temporary directory
             read_one_file_path = utilities.readGlobalFile(
-                fileStore, self.read_one_file_id, common_config["read_one_file_name"]
+                fileStore, self.read_one_file_id, bbnorm_params["read_one_file_name"]
             )
             read_two_file_path = utilities.readGlobalFile(
-                fileStore, self.read_two_file_id, common_config["read_two_file_name"]
+                fileStore, self.read_two_file_id, bbnorm_params["read_two_file_name"]
             )
 
             # Mount the Toil local temporary directory to the same path in
@@ -135,9 +139,18 @@ class UnicyclerJob(Job):
         # Return file ids and names for export
         unicycler_rv = {
             "unicycler_rv": {
-                "log_file": {"id": log_file_id, "name": log_file_name,},
-                "contigs_file": {"id": contigs_file_id, "name": contigs_file_name,},
-                "graph_file": {"id": graph_file_id, "name": graph_file_name,},
+                "log_file": {
+                    "id": log_file_id,
+                    "name": log_file_name,
+                },
+                "contigs_file": {
+                    "id": contigs_file_id,
+                    "name": contigs_file_name,
+                },
+                "graph_file": {
+                    "id": graph_file_id,
+                    "name": graph_file_name,
+                },
             }
         }
         unicycler_rv.update(self.parent_rv)

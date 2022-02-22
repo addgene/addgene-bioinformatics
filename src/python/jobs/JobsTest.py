@@ -14,6 +14,9 @@ from SpadesJob import SpadesJob
 from SkesaJob import SkesaJob
 from UnicyclerJob import UnicyclerJob
 from WellAssemblyJob import WellAssemblyJob
+from BBDukJob import BBDukJob
+from BBNormJob import BBNormJob
+from BBMergeJob import BBMergeJob
 
 import utilities
 
@@ -26,11 +29,17 @@ class ToilTestCase(unittest.TestCase):
         self.plate_spec_a = "A11967A_sW0154"
         self.well_spec_a = "A01"
         self.well_spec_b = "B01"
+
+        self.bbtools_plate_spec_a = "A14735A_sW0248"
+
         self.assembler = "spades"
 
         cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-1]
         self.config_path = os.sep + os.path.join(*cmps)
         self.config_file = "Assembler.ini"
+
+        self.adapters_path = os.sep + os.path.join(*cmps)
+        self.adapters_file = "adapters.fa"
 
         self.output_directory_aa = "{0}_{1}".format(self.plate_spec_a, self.well_spec_a)
         self.actual_directory_aa = self.output_directory_aa
@@ -44,8 +53,16 @@ class ToilTestCase(unittest.TestCase):
         if not os.path.exists(self.test_directory_ab):
             os.mkdir(self.test_directory_ab)
 
+        self.output_directory_bbtools = "{0}_{1}".format(
+            self.bbtools_plate_spec_a, self.well_spec_a
+        )
+        self.actual_directory_bbtools = self.output_directory_bbtools
+        self.test_directory_bbtools = self.output_directory_bbtools + "_TEST"
+        if not os.path.exists(self.test_directory_bbtools):
+            os.mkdir(self.test_directory_bbtools)
+
         self.plate_spec_b = "A11967B_sW0154"
-        self.well_specs = ["G04", "G06"]
+        self.well_specs = ["B01", "B02"]
 
         self.actual_directory_bg = self.plate_spec_b
         self.test_directory_bg = self.actual_directory_bg + "_TEST"
@@ -59,6 +76,14 @@ class ToilTestCase(unittest.TestCase):
         self.test_spades_fasta = "contigs.fasta"
         self.test_unicycler_fasta = "assembly.fasta"
 
+        self.test_bbduk_fastq1 = "trimmed_R1.fastq"
+        self.test_bbduk_fastq2 = "trimmed_R2.fastq"
+        self.test_bbnorm_fastq1 = "normed_R1.fastq"
+        self.test_bbnorm_fastq2 = "normed_R2.fastq"
+        self.test_bbmerge_outu1 = "unmerged_R1.fastq"
+        self.test_bbmerge_outu2 = "unmerged_R2.fastq"
+        self.test_bbmerge_fastq = "merged.fastq"
+
         self.test_apc_fasta = "apc.1.fa"
 
         self.actual_masurca_fasta = "assembly_masurca.fasta"
@@ -66,11 +91,26 @@ class ToilTestCase(unittest.TestCase):
         self.actual_shovill_fasta = "assembly_shovill.fasta"
         self.actual_skesa_fasta = "assembly_skesa.fasta"
         self.actual_spades_fasta = "assembly_spades.fasta"
+        self.actual_well_spades_fasta = "well_assembly_spades.fasta"
         self.actual_unicycler_fasta = "assembly_unicycler.fasta"
 
+        self.actual_bbduk_fastq1 = "bbduk1.fastq"
+        self.actual_bbduk_fastq2 = "bbduk2.fastq"
+        self.actual_bbnorm_fastq1 = "bbnorm1.fastq"
+        self.actual_bbnorm_fastq2 = "bbnorm2.fastq"
+        self.actual_bbmerge_outu1 = "bbmergeoutu1.fastq"
+        self.actual_bbmerge_outu2 = "bbmergeoutu2.fastq"
+        self.actual_bbmerge_fastq = "bbmerge.fastq"
+        self.actual_bbmerge_outu1_chained = "bbmergeoutu1_chained.fastq"
+        self.actual_bbmerge_outu2_chained = "bbmergeoutu2_chained.fastq"
+        self.actual_bbmerge_fastq_chained = "bbmerge_chained.fastq"
+
         self.actual_apc_fasta = "apc_spades.1.fa"
+        self.actual_well_apc_fasta = "well_apc_spades.1.fa"
 
     def tearDown(self):
+        if os.path.exists(self.test_directory_bbtools):
+            shutil.rmtree(self.test_directory_bbtools)
         if os.path.exists(self.test_directory_aa):
             shutil.rmtree(self.test_directory_aa)
         if os.path.exists(self.test_directory_ab):
@@ -78,9 +118,9 @@ class ToilTestCase(unittest.TestCase):
         if os.path.exists(self.test_directory_bg):
             shutil.rmtree(self.test_directory_bg)
 
-    def _import_read_files(self, toil, well_specs):
+    def _import_read_files(self, toil, plate_spec, well_specs):
         read_one_file_ids, read_two_file_ids = utilities.importReadFiles(
-            toil, self.data_path, self.plate_spec_a, well_specs
+            toil, self.data_path, plate_spec, well_specs
         )
         return read_one_file_ids, read_two_file_ids
 
@@ -89,6 +129,12 @@ class ToilTestCase(unittest.TestCase):
             toil, os.path.join(self.config_path, self.config_file)
         )
         return config_file_id
+
+    def _import_adapters_file(self, toil):
+        adapters_file_id = utilities.importAdaptersFile(
+            toil, os.path.join(self.adapters_path, self.adapters_file)
+        )
+        return adapters_file_id
 
     def _import_contigs_file(self, toil):
         contigs_file_id = utilities.importContigsFile(
@@ -107,6 +153,17 @@ class ToilTestCase(unittest.TestCase):
             actual_lines = f.readlines()
         self.assertTrue(test_lines[1:] == actual_lines[1:])
 
+    def _assert_true_cmp_sorted_fasta(
+        self, test_directory, test_fasta, actual_directory, actual_fasta
+    ):
+        with open(os.path.join(test_directory, test_fasta), "r") as f:
+            test_lines = f.readlines()
+        with open(os.path.join(actual_directory, actual_fasta), "r") as f:
+            actual_lines = f.readlines()
+        test_lines.sort()
+        actual_lines.sort()
+        self.assertTrue(test_lines[1:] == actual_lines[1:])
+
 
 class JobsTestCase(ToilTestCase):
     def test_masurca_job(self):
@@ -116,7 +173,7 @@ class JobsTestCase(ToilTestCase):
         with Toil(options) as toil:
 
             read_one_file_ids, read_two_file_ids = self._import_read_files(
-                toil, [self.well_spec_b]
+                toil, self.plate_spec_a, [self.well_spec_b]
             )
 
             config_file_id = self._import_config_file(toil)
@@ -147,7 +204,7 @@ class JobsTestCase(ToilTestCase):
         with Toil(options) as toil:
 
             read_one_file_ids, read_two_file_ids = self._import_read_files(
-                toil, [self.well_spec_a]
+                toil, self.plate_spec_a, [self.well_spec_a]
             )
 
             config_file_id = self._import_config_file(toil)
@@ -178,7 +235,7 @@ class JobsTestCase(ToilTestCase):
         with Toil(options) as toil:
 
             read_one_file_ids, read_two_file_ids = self._import_read_files(
-                toil, [self.well_spec_b]
+                toil, self.plate_spec_a, [self.well_spec_b]
             )
 
             config_file_id = self._import_config_file(toil)
@@ -210,7 +267,7 @@ class JobsTestCase(ToilTestCase):
         with Toil(options) as toil:
 
             read_one_file_ids, read_two_file_ids = self._import_read_files(
-                toil, [self.well_spec_b]
+                toil, self.plate_spec_a, [self.well_spec_b]
             )
 
             config_file_id = self._import_config_file(toil)
@@ -239,7 +296,7 @@ class JobsTestCase(ToilTestCase):
         with Toil(options) as toil:
 
             read_one_file_ids, read_two_file_ids = self._import_read_files(
-                toil, [self.well_spec_b]
+                toil, self.plate_spec_a, [self.well_spec_b]
             )
 
             config_file_id = self._import_config_file(toil)
@@ -269,7 +326,7 @@ class JobsTestCase(ToilTestCase):
         with Toil(options) as toil:
 
             read_one_file_ids, read_two_file_ids = self._import_read_files(
-                toil, [self.well_spec_b]
+                toil, self.plate_spec_a, [self.well_spec_b]
             )
 
             config_file_id = self._import_config_file(toil)
@@ -314,6 +371,130 @@ class JobsTestCase(ToilTestCase):
             self.actual_apc_fasta,
         )
 
+    def test_bbduk(self):
+
+        options = Job.Runner.getDefaultOptions("bbdukFileStore")
+
+        with Toil(options) as toil:
+
+            read_one_file_ids, read_two_file_ids = self._import_read_files(
+                toil, self.bbtools_plate_spec_a, [self.well_spec_a]
+            )
+
+            config_file_id = self._import_config_file(toil)
+            adapters_file_id = self._import_adapters_file(toil)
+
+            bbduk_job = BBDukJob(
+                read_one_file_ids[0],
+                read_two_file_ids[0],
+                config_file_id,
+                self.config_file,
+                adapters_file_id,
+                self.adapters_file,
+            )
+            bbduk_rv = toil.start(bbduk_job)
+
+            utilities.exportFiles(
+                toil, self.test_directory_bbtools, bbduk_rv["bbduk_rv"]
+            )
+
+        self._assert_true_cmp_fasta(
+            self.test_directory_bbtools,
+            self.test_bbduk_fastq1,
+            self.actual_directory_bbtools,
+            self.actual_bbduk_fastq1,
+        )
+
+        self._assert_true_cmp_fasta(
+            self.test_directory_bbtools,
+            self.test_bbduk_fastq2,
+            self.actual_directory_bbtools,
+            self.actual_bbduk_fastq2,
+        )
+
+    def test_bbnorm(self):
+
+        options = Job.Runner.getDefaultOptions("bbnormFileStore")
+
+        with Toil(options) as toil:
+
+            read_one_file_ids, read_two_file_ids = self._import_read_files(
+                toil, self.bbtools_plate_spec_a, [self.well_spec_a]
+            )
+
+            config_file_id = self._import_config_file(toil)
+
+            bbnorm_job = BBNormJob(
+                read_one_file_ids[0],
+                read_two_file_ids[0],
+                config_file_id,
+                self.config_file,
+            )
+            bbnorm_rv = toil.start(bbnorm_job)
+
+            utilities.exportFiles(
+                toil, self.test_directory_bbtools, bbnorm_rv["bbnorm_rv"]
+            )
+
+        self._assert_true_cmp_fasta(
+            self.test_directory_bbtools,
+            self.test_bbnorm_fastq1,
+            self.actual_directory_bbtools,
+            self.actual_bbnorm_fastq1,
+        )
+
+        self._assert_true_cmp_fasta(
+            self.test_directory_bbtools,
+            self.test_bbnorm_fastq2,
+            self.actual_directory_bbtools,
+            self.actual_bbnorm_fastq2,
+        )
+
+    def test_bbmerge(self):
+
+        options = Job.Runner.getDefaultOptions("bbmergeFileStore")
+
+        with Toil(options) as toil:
+
+            read_one_file_ids, read_two_file_ids = self._import_read_files(
+                toil, self.bbtools_plate_spec_a, [self.well_spec_a]
+            )
+
+            config_file_id = self._import_config_file(toil)
+
+            bbmerge_job = BBMergeJob(
+                read_one_file_ids[0],
+                read_two_file_ids[0],
+                config_file_id,
+                self.config_file,
+            )
+            bbmerge_rv = toil.start(bbmerge_job)
+
+            utilities.exportFiles(
+                toil, self.test_directory_bbtools, bbmerge_rv["bbmerge_rv"]
+            )
+
+        self._assert_true_cmp_sorted_fasta(
+            self.test_directory_bbtools,
+            self.test_bbmerge_outu1,
+            self.actual_directory_bbtools,
+            self.actual_bbmerge_outu1,
+        )
+
+        self._assert_true_cmp_sorted_fasta(
+            self.test_directory_bbtools,
+            self.test_bbmerge_outu2,
+            self.actual_directory_bbtools,
+            self.actual_bbmerge_outu2,
+        )
+
+        self._assert_true_cmp_sorted_fasta(
+            self.test_directory_bbtools,
+            self.test_bbmerge_fastq,
+            self.actual_directory_bbtools,
+            self.actual_bbmerge_fastq,
+        )
+
 
 class WellAssemblyJobTestCase(ToilTestCase):
     def test_well_assembly_job(self):
@@ -323,10 +504,11 @@ class WellAssemblyJobTestCase(ToilTestCase):
         with Toil(options) as toil:
 
             read_one_file_ids, read_two_file_ids = self._import_read_files(
-                toil, [self.well_spec_b]
+                toil, self.plate_spec_a, [self.well_spec_b]
             )
 
             config_file_id = self._import_config_file(toil)
+            adapters_file_id = self._import_adapters_file(toil)
 
             well_assembly_job = WellAssemblyJob(
                 read_one_file_ids[0],
@@ -334,6 +516,8 @@ class WellAssemblyJobTestCase(ToilTestCase):
                 self.assembler,
                 config_file_id,
                 self.config_file,
+                adapters_file_id,
+                self.adapters_file,
                 self.output_directory_ab,
             )
             well_assembly_rv = toil.start(well_assembly_job)
@@ -349,13 +533,13 @@ class WellAssemblyJobTestCase(ToilTestCase):
             self.test_directory_ab,
             self.test_spades_fasta,
             self.actual_directory_ab,
-            self.actual_spades_fasta,
+            self.actual_well_spades_fasta,
         )
         self._assert_true_cmp_fasta(
             self.test_directory_ab,
             self.test_apc_fasta,
             self.actual_directory_ab,
-            self.actual_apc_fasta,
+            self.actual_well_apc_fasta,
         )
 
 
@@ -367,19 +551,22 @@ class PlateAssemblyJobTestCase(ToilTestCase):
         with Toil(options) as toil:
 
             read_one_file_ids, read_two_file_ids = self._import_read_files(
-                toil, self.well_specs
+                toil, self.plate_spec_a, self.well_specs
             )
 
             config_file_id = self._import_config_file(toil)
+            adapters_file_id = self._import_adapters_file(toil)
 
             plate_assembly_job = PlateAssemblyJob(
                 self.well_specs,
                 read_one_file_ids,
                 read_two_file_ids,
-                self.plate_spec_b,
+                self.plate_spec_a,
                 self.assembler,
                 config_file_id,
                 self.config_file,
+                adapters_file_id,
+                self.adapters_file,
                 cores=2,
                 disk="3G",
                 memory="4G",
@@ -389,22 +576,22 @@ class PlateAssemblyJobTestCase(ToilTestCase):
             utilities.exportWellAssemblyFiles(
                 toil,
                 self.assembler,
-                self.test_directory_bg,
+                self.test_directory_ab,
                 self.well_specs,
                 well_assembly_rvs,
             )
 
         for well_spec in self.well_specs:
             self._assert_true_cmp_fasta(
-                os.path.join(self.test_directory_bg, well_spec),
+                os.path.join(self.test_directory_ab, well_spec),
                 self.test_spades_fasta,
-                os.path.join(self.actual_directory_bg, well_spec),
+                os.path.join(self.actual_directory_ab, well_spec),
                 self.actual_spades_fasta,
             )
             self._assert_true_cmp_fasta(
-                os.path.join(self.test_directory_bg, well_spec),
+                os.path.join(self.test_directory_ab, well_spec),
                 self.test_apc_fasta,
-                os.path.join(self.actual_directory_bg, well_spec),
+                os.path.join(self.actual_directory_ab, well_spec),
                 self.actual_apc_fasta,
             )
 

@@ -12,6 +12,9 @@ from SpadesJob import SpadesJob
 from ShovillJob import ShovillJob
 from SkesaJob import SkesaJob
 from UnicyclerJob import UnicyclerJob
+from BBDukJob import BBDukJob
+from BBNormJob import BBNormJob
+from BBMergeJob import BBMergeJob
 
 import utilities
 
@@ -31,7 +34,10 @@ class WellAssemblyJob(Job):
         assembler,
         config_file_id,
         config_file_name,
+        adapters_file_id,
+        adapters_file_name,
         output_directory,
+        preprocessing=True,
         *args,
         **kwargs
     ):
@@ -61,7 +67,10 @@ class WellAssemblyJob(Job):
         self.assembler = assembler
         self.config_file_id = config_file_id
         self.config_file_name = config_file_name
+        self.adapters_file_id = adapters_file_id
+        self.adapters_file_name = adapters_file_name
         self.output_directory = output_directory
+        self.preprocessing = preprocessing
 
     def run(self, fileStore):
         """
@@ -71,6 +80,34 @@ class WellAssemblyJob(Job):
             the return values of the SpadesJob and ApcJob
         """
         try:
+            if self.preprocessing:
+
+                ## BBTools preprocessing - defined here for all assemblers, although not all assemblers use all preprocessing jobs
+                bbduk_job = BBDukJob(
+                    self.read_one_file_id,
+                    self.read_two_file_id,
+                    self.config_file_id,
+                    self.config_file_name,
+                    self.adapters_file_id,
+                    self.adapters_file_name,
+                )
+                bbnorm_job = BBNormJob(
+                    bbduk_job.rv("bbduk_rv", "out1_file", "id"),
+                    bbduk_job.rv("bbduk_rv", "out2_file", "id"),
+                    self.config_file_id,
+                    self.config_file_name,
+                    chained_job=True,
+                    parent_rv=bbduk_job.rv(),
+                )
+                bbmerge_job = BBMergeJob(
+                    bbnorm_job.rv("bbnorm_rv", "out1_file", "id"),
+                    bbnorm_job.rv("bbnorm_rv", "out2_file", "id"),
+                    self.config_file_id,
+                    self.config_file_name,
+                    chained_job=True,
+                    parent_rv=bbnorm_job.rv(),
+                )
+
             if self.assembler == "masurca":
                 masurca_job = MasurcaJob(
                     self.read_one_file_id,
@@ -85,13 +122,32 @@ class WellAssemblyJob(Job):
                 final_job = self.addChild(masurca_job).addChild(apc_job)
 
             elif self.assembler == "novoplasty":
-                novoplasty_job = NovoplastyJob(
-                    self.read_one_file_id,
-                    self.read_two_file_id,
-                    self.config_file_id,
-                    self.config_file_name,
-                )
-                final_job = self.addChild(novoplasty_job)
+
+                if self.preprocessing:
+
+                    novoplasty_job = NovoplastyJob(
+                        bbnorm_job.rv("bbnorm_rv", "out1_file", "id"),
+                        bbnorm_job.rv("bbnorm_rv", "out2_file", "id"),
+                        self.config_file_id,
+                        self.config_file_name,
+                        chained_job=True,
+                        parent_rv=bbnorm_job.rv(),
+                    )
+                    final_job = (
+                        self.addChild(bbduk_job)
+                            .addChild(bbnorm_job)
+                            .addChild(novoplasty_job)
+                    )
+
+                else:
+                    novoplasty_job = NovoplastyJob(
+                        self.read_one_file_id,
+                        self.read_two_file_id,
+                        self.config_file_id,
+                        self.config_file_name,
+                    )
+
+                    final_job = self.addChild(novoplasty_job)
 
             elif self.assembler == "shovill":
                 shovill_job = ShovillJob(
@@ -121,32 +177,76 @@ class WellAssemblyJob(Job):
                 final_job = self.addChild(skesa_job).addChild(apc_job)
 
             elif self.assembler == "spades":
-                spades_job = SpadesJob(
-                    self.read_one_file_id,
-                    self.read_two_file_id,
-                    self.config_file_id,
-                    self.config_file_name,
-                    self.output_directory,
-                )
-                apc_job = ApcJob(
-                    spades_job.rv("spades_rv", "contigs_file", "id"),
-                    parent_rv=spades_job.rv(),
-                )
-                final_job = self.addChild(spades_job).addChild(apc_job)
+
+                if self.preprocessing:
+
+                    spades_job = SpadesJob(
+                        bbmerge_job.rv("bbmerge_rv", "outu1_file", "id"),
+                        bbmerge_job.rv("bbmerge_rv", "outu2_file", "id"),
+                        self.config_file_id,
+                        self.config_file_name,
+                        self.output_directory,
+                        merged_file_id=bbmerge_job.rv(
+                            "bbmerge_rv", "merged_file", "id"
+                        ),
+                        chained_job=True,
+                        parent_rv=bbmerge_job.rv(),
+                    )
+                    apc_job = ApcJob(
+                        spades_job.rv("spades_rv", "contigs_file", "id"),
+                        parent_rv=spades_job.rv(),
+                    )
+
+                    final_job = (
+                        self.addChild(bbduk_job)
+                        .addChild(bbnorm_job)
+                        .addChild(bbmerge_job)
+                        .addChild(spades_job)
+                        .addChild(apc_job)
+                    )
+
+                else:
+
+                    spades_job = SpadesJob(
+                        self.read_one_file_id,
+                        self.read_two_file_id,
+                        self.config_file_id,
+                        self.config_file_name,
+                        self.output_directory,
+                    )
+                    apc_job = ApcJob(
+                        spades_job.rv("spades_rv", "contigs_file", "id"),
+                        parent_rv=spades_job.rv(),
+                    )
+
+                    final_job = self.addChild(spades_job).addChild(apc_job)
 
             elif self.assembler == "unicycler":
-                unicycler_job = UnicyclerJob(
-                    self.read_one_file_id,
-                    self.read_two_file_id,
-                    self.config_file_id,
-                    self.config_file_name,
-                    self.output_directory,
-                )
-                apc_job = ApcJob(
-                    unicycler_job.rv("unicycler_rv", "contigs_file", "id"),
-                    parent_rv=unicycler_job.rv(),
-                )
-                final_job = self.addChild(unicycler_job).addChild(apc_job)
+
+                if self.preprocessing:
+
+                    unicycler_job = UnicyclerJob(
+                        bbnorm_job.rv("bbnorm_rv", "out1_file", "id"),
+                        bbnorm_job.rv("bbnorm_rv", "out2_file", "id"),
+                        self.config_file_id,
+                        self.config_file_name,
+                        self.output_directory,
+                    )
+                    final_job = (
+                        self.addChild(bbduk_job)
+                        .addChild(bbnorm_job)
+                        .addChild(unicycler_job)
+                    )
+                else:
+                    unicycler_job = UnicyclerJob(
+                        self.read_one_file_id,
+                        self.read_two_file_id,
+                        self.config_file_id,
+                        self.config_file_name,
+                        self.output_directory,
+                    )
+
+                    final_job = self.addChild(unicycler_job)
 
             # Assign assembler return values
             assembler_rv = final_job.rv()
@@ -212,11 +312,26 @@ if __name__ == "__main__":
         help="path to a .ini file with args to be passed to the assembler",
     )
     parser.add_argument(
+        "--adapters-path",
+        default=os.sep + os.path.join(*cmps),
+        help="path to a .fa file with adapters to be passed to bbtools",
+    )
+    parser.add_argument(
+        "--adapters-file",
+        default="adapters.fa",
+        help="path to a .fa file with adapters to be passed to bbtools",
+    )
+    parser.add_argument(
         "-o",
         "--output-directory",
         default=None,
         help="the directory containing all output files",
     )
+    parser.add_argument(
+        "--no-preprocessing", dest="preprocessing", action="store_false"
+    )
+    parser.set_defaults(preprocessing=True)
+
     options = parser.parse_args()
     if options.output_directory is None:
         options.output_directory = options.plate_spec + "_" + options.well_spec
@@ -241,6 +356,11 @@ if __name__ == "__main__":
                 toil, os.path.join(options.config_path, options.config_file)
             )
 
+            # Import local adapters file into the file store
+            adapters_file_id = utilities.importAdaptersFile(
+                toil, os.path.join(options.adapters_path, options.adapters_file)
+            )
+
             # Construct and start the well assembly job
             well_assembly_job = WellAssemblyJob(
                 read_one_file_ids[0],
@@ -248,7 +368,10 @@ if __name__ == "__main__":
                 options.assembler,
                 config_file_id,
                 options.config_file,
+                adapters_file_id,
+                options.adapters_file,
                 options.output_directory,
+                preprocessing=options.preprocessing,
             )
             well_assembly_rv = toil.start(well_assembly_job)
 

@@ -21,6 +21,7 @@ OPTIONS
      selected assembler.
 -s   Date and time stamp the ouput directory
 -t   Use a test plate containing two wells
+-b  Run plates without BBTools preprocessing
 
 EOF
 }
@@ -29,7 +30,7 @@ EOF
 OUTPUT_DIRECTORY=""
 USE_DATE_STAMP=0
 USE_TEST_PLATE=0
-while getopts ":d:sth" opt; do
+while getopts ":d:sth:b" opt; do
     case $opt in
 	d)
 	    OUTPUT_DIRECTORY=$OPTARG
@@ -39,6 +40,9 @@ while getopts ":d:sth" opt; do
 	    ;;
 	t)
 	    USE_TEST_PLATE=1
+	    ;;
+	b)
+	    NO_PREPROCESSING=1
 	    ;;
 	h)
 	    usage
@@ -121,7 +125,7 @@ else
     # PLATES="$PLATES A11988A_sW0155"
 
 fi
-    
+
 # Process each plate
 for PLATE in $PLATES; do
 
@@ -130,11 +134,22 @@ for PLATE in $PLATES; do
     rm -rf pajfs
 
     # Run the plate assembly job
-    python ${BASE}/src/python/toil/PlateAssemblyJob.py \
-	   -s s3 -d addgene-sequencing-data/2018/FASTQ \
-	   -p $PLATE \
-	   -a $ASSEMBLER \
-	   pajfs
+    if [ $NO_PREPROCESSING == 1 ]; then
+      python ${BASE}/src/python/jobs/PlateAssemblyJob.py \
+       -s s3 -d addgene-sequencing-data/2018/FASTQ \
+       -l $PLATE \
+       -a $ASSEMBLER \
+       --no-preprocessing \
+       pajfs
+    else
+      python ${BASE}/src/python/jobs/PlateAssemblyJob.py \
+       -s s3 -d addgene-sequencing-data/2018/FASTQ \
+       -l $PLATE \
+       -a $ASSEMBLER \
+       --defaultMemory 4.0G \
+       pajfs
+    fi
+
 
     # Archive the plate assembly job output files
     tar -czvf $PLATE.tar.gz $PLATE

@@ -12,7 +12,11 @@ daemon should be started by default.
 
 Docker will need to mount the directory Toil creates for a job. When
 using Docker Desktop on macOS, this mount is accomplished in
-"Preferences > File Sharing" by adding "/var/folders" to the list.
+"Preferences > Resources > File Sharing" by adding "/var/folders" to the list.
+
+Additionally, Docker will need to be allocated enough resources to run a job.
+This can be done in "Preferences > Resources > Advanced" by setting (minimum)
+CPUs to 2 and memory to 4.0GB
 
 ## Clone the repository:
 
@@ -27,16 +31,11 @@ $ mkvirtualenv addgene-bioinformatics
 $ pip install -r requirements.txt
 ```
 
-## Pull required images from Docker Hub:
+## Build Required Docker Images:
 
 ```shell
-$ docker pull ralatsdio/masurca:v3.3.1
-$ docker pull ralatsdio/novoplasty:v3.7.0
-$ docker pull ralatsdio/shovill:v1.0.9
-$ docker pull ralatsdio/skesa:v2.3.0
-$ docker pull ralatsdio/spades:v3.13.1
-$ docker pull ralatsdio/unicycler:v0.4.7
-$ docker pull ralatsdio/apc:v0.1.0
+$ cd containers
+$ ./build.sh
 ```
 
 # Demonstration
@@ -44,23 +43,24 @@ $ docker pull ralatsdio/apc:v0.1.0
 ## Run the tests:
 
 ```shell
-$ python src/python/toil/JobsTest.py
+$ cd src/python/jobs
+$ python JobsTest.py
 ```
 
 ## Run one of the jobs with default inputs locally:
 
 ```shell
-$ python src/python/toil/SpadesJob.py sjfs
-$ python src/python/toil/ApcJob.py ajfs
-$ python src/python/toil/WellAssemblyJob.py wajfs
-$ python src/python/toil/PlateAssemblyJob.py pajfs
+$ python src/python/jobs/SpadesJob.py sjfs
+$ python src/python/jobs/ApcJob.py ajfs
+$ python src/python/jobs/WellAssemblyJob.py wajfs
+$ python src/python/jobs/PlateAssemblyJob.py pajfs
 ```
 
 ## Run a well or sample plate assembly job locally with data imported from S3:
 
 ```shell
-$ python src/python/toil/WellAssemblyJob.py  -s s3 -d addgene-sequencing-data/2018/FASTQ -p A11935X_sW0148 -w A01 wajfs
-$ python src/python/toil/PlateAssemblyJob.py -s s3 -d addgene-sequencing-data/2018/FASTQ -p A11935X_sW0148 pajfs
+$ python src/python/jobs/WellAssemblyJob.py  -s s3 -d addgene-sequencing-data/2018/FASTQ -l A11935X_sW0148 -w A01 wajfs
+$ python src/python/jobs/PlateAssemblyJob.py -s s3 -d addgene-sequencing-data/2018/FASTQ -l A11935X_sW0148 pajfs
 ```
 
 ## Run one of the jobs on EC2
@@ -103,8 +103,8 @@ $ python PlateAssemblyJob.py --data-directory miscellaneous --plate-spec A11967B
 
 ```bash
 $ cd python/src/toil
-$ python WellAssemblyJob.py  -s s3 -d addgene-sequencing-data/2018/FASTQ -p A11935X_sW0148 -w A01 wajfs
-$ python PlateAssemblyJob.py -s s3 -d addgene-sequencing-data/2018/FASTQ -p A11935X_sW0148 pajfs
+$ python WellAssemblyJob.py  -s s3 -d addgene-sequencing-data/2018/FASTQ -l A11935X_sW0148 -w A01 wajfs
+$ python PlateAssemblyJob.py -s s3 -d addgene-sequencing-data/2018/FASTQ -l A11935X_sW0148 pajfs
 ```
 
 ### Run the default or a larger plate assembly job using auto-scaling with an S3 file store:
