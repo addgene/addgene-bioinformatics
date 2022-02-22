@@ -1,0 +1,7 @@
+awscli
+biopython
+ipython
+matplotlib
+pip-tools
+scikit-learn
+toil[aws,mesos,google,encryption,cwl]
