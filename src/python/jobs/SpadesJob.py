@@ -87,37 +87,34 @@ class SpadesJob(Job):
             )
 
             if self.chained_job:
-                # Read the read files from the file store into the local
-                # temporary directory
-                read_one_file_path = utilities.readGlobalFile(
-                    fileStore,
-                    self.read_one_file_id,
-                    bbmerge_params["read_one_file_name"],
-                )
-                read_two_file_path = utilities.readGlobalFile(
-                    fileStore,
-                    self.read_two_file_id,
-                    bbmerge_params["read_two_file_name"],
-                )
+
+                read_one_file_name = bbmerge_params["read_one_file_name"]
+                read_two_file_name = bbmerge_params["read_two_file_name"]
+
                 if self.merged_file_id:
                     merged_file_path = utilities.readGlobalFile(
                         fileStore,
                         self.merged_file_id,
                         bbmerge_params["merged_read_file_name"],
                     )
+
             else:
-                # Read the read files from the file store into the local
-                # temporary directory
-                read_one_file_path = utilities.readGlobalFile(
-                    fileStore,
-                    self.read_one_file_id,
-                    common_config["read_one_file_name"],
-                )
-                read_two_file_path = utilities.readGlobalFile(
-                    fileStore,
-                    self.read_two_file_id,
-                    common_config["read_two_file_name"],
-                )
+
+                read_one_file_name = common_config["read_one_file_name"],
+                read_two_file_name = common_config["read_two_file_name"],
+
+            # Read the read files from the file store into the local
+            # temporary directory
+            read_one_file_path = utilities.readGlobalFile(
+                fileStore,
+                self.read_one_file_id,
+                read_one_file_name,
+            )
+            read_two_file_path = utilities.readGlobalFile(
+                fileStore,
+                self.read_two_file_id,
+                read_two_file_name,
+            )
 
             # Mount the Toil local temporary directory to the same path in
             # the container, and use the path as the working directory in

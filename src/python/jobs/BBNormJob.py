@@ -12,6 +12,11 @@ logger = logging.getLogger(__name__)
 
 
 class BBNormJob(Job):
+    """
+    Accepts paired-end Illumina reads for BBNorm
+    (https://jgi.doe.gov/data-and-tools/bbtools/bb-tools-user-guide/bbnorm-guide/)
+    """
+
     def __init__(
         self,
         read_one_file_id,
@@ -69,37 +74,29 @@ class BBNormJob(Job):
             config_file_path = utilities.readGlobalFile(
                 fileStore, self.config_file_id, self.config_file_name
             )
+            # Get assembler params
             common_config, bbnorm_params = utilities.parseConfigFile(
                 config_file_path, "bbnorm"
             )
+            common_config, bbduk_params = utilities.parseConfigFile(
+                config_file_path, "bbduk"
+            )
 
             if self.chained_job:
-                # Get BBDuk config for input path
-                common_config, bbduk_params = utilities.parseConfigFile(
-                    config_file_path, "bbduk"
-                )
-
-                # Read the read files from the file store into the local
-                # temporary directory
-                read_one_file_path = utilities.readGlobalFile(
-                    fileStore, self.read_one_file_id, bbduk_params["read_one_file_name"]
-                )
-                read_two_file_path = utilities.readGlobalFile(
-                    fileStore, self.read_two_file_id, bbduk_params["read_two_file_name"]
-                )
+                read_one_file_name = bbduk_params["read_one_file_name"]
+                read_two_file_name = bbduk_params["read_two_file_name"]
             else:
-                # Read the read files from the file store into the local
-                # temporary directory
-                read_one_file_path = utilities.readGlobalFile(
-                    fileStore,
-                    self.read_one_file_id,
-                    common_config["read_one_file_name"],
-                )
-                read_two_file_path = utilities.readGlobalFile(
-                    fileStore,
-                    self.read_two_file_id,
-                    common_config["read_two_file_name"],
-                )
+                read_one_file_name = common_config["read_one_file_name"],
+                read_two_file_name = common_config["read_two_file_name"],
+
+            # Read the read files from the file store into the local
+            # temporary directory
+            read_one_file_path = utilities.readGlobalFile(
+                fileStore, self.read_one_file_id, read_one_file_name
+            )
+            read_two_file_path = utilities.readGlobalFile(
+                fileStore, self.read_two_file_id, read_two_file_name
+            )
 
             # Read the output filenames from the config file
             out1_file_name = bbnorm_params["read_one_file_name"]
@@ -131,6 +128,7 @@ class BBNormJob(Job):
                     f"out2={out2_file_name}",
                     f"-Xmx{self.maxmem}"
                 ]
+
 
             if len(bbnorm_params) > 0:
                 for arg, value in bbnorm_params.items():

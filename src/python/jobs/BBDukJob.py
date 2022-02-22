@@ -12,6 +12,11 @@ logger = logging.getLogger(__name__)
 
 
 class BBDukJob(Job):
+    """
+    Accepts paired-end Illumina reads for BBDuk
+    (https://jgi.doe.gov/data-and-tools/bbtools/bb-tools-user-guide/bbduk-guide/)
+    """
+
     def __init__(
         self,
         read_one_file_id,

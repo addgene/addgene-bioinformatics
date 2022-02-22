@@ -134,13 +134,22 @@ for PLATE in $PLATES; do
     rm -rf pajfs
 
     # Run the plate assembly job
-    python ${BASE}/src/python/jobs/PlateAssemblyJob.py \
-     -s s3 -d addgene-sequencing-data/2018/FASTQ \
-     -l $PLATE \
-     -a $ASSEMBLER \
-     -b $PREPROCESSING \
-     pajfs \
-     --defaultMemory 4.0G \
+
+    if [ $NO_PREPROCESSING == 1 ]; then
+      python ${BASE}/src/python/jobs/PlateAssemblyJob.py \
+       -s s3 -d addgene-sequencing-data/2018/FASTQ \
+       -l $PLATE \
+       -a $ASSEMBLER \
+       --no-preprocessing \
+       pajfs
+    else
+      python ${BASE}/src/python/jobs/PlateAssemblyJob.py \
+       -s s3 -d addgene-sequencing-data/2018/FASTQ \
+       -l $PLATE \
+       -a $ASSEMBLER \
+       --defaultMemory 4.0G \
+       pajfs
+    fi
 
 
     # Archive the plate assembly job output files
