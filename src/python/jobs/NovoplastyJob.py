@@ -80,9 +80,6 @@ class NovoplastyJob(Job):
             # Select a read sequence as the seed, and write it
             # into the local temporary directory
             working_dir = fileStore.localTempDir
-            seed_file_path = os.path.join(
-                working_dir, assembler_params["seed_file_name"]
-            )
 
             if self.chained_job:
                 # Get BBMerge config for input path
@@ -98,20 +95,6 @@ class NovoplastyJob(Job):
                     fileStore, self.read_two_file_id, bbnorm_params["read_two_file_name"]
                 )
 
-                #Check if seed file exists; I.E., it's been imported
-                if not os.path.isfile(seed_file_path):
-                    # Create seed file from first read
-                    with open(seed_file_path, "w+") as f:
-                        with open(read_one_file_path, "rt") as g:
-                            do_write = False
-                            for line in g:
-                                if line[0] == "@":
-                                    do_write = True
-                                if line[0] == "+":
-                                    break
-                                if do_write:
-                                    f.write(line)
-
             else:
                 # Read the read files from the file store into the local
                 # temporary directory
@@ -122,19 +105,28 @@ class NovoplastyJob(Job):
                     fileStore, self.read_two_file_id, common_config["read_two_file_name"]
                 )
 
-                #TODO: Check if seed file exists; I.E., it's been imported
-                if not os.path.isfile(seed_file_path):
-                    # Create seed file from first read
-                    with open(seed_file_path, "w+") as f:
-                        with gzip.open(read_one_file_path, "rt") as g:
-                            do_write = False
-                            for line in g:
-                                if line[0] == "@":
-                                    do_write = True
-                                if line[0] == "+":
-                                    break
-                                if do_write:
-                                    f.write(line)
+            # Check if seed file exists; I.E., it's been imported
+            if self.seed_file_id:
+                # Read existing seed file
+                seed_file_path = utilities.readGlobalFile(
+                    fileStore, self.seed_file_id, os.path.basename(self.seed_file_id)
+                )
+            else:
+                seed_file_path = os.path.join(
+                    working_dir, assembler_params["seed_file_name"]
+                )
+
+                # Create seed file from first read
+                with open(seed_file_path, "w+") as f:
+                    with open(read_one_file_path, "rt") as g:
+                        do_write = False
+                        for line in g:
+                            if line[0] == "@":
+                                do_write = True
+                            if line[0] == "+":
+                                break
+                            if do_write:
+                                f.write(line)
 
             # Write the NOVOPlasty config file into the local temporary
             # directory
@@ -330,6 +322,7 @@ if __name__ == "__main__":
                 read_two_file_ids[0],
                 config_file_id,
                 options.config_file,
+                seed_file_id=seed_file_id,
             )
             novoplasty_rv = toil.start(novoplasty_job)
 
