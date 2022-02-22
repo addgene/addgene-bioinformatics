@@ -30,7 +30,7 @@ EOF
 OUTPUT_DIRECTORY=""
 USE_DATE_STAMP=0
 USE_TEST_PLATE=0
-while getopts ":d:sth:b" opt; do
+while getopts ":d:sthbe:" opt; do
     case $opt in
 	d)
 	    OUTPUT_DIRECTORY=$OPTARG
@@ -43,6 +43,9 @@ while getopts ":d:sth:b" opt; do
 	    ;;
 	b)
 	    NO_PREPROCESSING=1
+	    ;;
+	e)
+	    SEED=$OPTARG
 	    ;;
 	h)
 	    usage
@@ -140,6 +143,7 @@ for PLATE in $PLATES; do
        -l $PLATE \
        -a $ASSEMBLER \
        --no-preprocessing \
+       --seed-file -e \
        pajfs
     else
       python ${BASE}/src/python/jobs/PlateAssemblyJob.py \
@@ -147,6 +151,7 @@ for PLATE in $PLATES; do
        -l $PLATE \
        -a $ASSEMBLER \
        --defaultMemory 4.0G \
+       --seed-file -e \
        pajfs
     fi
 
