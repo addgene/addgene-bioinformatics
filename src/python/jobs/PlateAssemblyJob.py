@@ -35,6 +35,7 @@ class PlateAssemblyJob(Job):
         adapters_file_name,
         preprocessing=True,
         max_wells=None,
+        seed_file_id=None,
         *args,
         **kwargs
     ):
@@ -73,6 +74,7 @@ class PlateAssemblyJob(Job):
         self.adapters_file_name = adapters_file_name
         self.preprocessing = preprocessing
         self.max_wells = max_wells
+        self.seed_file_id = seed_file_id
 
     def run(self, fileStore):
         """
@@ -108,6 +110,7 @@ class PlateAssemblyJob(Job):
                         self.adapters_file_name,
                         self.plate_spec + "_" + self.well_specs[iW],
                         preprocessing=self.preprocessing,
+                        seed_file_id=self.seed_file_id,
                     )
                 ).rv()
             )
@@ -166,6 +169,16 @@ if __name__ == "__main__":
         "--adapters-file",
         default="adapters.fa",
         help="path to a .fa file with adapters to be passed to bbtools",
+    )
+    parser.add_argument(
+        "--seed-path",
+        default=os.sep + os.path.join(*cmps),
+        help="path to a .fastq file to be used as seed by assembler, where applicable (defaults to using first read)",
+    )
+    parser.add_argument(
+        "--seed-file",
+        default=None,
+        help="path to a .fastq file to be used as seed by assembler, where applicable (defaults to using first read)",
     )
     parser.add_argument(
         "-o",
@@ -259,9 +272,17 @@ if __name__ == "__main__":
             )
 
             # Import local adapters file into the file store
-            adapters_file_id = utilities.importAdaptersFile(
+            adapters_file_id = utilities.importFile(
                 toil, os.path.join(options.adapters_path, options.adapters_file)
             )
+
+            # Import local seed file into the file store, if needed
+            if options.seed_file:
+                seed_file_id = utilities.importFile(
+                    toil, os.path.join(options.seed_path, options.seed_file)
+                )
+            else:
+                seed_file_id = None
 
             # Construct and start the plate assembly job
             plate_assembly_job = PlateAssemblyJob(
@@ -275,7 +296,8 @@ if __name__ == "__main__":
                 adapters_file_id,
                 options.adapters_file,
                 preprocessing=options.preprocessing,
-                max_wells=options.well_maximum
+                max_wells=options.well_maximum,
+                seed_file_id=seed_file_id
             )
             well_assembly_rvs = toil.start(plate_assembly_job)
 

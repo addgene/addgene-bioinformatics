@@ -38,6 +38,7 @@ class WellAssemblyJob(Job):
         adapters_file_name,
         output_directory,
         preprocessing=True,
+        seed_file_id=False,
         *args,
         **kwargs
     ):
@@ -71,6 +72,7 @@ class WellAssemblyJob(Job):
         self.adapters_file_name = adapters_file_name
         self.output_directory = output_directory
         self.preprocessing = preprocessing
+        self.seed_file_id = seed_file_id
 
     def run(self, fileStore):
         """
@@ -130,6 +132,7 @@ class WellAssemblyJob(Job):
                         bbnorm_job.rv("bbnorm_rv", "out2_file", "id"),
                         self.config_file_id,
                         self.config_file_name,
+                        seed_file_id=self.seed_file_id,
                         chained_job=True,
                         parent_rv=bbnorm_job.rv(),
                     )
@@ -145,6 +148,7 @@ class WellAssemblyJob(Job):
                         self.read_two_file_id,
                         self.config_file_id,
                         self.config_file_name,
+                        seed_file_id=self.seed_file_id,
                     )
 
                     final_job = self.addChild(novoplasty_job)
@@ -357,7 +361,7 @@ if __name__ == "__main__":
             )
 
             # Import local adapters file into the file store
-            adapters_file_id = utilities.importAdaptersFile(
+            adapters_file_id = utilities.importFile(
                 toil, os.path.join(options.adapters_path, options.adapters_file)
             )
 
