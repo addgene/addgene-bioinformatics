@@ -131,6 +131,7 @@ fi
 
 # Process each plate
 for PLATE in $PLATES; do
+   echo
 
     # Remove the plate assembly job file store, since it exists if an
     # earlier plate assembly job failed
@@ -143,7 +144,7 @@ for PLATE in $PLATES; do
        -l $PLATE \
        -a $ASSEMBLER \
        --no-preprocessing \
-       --seed-file -e \
+       --seed-file $SEED \
        pajfs
     else
       python ${BASE}/src/python/jobs/PlateAssemblyJob.py \
@@ -151,7 +152,7 @@ for PLATE in $PLATES; do
        -l $PLATE \
        -a $ASSEMBLER \
        --defaultMemory 4.0G \
-       --seed-file -e \
+       --seed-file $SEED \
        pajfs
     fi
 
