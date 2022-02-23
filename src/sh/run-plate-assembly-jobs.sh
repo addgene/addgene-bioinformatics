@@ -30,7 +30,7 @@ EOF
 OUTPUT_DIRECTORY=""
 USE_DATE_STAMP=0
 USE_TEST_PLATE=0
-while getopts ":d:stheb:" opt; do
+while getopts ":d:sthe:b:" opt; do
     case $opt in
 	d)
 	    OUTPUT_DIRECTORY=$OPTARG
