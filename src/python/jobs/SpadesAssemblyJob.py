@@ -38,7 +38,6 @@ class WellAssemblyJob(Job):
         adapters_file_name,
         output_directory,
         preprocessing=True,
-        seed_file_id=False,
         export_intermediary_files=False,
         *args,
         **kwargs
@@ -73,7 +72,6 @@ class WellAssemblyJob(Job):
         self.adapters_file_name = adapters_file_name
         self.output_directory = output_directory
         self.preprocessing = preprocessing
-        self.seed_file_id = seed_file_id
         self.export_intermediary_files = export_intermediary_files
 
     def run(self, fileStore):
@@ -84,34 +82,6 @@ class WellAssemblyJob(Job):
             the return values of the SpadesJob and ApcJob
         """
         try:
-            if self.preprocessing:
-
-                ## BBTools preprocessing - defined here for all assemblers, although not all assemblers use all preprocessing jobs
-                bbduk_job = BBDukJob(
-                    self.read_one_file_id,
-                    self.read_two_file_id,
-                    self.config_file_id,
-                    self.config_file_name,
-                    self.adapters_file_id,
-                    self.adapters_file_name,
-                )
-                bbnorm_job = BBNormJob(
-                    bbduk_job.rv("bbduk_rv", "out1_file", "id"),
-                    bbduk_job.rv("bbduk_rv", "out2_file", "id"),
-                    self.config_file_id,
-                    self.config_file_name,
-                    chained_job=True,
-                    parent_rv=bbduk_job.rv(),
-                )
-                bbmerge_job = BBMergeJob(
-                    bbnorm_job.rv("bbnorm_rv", "out1_file", "id"),
-                    bbnorm_job.rv("bbnorm_rv", "out2_file", "id"),
-                    self.config_file_id,
-                    self.config_file_name,
-                    chained_job=True,
-                    parent_rv=bbnorm_job.rv(),
-                )
-
             if self.assembler == "masurca":
                 masurca_job = MasurcaJob(
                     self.read_one_file_id,
@@ -128,13 +98,28 @@ class WellAssemblyJob(Job):
             elif self.assembler == "novoplasty":
 
                 if self.preprocessing:
-
+                    ## BBTools preprocessing
+                    bbduk_job = BBDukJob(
+                        self.read_one_file_id,
+                        self.read_two_file_id,
+                        self.config_file_id,
+                        self.config_file_name,
+                        self.adapters_file_id,
+                        self.adapters_file_name,
+                    )
+                    bbnorm_job = BBNormJob(
+                        bbduk_job.rv("bbduk_rv", "out1_file", "id"),
+                        bbduk_job.rv("bbduk_rv", "out2_file", "id"),
+                        self.config_file_id,
+                        self.config_file_name,
+                        chained_job=True,
+                        parent_rv=bbduk_job.rv(),
+                    )
                     novoplasty_job = NovoplastyJob(
                         bbnorm_job.rv("bbnorm_rv", "out1_file", "id"),
                         bbnorm_job.rv("bbnorm_rv", "out2_file", "id"),
                         self.config_file_id,
                         self.config_file_name,
-                        seed_file_id=self.seed_file_id,
                         chained_job=True,
                         parent_rv=bbnorm_job.rv(),
                     )
@@ -150,7 +135,6 @@ class WellAssemblyJob(Job):
                         self.read_two_file_id,
                         self.config_file_id,
                         self.config_file_name,
-                        seed_file_id=self.seed_file_id,
                     )
 
                     final_job = self.addChild(novoplasty_job)
@@ -182,78 +166,9 @@ class WellAssemblyJob(Job):
                 )
                 final_job = self.addChild(skesa_job).addChild(apc_job)
 
-            if self.assembler == "spades":
+            elif self.assembler == "spades":
 
-                if self.preprocessing == "bbduk":
-                    ## BBTools preprocessing
-                    bbduk_job = BBDukJob(
-                        self.read_one_file_id,
-                        self.read_two_file_id,
-                        self.config_file_id,
-                        self.config_file_name,
-                        self.adapters_file_id,
-                        self.adapters_file_name,
-                    )
-                    spades_job = SpadesJob(
-                        bbduk_job.rv("bbduk_rv", "out1_file", "id"),
-                        bbduk_job.rv("bbduk_rv", "out2_file", "id"),
-                        self.config_file_id,
-                        self.config_file_name,
-                        self.output_directory,
-                        chained_job=True,
-                        parent_rv=bbduk_job.rv(),
-                    )
-                    apc_job = ApcJob(
-                        spades_job.rv("spades_rv", "contigs_file", "id"),
-                        parent_rv=spades_job.rv(),
-                    )
-
-                    final_job = (
-                        self.addChild(bbduk_job)
-                            .addChild(spades_job)
-                            .addChild(apc_job)
-                    )
-
-                elif self.preprocessing == "bbnorm":
-                    ## BBTools preprocessing
-                    bbduk_job = BBDukJob(
-                        self.read_one_file_id,
-                        self.read_two_file_id,
-                        self.config_file_id,
-                        self.config_file_name,
-                        self.adapters_file_id,
-                        self.adapters_file_name,
-                    )
-                    bbnorm_job = BBNormJob(
-                        bbduk_job.rv("bbduk_rv", "out1_file", "id"),
-                        bbduk_job.rv("bbduk_rv", "out2_file", "id"),
-                        self.config_file_id,
-                        self.config_file_name,
-                        chained_job=True,
-                        parent_rv=bbduk_job.rv(),
-                    )
-                    spades_job = SpadesJob(
-                        bbnorm_job.rv("bbnorm_rv", "out1_file", "id"),
-                        bbnorm_job.rv("bbnorm_rv", "out2_file", "id"),
-                        self.config_file_id,
-                        self.config_file_name,
-                        self.output_directory,
-                        chained_job=True,
-                        parent_rv=bbnorm_job.rv(),
-                    )
-                    apc_job = ApcJob(
-                        spades_job.rv("spades_rv", "contigs_file", "id"),
-                        parent_rv=spades_job.rv(),
-                    )
-
-                    final_job = (
-                        self.addChild(bbduk_job)
-                            .addChild(bbnorm_job)
-                            .addChild(spades_job)
-                            .addChild(apc_job)
-                    )
-
-                elif self.preprocessing == "bbmerge":
+                if self.preprocessing:
                     ## BBTools preprocessing
                     bbduk_job = BBDukJob(
                         self.read_one_file_id,
@@ -298,66 +213,14 @@ class WellAssemblyJob(Job):
 
                     final_job = (
                         self.addChild(bbduk_job)
-                            .addChild(bbnorm_job)
-                            .addChild(bbmerge_job)
-                            .addChild(spades_job)
-                            .addChild(apc_job)
-                    )
-
-                elif self.preprocessing == "nextflow":
-
-                    ## BBTools preprocessing
-                    bbduk_job = BBDukJob(
-                        self.read_one_file_id,
-                        self.read_two_file_id,
-                        self.config_file_id,
-                        self.config_file_name,
-                        self.adapters_file_id,
-                        self.adapters_file_name,
-                    )
-                    bbnorm_job = BBNormJob(
-                        bbduk_job.rv("bbduk_rv", "out1_file", "id"),
-                        bbduk_job.rv("bbduk_rv", "out2_file", "id"),
-                        self.config_file_id,
-                        self.config_file_name,
-                        chained_job=True,
-                        parent_rv=bbduk_job.rv(),
-                    )
-                    bbmerge_job = BBMergeJob(
-                        bbnorm_job.rv("bbnorm_rv", "out1_file", "id"),
-                        bbnorm_job.rv("bbnorm_rv", "out2_file", "id"),
-                        self.config_file_id,
-                        self.config_file_name,
-                        chained_job=True,
-                        parent_rv=bbnorm_job.rv(),
-                    )
-
-                    spades_job = SpadesJob(
-                        self.read_one_file_id,
-                        self.read_two_file_id,
-                        self.config_file_id,
-                        self.config_file_name,
-                        self.output_directory,
-                        merged_file_id=bbmerge_job.rv(
-                            "bbmerge_rv", "merged_file", "id"
-                        ),
-                        chained_job=True,
-                        parent_rv=bbmerge_job.rv(),
-                    )
-                    apc_job = ApcJob(
-                        spades_job.rv("spades_rv", "contigs_file", "id"),
-                        parent_rv=spades_job.rv(),
-                    )
-
-                    final_job = (
-                        self.addChild(bbduk_job)
-                            .addChild(bbnorm_job)
-                            .addChild(bbmerge_job)
-                            .addChild(spades_job)
-                            .addChild(apc_job)
+                        .addChild(bbnorm_job)
+                        .addChild(bbmerge_job)
+                        .addChild(spades_job)
+                        .addChild(apc_job)
                     )
 
                 else:
+
                     spades_job = SpadesJob(
                         self.read_one_file_id,
                         self.read_two_file_id,
@@ -375,7 +238,23 @@ class WellAssemblyJob(Job):
             elif self.assembler == "unicycler":
 
                 if self.preprocessing:
-
+                    ## BBTools preprocessing
+                    bbduk_job = BBDukJob(
+                        self.read_one_file_id,
+                        self.read_two_file_id,
+                        self.config_file_id,
+                        self.config_file_name,
+                        self.adapters_file_id,
+                        self.adapters_file_name,
+                    )
+                    bbnorm_job = BBNormJob(
+                        bbduk_job.rv("bbduk_rv", "out1_file", "id"),
+                        bbduk_job.rv("bbduk_rv", "out2_file", "id"),
+                        self.config_file_id,
+                        self.config_file_name,
+                        chained_job=True,
+                        parent_rv=bbduk_job.rv(),
+                    )
                     unicycler_job = UnicyclerJob(
                         bbnorm_job.rv("bbnorm_rv", "out1_file", "id"),
                         bbnorm_job.rv("bbnorm_rv", "out2_file", "id"),
@@ -412,7 +291,7 @@ class WellAssemblyJob(Job):
             assembler_rv = {self.assembler: {}}
 
         # Return file ids, and names for export
-        return assembler_rv
+        return final_job.rv()
 
 
 if __name__ == "__main__":
@@ -479,10 +358,9 @@ if __name__ == "__main__":
         help="the directory containing all output files",
     )
     parser.add_argument(
-        "-b",
-        "--preprocessing",
-        help="keywork specification of bbtools preprocessing",
+        "--no-preprocessing", dest="preprocessing", action="store_false"
     )
+    parser.set_defaults(preprocessing=True)
     parser.add_argument(
         "--export_intermediary_files", dest="export_intermediary_files", action="store_true",
         help="With flag enabled all intermediate output files (including preprocessing) are saved"
@@ -513,7 +391,7 @@ if __name__ == "__main__":
             )
 
             # Import local adapters file into the file store
-            adapters_file_id = utilities.importFile(
+            adapters_file_id = utilities.importAdaptersFile(
                 toil, os.path.join(options.adapters_path, options.adapters_file)
             )
 

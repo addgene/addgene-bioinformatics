@@ -194,9 +194,10 @@ if __name__ == "__main__":
         help="the maximum number of wells processed. Set None for all wells",
     )
     parser.add_argument(
-        "--no-preprocessing", dest="preprocessing", action="store_false"
+        "-b",
+        "--preprocessing",
+        help="keyword specification of bbtools preprocessing",
     )
-    parser.set_defaults(preprocessing=True)
 
     # Define and make the output directory, if needed
     options = parser.parse_args()

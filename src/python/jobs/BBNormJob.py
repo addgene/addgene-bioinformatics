@@ -25,6 +25,7 @@ class BBNormJob(Job):
         config_file_name,
         chained_job=False,
         maxmem="2g",
+        merged_file_id=None,
         parent_rv={},
         *args,
         **kwargs,
@@ -53,6 +54,7 @@ class BBNormJob(Job):
         self.config_file_name = config_file_name
         self.chained_job = chained_job
         self.parent_rv = parent_rv
+        self.merged_file_id = merged_file_id
         self.maxmem = maxmem
 
     def run(self, fileStore):

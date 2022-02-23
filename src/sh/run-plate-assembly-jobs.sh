@@ -21,7 +21,7 @@ OPTIONS
      selected assembler.
 -s   Date and time stamp the ouput directory
 -t   Use a test plate containing two wells
--b  Run plates without BBTools preprocessing
+-b   Use specifies bbtools preprocessing schema
 
 EOF
 }
@@ -30,19 +30,19 @@ EOF
 OUTPUT_DIRECTORY=""
 USE_DATE_STAMP=0
 USE_TEST_PLATE=0
-while getopts ":d:sthbe:" opt; do
+while getopts ":d:stheb:" opt; do
     case $opt in
 	d)
 	    OUTPUT_DIRECTORY=$OPTARG
+	    ;;
+	b)
+	    PREPROCESSING=$OPTARG
 	    ;;
 	s)
 	    USE_DATE_STAMP=1
 	    ;;
 	t)
 	    USE_TEST_PLATE=1
-	    ;;
-	b)
-	    NO_PREPROCESSING=1
 	    ;;
 	e)
 	    SEED=$OPTARG
@@ -104,16 +104,16 @@ else
     # ... for processing
 
     PLATES="$PLATES A11935_sW0148"
-#    PLATES="$PLATES A11938A_sW0144"
-#    PLATES="$PLATES A11942A_sW0145"
-#    PLATES="$PLATES A11948_sW0148"
-#    PLATES="$PLATES A11953A_sW0150"
-#
-#    PLATES="$PLATES A11956A_sW0152"
-#    PLATES="$PLATES A11957_sW0148"
-#    PLATES="$PLATES A11959A_sW0150"
-#    PLATES="$PLATES A11960A_sW0154"
-#    PLATES="$PLATES A11966A_sW0152"
+    PLATES="$PLATES A11938A_sW0144"
+    PLATES="$PLATES A11942A_sW0145"
+    PLATES="$PLATES A11948_sW0148"
+    PLATES="$PLATES A11953A_sW0150"
+
+    PLATES="$PLATES A11956A_sW0152"
+    PLATES="$PLATES A11957_sW0148"
+    PLATES="$PLATES A11959A_sW0150"
+    PLATES="$PLATES A11960A_sW0154"
+    PLATES="$PLATES A11966A_sW0152"
 
     # PLATES="$PLATES A11967A_sW0154"
     # PLATES="$PLATES A11967B_sW0154"
@@ -138,24 +138,14 @@ for PLATE in $PLATES; do
     rm -rf pajfs
 
     # Run the plate assembly job
-    if [ $NO_PREPROCESSING == 1 ]; then
-      python ${BASE}/src/python/jobs/PlateAssemblyJob.py \
-       -s s3 -d addgene-sequencing-data/2018/FASTQ \
-       -l $PLATE \
-       -a $ASSEMBLER \
-       --no-preprocessing \
-       --seed-file $SEED \
-       pajfs
-    else
-      python ${BASE}/src/python/jobs/PlateAssemblyJob.py \
-       -s s3 -d addgene-sequencing-data/2018/FASTQ \
-       -l $PLATE \
-       -a $ASSEMBLER \
-       --defaultMemory 4.0G \
-       --seed-file $SEED \
-       pajfs
-    fi
-
+    python ${BASE}/src/python/jobs/PlateAssemblyJob.py \
+     -s s3 -d addgene-sequencing-data/2018/FASTQ \
+     -l $PLATE \
+     -a $ASSEMBLER \
+     -b $PREPROCESSING \
+     --seed-file $SEED \
+     pajfs \
+     --defaultMemory 4.0G \
 
     # Archive the plate assembly job output files
     tar -czvf $PLATE.tar.gz $PLATE
