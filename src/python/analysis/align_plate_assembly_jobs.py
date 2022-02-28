@@ -630,6 +630,7 @@ if __name__ == "__main__":
         # Print alignment results
         print("")
         print("Assembler: {}".format(assembler))
+        print("Data Dir: {}".format(assembler_run_dir))
         print(
             "    Assembled (nonzero length): {:.1f}%".format(
                 100
@@ -646,7 +647,7 @@ if __name__ == "__main__":
                 )
             )
 
-        fraction_aligned = 0.10
+        fraction_aligned = 0.05
         print(
             "    Assembly aligned (within {:.1f}%): {:.1f}%".format(
                 100 * fraction_aligned,
