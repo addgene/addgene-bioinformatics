@@ -66,7 +66,7 @@ class NovoplastyJob(Job):
         contigs_file_name = "Circularized_assembly_1_{0}.fasta".format(project_name)
 
         try:
-            # Read the config file from the file store into the local
+            # Read the config files from the file store into the local
             # temporary directory, and parse
             config_file_path = utilities.readGlobalFile(
                 fileStore, self.config_file_id, self.config_file_name
