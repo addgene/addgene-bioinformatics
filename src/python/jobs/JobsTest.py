@@ -371,7 +371,7 @@ class JobsTestCase(ToilTestCase):
             self.actual_apc_fasta,
         )
 
-    def test_bbduk(self):
+    def test_bbduk_job(self):
 
         options = Job.Runner.getDefaultOptions("bbdukFileStore")
 
@@ -412,7 +412,7 @@ class JobsTestCase(ToilTestCase):
             self.actual_bbduk_fastq2,
         )
 
-    def test_bbnorm(self):
+    def test_bbnorm_job(self):
 
         options = Job.Runner.getDefaultOptions("bbnormFileStore")
 
@@ -450,7 +450,7 @@ class JobsTestCase(ToilTestCase):
             self.actual_bbnorm_fastq2,
         )
 
-    def test_bbmerge(self):
+    def test_bbmerge_job(self):
 
         options = Job.Runner.getDefaultOptions("bbmergeFileStore")
 
