@@ -21,7 +21,7 @@ OPTIONS
      selected assembler.
 -s   Date and time stamp the ouput directory
 -t   Use a test plate containing two wells
--b  Run plates without BBTools preprocessing
+-b   Use specifies bbtools preprocessing schema
 
 EOF
 }
@@ -30,19 +30,19 @@ EOF
 OUTPUT_DIRECTORY=""
 USE_DATE_STAMP=0
 USE_TEST_PLATE=0
-while getopts ":d:sth:b" opt; do
+while getopts ":d:sth:b:" opt; do
     case $opt in
 	d)
 	    OUTPUT_DIRECTORY=$OPTARG
+	    ;;
+	b)
+	    PREPROCESSING=$OPTARG
 	    ;;
 	s)
 	    USE_DATE_STAMP=1
 	    ;;
 	t)
 	    USE_TEST_PLATE=1
-	    ;;
-	b)
-	    NO_PREPROCESSING=1
 	    ;;
 	h)
 	    usage
@@ -134,6 +134,7 @@ for PLATE in $PLATES; do
     rm -rf pajfs
 
     # Run the plate assembly job
+
     if [ $NO_PREPROCESSING == 1 ]; then
       python ${BASE}/src/python/jobs/PlateAssemblyJob.py \
        -s s3 -d addgene-sequencing-data/2018/FASTQ \
