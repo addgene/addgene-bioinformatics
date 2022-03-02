@@ -252,7 +252,7 @@ def exportFiles(toil, output_directory, job_rv):
 
 
 def exportWellAssemblyFiles(
-    toil, assembler, output_directory, well_specs, well_assembly_rvs, well_maximum
+    toil, assembler, output_directory, well_specs, well_assembly_rvs, well_maximum=False
 ):
     """
     Export the assembler output files, and the apc output files, if

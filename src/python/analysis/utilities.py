@@ -1714,7 +1714,7 @@ def BBDuk(inp_fq_one_fNm,
         duk=<file>             Write statistics in duk's format. *DEPRECATED*
         nzo=t                  Only write statistics about ref sequences with nonzero hits.
         overwrite=t            (ow) Grant permission to overwrite files.
-        showspeed=t            (ss) 'f' suppresses display of processing speed.
+        showspeed=t           (ss) 'f' suppresses display of processing speed.
         ziplevel=2             (zl) Compression level; 1 (min) through 9 (max).
         fastawrap=70           Length of lines in fasta output.
         qout=auto              Output quality offset: 33 (Sanger), 64, or auto.
