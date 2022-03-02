@@ -371,7 +371,7 @@ class JobsTestCase(ToilTestCase):
             self.actual_apc_fasta,
         )
 
-    def test_bbduk(self):
+    def test_bbduk_job(self):
 
         options = Job.Runner.getDefaultOptions("bbdukFileStore")
 
@@ -412,7 +412,7 @@ class JobsTestCase(ToilTestCase):
             self.actual_bbduk_fastq2,
         )
 
-    def test_bbnorm(self):
+    def test_bbnorm_job(self):
 
         options = Job.Runner.getDefaultOptions("bbnormFileStore")
 
@@ -450,7 +450,7 @@ class JobsTestCase(ToilTestCase):
             self.actual_bbnorm_fastq2,
         )
 
-    def test_bbmerge(self):
+    def test_bbmerge_job(self):
 
         options = Job.Runner.getDefaultOptions("bbmergeFileStore")
 
@@ -608,12 +608,9 @@ if __name__ == "__main__":
     jobsTestSuite.addTest(JobsTestCase("test_spades_job"))
     jobsTestSuite.addTest(JobsTestCase("test_unicycler_job"))
     jobsTestSuite.addTest(JobsTestCase("test_apc_job"))
-
-    testSuites = unittest.TestSuite(
-        [
-            jobsTestSuite,
-        ]
-    )
+    jobsTestSuite.addTest(JobsTestCase("test_bbduk_job"))
+    jobsTestSuite.addTest(JobsTestCase("test_bbnorm_job"))
+    jobsTestSuite.addTest(JobsTestCase("test_bbmerge_job"))
 
     wellAssemblyJobTestSuite = unittest.TestLoader().loadTestsFromTestCase(
         WellAssemblyJobTestCase

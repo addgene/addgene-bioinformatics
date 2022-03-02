@@ -1,3 +1,4 @@
+
 set -x
 
 # Build base images
@@ -39,4 +40,8 @@ docker build --tag ralatsdio/apc:v0.1.0 apc/v0.1.0 \
      2>&1 | tee apc/v0.1.0/build.log
 
 # Summarize build logs
-find . -name 'build.log' -exec echo ">{}" \; -exec tail -2 {} \;
+find . -mindepth 2 \
+     -name 'build.log' \
+     -exec echo ">{}" \; \
+     -exec grep "naming" {} \; \
+     > build.log

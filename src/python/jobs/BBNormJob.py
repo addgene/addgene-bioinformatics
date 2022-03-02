@@ -69,28 +69,26 @@ class BBNormJob(Job):
         out2_file_name = "bbnorm_output2.fastq"
 
         try:
-            # Read the config file from the file store into the local
+            # Read the config files from the file store into the local
             # temporary directory, and parse
             config_file_path = utilities.readGlobalFile(
                 fileStore, self.config_file_id, self.config_file_name
             )
-            # Get assembler params
-            common_config, bbnorm_params = utilities.parseConfigFile(
-                config_file_path, "bbnorm"
-            )
             common_config, bbduk_params = utilities.parseConfigFile(
                 config_file_path, "bbduk"
             )
+            common_config, bbnorm_params = utilities.parseConfigFile(
+                config_file_path, "bbnorm"
+            )
 
+            # Read the read files from the file store into the local
+            # temporary directory
             if self.chained_job:
                 read_one_file_name = bbduk_params["read_one_file_name"]
                 read_two_file_name = bbduk_params["read_two_file_name"]
             else:
-                read_one_file_name = common_config["read_one_file_name"],
-                read_two_file_name = common_config["read_two_file_name"],
-
-            # Read the read files from the file store into the local
-            # temporary directory
+                read_one_file_name = common_config["read_one_file_name"]
+                read_two_file_name = common_config["read_two_file_name"]
             read_one_file_path = utilities.readGlobalFile(
                 fileStore, self.read_one_file_id, read_one_file_name
             )

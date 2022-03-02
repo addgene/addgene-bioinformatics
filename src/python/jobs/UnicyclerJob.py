@@ -67,7 +67,7 @@ class UnicyclerJob(Job):
         graph_file_name = "assembly.gfa"
 
         try:
-            # Read the config file from the file store into the local
+            # Read the config files from the file store into the local
             # temporary directory, and parse
             config_file_path = utilities.readGlobalFile(
                 fileStore, self.config_file_id, self.config_file_name
@@ -75,8 +75,6 @@ class UnicyclerJob(Job):
             common_config, assembler_params = utilities.parseConfigFile(
                 config_file_path, "unicycler"
             )
-
-            # Get BBNorm config for input path
             common_config, bbnorm_params = utilities.parseConfigFile(
                 config_file_path, "bbnorm"
             )
