@@ -66,46 +66,36 @@ class BBMergeJob(Job):
         outu2_file_name = "unmerged2.fastq"
 
         try:
-            # Read the config file from the file store into the local
+            # Read the config files from the file store into the local
             # temporary directory, and parse
             config_file_path = utilities.readGlobalFile(
                 fileStore, self.config_file_id, self.config_file_name
+            )
+            common_config, bbnorm_params = utilities.parseConfigFile(
+                config_file_path, "bbnorm"
             )
             common_config, bbmerge_params = utilities.parseConfigFile(
                 config_file_path, "bbmerge"
             )
 
+            # Read the read files from the file store into the local
+            # temporary directory
             if self.chained_job:
-                # Get BBNorm config for input path
-                common_config, bbnorm_params = utilities.parseConfigFile(
-                    config_file_path, "bbnorm"
-                )
-
-                # Read the read files from the file store into the local
-                # temporary directory
-                read_one_file_path = utilities.readGlobalFile(
-                    fileStore,
-                    self.read_one_file_id,
-                    bbnorm_params["read_one_file_name"],
-                )
-                read_two_file_path = utilities.readGlobalFile(
-                    fileStore,
-                    self.read_two_file_id,
-                    bbnorm_params["read_two_file_name"],
-                )
+                read_one_file_name = bbnorm_params["read_one_file_name"]
+                read_two_file_name = bbnorm_params["read_two_file_name"]
             else:
-                # Read the read files from the file store into the local
-                # temporary directory
-                read_one_file_path = utilities.readGlobalFile(
-                    fileStore,
-                    self.read_one_file_id,
-                    common_config["read_one_file_name"],
-                )
-                read_two_file_path = utilities.readGlobalFile(
-                    fileStore,
-                    self.read_two_file_id,
-                    common_config["read_two_file_name"],
-                )
+                read_one_file_name = common_config["read_one_file_name"]
+                read_two_file_name = common_config["read_two_file_name"]
+            read_one_file_path = utilities.readGlobalFile(
+                fileStore,
+                self.read_one_file_id,
+                read_one_file_name,
+            )
+            read_two_file_path = utilities.readGlobalFile(
+                fileStore,
+                self.read_two_file_id,
+                read_two_file_name,
+            )
 
             # Read the output filenames from the config file
             outu1_file_name = bbmerge_params["read_one_file_name"]

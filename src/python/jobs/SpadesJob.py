@@ -72,7 +72,7 @@ class SpadesJob(Job):
         contigs_file_name = "contigs.fasta"
 
         try:
-            # Read the config file from the file store into the local
+            # Read the config files from the file store into the local
             # temporary directory, and parse
             config_file_path = utilities.readGlobalFile(
                 fileStore, self.config_file_id, self.config_file_name
@@ -80,25 +80,15 @@ class SpadesJob(Job):
             common_config, assembler_params = utilities.parseConfigFile(
                 config_file_path, "spades"
             )
-
-            # Get BBMerge config for input path
             common_config, bbmerge_params = utilities.parseConfigFile(
                 config_file_path, "bbmerge"
             )
 
+            # Read the read files from the file store into the local
+            # temporary directory
             if self.chained_job:
-                # Read the read files from the file store into the local
-                # temporary directory
-                read_one_file_path = utilities.readGlobalFile(
-                    fileStore,
-                    self.read_one_file_id,
-                    bbmerge_params["read_one_file_name"],
-                )
-                read_two_file_path = utilities.readGlobalFile(
-                    fileStore,
-                    self.read_two_file_id,
-                    bbmerge_params["read_two_file_name"],
-                )
+                read_one_file_name = bbmerge_params["read_one_file_name"]
+                read_two_file_name = bbmerge_params["read_two_file_name"]
                 if self.merged_file_id:
                     merged_file_path = utilities.readGlobalFile(
                         fileStore,
@@ -106,18 +96,18 @@ class SpadesJob(Job):
                         bbmerge_params["merged_read_file_name"],
                     )
             else:
-                # Read the read files from the file store into the local
-                # temporary directory
-                read_one_file_path = utilities.readGlobalFile(
-                    fileStore,
-                    self.read_one_file_id,
-                    common_config["read_one_file_name"],
-                )
-                read_two_file_path = utilities.readGlobalFile(
-                    fileStore,
-                    self.read_two_file_id,
-                    common_config["read_two_file_name"],
-                )
+                read_one_file_name = common_config["read_one_file_name"]
+                read_two_file_name = common_config["read_two_file_name"]
+            read_one_file_path = utilities.readGlobalFile(
+                fileStore,
+                self.read_one_file_id,
+                read_one_file_name,
+            )
+            read_two_file_path = utilities.readGlobalFile(
+                fileStore,
+                self.read_two_file_id,
+                read_two_file_name,
+            )
 
             # Mount the Toil local temporary directory to the same path in
             # the container, and use the path as the working directory in

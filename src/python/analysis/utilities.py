@@ -92,6 +92,9 @@ def simulate_paired_reads(
         len_second_read=250,
         outer_distance=500,
 ):
+    """
+    TODO: Complete
+    """
     rd1_seq_rcds = []
     rd2_seq_rcds = []
     seq_len = len(seq)
@@ -137,6 +140,9 @@ def simulate_paired_reads(
 
 
 def simulate_unpaired_reads(seq, seq_nm, number_pairs=25000, len_read=500):
+    """
+    TODO: Complete
+    """
     rd_seq_rcds = []
     seq_len = len(seq)
     for iP in range(number_pairs):
@@ -172,6 +178,7 @@ def create_aligner(config):
     ----------
     config : dct
         pairwise aligner configuration
+
     Returns
     -------
     Align.PairwiseAligner
@@ -455,6 +462,9 @@ def simulate_paired_reads_wgsim(
         len_second_read=250,
         outer_distance=750,
 ):
+    """
+    TODO: Complete
+    """
     seq_rcd = SeqRecord(seq, id="0", name="base", description="reference")
     seq_fNm = seq_nm + ".fasta"
     rd1_fNm = seq_nm + "_rd1.fastq"
@@ -2415,6 +2425,9 @@ def BBMerge(inp_fq_one_fNm,
 def BBSplit(inp_fq_fNm,
             *args,
             **kwargs):
+    """
+    TODO: Complete
+    """
     # Run the command in the Docker image
     image = "ralatsdio/bbtools:v38.90"
 

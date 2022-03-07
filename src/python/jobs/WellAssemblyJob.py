@@ -279,6 +279,7 @@ class WellAssemblyJob(Job):
                         chained_job=True,
                         parent_rv=bbnorm_job.rv(),
                     )
+
                     spades_job = SpadesJob(
                         bbmerge_job.rv("bbmerge_rv", "outu1_file", "id"),
                         bbmerge_job.rv("bbmerge_rv", "outu2_file", "id"),
