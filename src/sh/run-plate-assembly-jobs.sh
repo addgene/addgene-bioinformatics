@@ -131,7 +131,6 @@ fi
 
 # Process each plate
 for PLATE in $PLATES; do
-   echo $SEED
 
     # Remove the plate assembly job file store, since it exists if an
     # earlier plate assembly job failed
