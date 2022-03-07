@@ -143,8 +143,8 @@ for PLATE in $PLATES; do
      -a $ASSEMBLER \
      -b $PREPROCESSING \
      --seed-file $SEED \
-     pajfs \
      --defaultMemory 4.0G \
+     pajfs \
 
     # Archive the plate assembly job output files
     tar -czvf $PLATE.tar.gz $PLATE
