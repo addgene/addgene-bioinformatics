@@ -38,7 +38,7 @@ class WellAssemblyJob(Job):
         adapters_file_name,
         output_directory,
         preprocessing=True,
-        seed_file_id=False,
+        seed_file_id=None,
         export_intermediary_files=False,
         *args,
         **kwargs

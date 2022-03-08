@@ -24,7 +24,7 @@ class NovoplastyJob(Job):
         config_file_id,
         config_file_name,
         chained_job=False,
-        seed_file_id=False,
+        seed_file_id=None,
         parent_rv={},
         *args,
         **kwargs
@@ -101,7 +101,7 @@ class NovoplastyJob(Job):
 
             # Check if seed file exists; I.E., it's been imported
             if self.seed_file_id:
-                # Read existing seed file
+                # Read existing seed file - must be in FASTA format
                 seed_file_path = utilities.readGlobalFile(
                     fileStore, self.seed_file_id, os.path.basename(self.seed_file_id)
                 )
@@ -110,7 +110,7 @@ class NovoplastyJob(Job):
                     working_dir, assembler_params["seed_file_name"]
                 )
 
-                # Create seed file from first read
+                # Create seed file from first read - read must be in FASTQ format
                 with open(seed_file_path, "w+") as f:
                     with open(read_one_file_path, "rt") as g:
                         do_write = False
