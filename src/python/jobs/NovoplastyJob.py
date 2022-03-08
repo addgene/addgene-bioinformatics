@@ -24,6 +24,7 @@ class NovoplastyJob(Job):
         config_file_id,
         config_file_name,
         chained_job=False,
+        seed_file_id=None,
         parent_rv={},
         *args,
         **kwargs
@@ -51,6 +52,7 @@ class NovoplastyJob(Job):
         self.config_file_name = config_file_name
         self.chained_job = chained_job
         self.parent_rv = parent_rv
+        self.seed_file_id = seed_file_id
 
     def run(self, fileStore):
         """
@@ -96,19 +98,29 @@ class NovoplastyJob(Job):
             # Select the first read sequence as the seed, and write it
             # into the local temporary directory
             working_dir = fileStore.localTempDir
-            seed_file_path = os.path.join(
-                working_dir, assembler_params["seed_file_name"]
-            )
-            with open(seed_file_path, "w+") as f:
-                with gzip.open(read_one_file_path, "rt") as g:
-                    do_write = False
-                    for line in g:
-                        if line[0] == "@":
-                            do_write = True
-                        if line[0] == "+":
-                            break
-                        if do_write:
-                            f.write(line)
+
+            # Check if seed file exists; I.E., it's been imported
+            if self.seed_file_id:
+                # Read existing seed file - must be in FASTA format
+                seed_file_path = utilities.readGlobalFile(
+                    fileStore, self.seed_file_id, os.path.basename(self.seed_file_id)
+                )
+            else:
+                seed_file_path = os.path.join(
+                    working_dir, assembler_params["seed_file_name"]
+                )
+
+                # Create seed file from first read - read must be in FASTQ format
+                with open(seed_file_path, "w+") as f:
+                    with open(read_one_file_path, "rt") as g:
+                        do_write = False
+                        for line in g:
+                            if line[0] == "@":
+                                do_write = True
+                            if line[0] == "+":
+                                break
+                            if do_write:
+                                f.write(line)
 
             # Write the NOVOPlasty config file into the local temporary
             # directory
@@ -251,6 +263,16 @@ if __name__ == "__main__":
         help="path to a .ini file with args to be passed to the assembler",
     )
     parser.add_argument(
+        "--seed-path",
+        default=os.sep + os.path.join(*cmps),
+        help="path to a .fastq file to be used as seed by assembler, where applicable (defaults to using first read)",
+    )
+    parser.add_argument(
+        "--seed-file",
+        default=None,
+        help="path to a .fastq file to be used as seed by assembler, where applicable (defaults to using first read)",
+    )
+    parser.add_argument(
         "-o",
         "--output-directory",
         default=None,
@@ -280,12 +302,21 @@ if __name__ == "__main__":
                 toil, os.path.join(options.config_path, options.config_file)
             )
 
+            # Import local seed file into the file store, if needed
+            if options.seed_file:
+                seed_file_id = utilities.importFile(
+                    toil, os.path.join(options.seed_path, options.seed_file)
+                )
+            else:
+                seed_file_id = None
+
             # Construct and start the NOVOPlasty job
             novoplasty_job = NovoplastyJob(
                 read_one_file_ids[0],
                 read_two_file_ids[0],
                 config_file_id,
                 options.config_file,
+                seed_file_id=seed_file_id,
             )
             novoplasty_rv = toil.start(novoplasty_job)
 

@@ -30,7 +30,7 @@ EOF
 OUTPUT_DIRECTORY=""
 USE_DATE_STAMP=0
 USE_TEST_PLATE=0
-while getopts ":d:sth:b:" opt; do
+while getopts ":d:sthe:b:" opt; do
     case $opt in
 	d)
 	    OUTPUT_DIRECTORY=$OPTARG
@@ -43,6 +43,9 @@ while getopts ":d:sth:b:" opt; do
 	    ;;
 	t)
 	    USE_TEST_PLATE=1
+	    ;;
+	e)
+	    SEED=$OPTARG
 	    ;;
 	h)
 	    usage
@@ -134,23 +137,14 @@ for PLATE in $PLATES; do
     rm -rf pajfs
 
     # Run the plate assembly job
-
-    if [ $NO_PREPROCESSING == 1 ]; then
-      python ${BASE}/src/python/jobs/PlateAssemblyJob.py \
-       -s s3 -d addgene-sequencing-data/2018/FASTQ \
-       -l $PLATE \
-       -a $ASSEMBLER \
-       --no-preprocessing \
-       pajfs
-    else
-      python ${BASE}/src/python/jobs/PlateAssemblyJob.py \
-       -s s3 -d addgene-sequencing-data/2018/FASTQ \
-       -l $PLATE \
-       -a $ASSEMBLER \
-       --defaultMemory 4.0G \
-       pajfs
-    fi
-
+    python ${BASE}/src/python/jobs/PlateAssemblyJob.py \
+     -s s3 -d addgene-sequencing-data/2018/FASTQ \
+     -l $PLATE \
+     -a $ASSEMBLER \
+     -b $PREPROCESSING \
+     --seed-file $SEED \
+     --defaultMemory 4.0G \
+     pajfs \
 
     # Archive the plate assembly job output files
     tar -czvf $PLATE.tar.gz $PLATE
