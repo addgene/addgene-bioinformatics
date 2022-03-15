@@ -23,11 +23,11 @@ USER root
 ENV INSTALL_PFX=/home/biodocker
 
 # Install LAST
-ENV LAST_VER=992
+ENV LAST_VER=1268
 RUN cd $INSTALL_PFX && \
-    hg clone http://last.cbrc.jp/last/ && \
+    git clone https://gitlab.com/mcfrith/last.git && \
     cd last && \
-    hg update $LAST_VER && \
+    git checkout $LAST_VER && \
     make && \
     make install prefix=$INSTALL_PFX && \
     cd .. && \
