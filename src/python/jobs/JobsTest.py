@@ -131,7 +131,7 @@ class ToilTestCase(unittest.TestCase):
         return config_file_id
 
     def _import_adapters_file(self, toil):
-        adapters_file_id = utilities.importAdaptersFile(
+        adapters_file_id = utilities.importFile(
             toil, os.path.join(self.adapters_path, self.adapters_file)
         )
         return adapters_file_id
