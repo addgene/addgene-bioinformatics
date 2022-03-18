@@ -185,15 +185,6 @@ class WellAssemblyJob(Job):
             if self.assembler == "spades":
 
                 if self.preprocessing == "bbduk":
-                    ## BBTools preprocessing
-                    bbduk_job = BBDukJob(
-                        self.read_one_file_id,
-                        self.read_two_file_id,
-                        self.config_file_id,
-                        self.config_file_name,
-                        self.adapters_file_id,
-                        self.adapters_file_name,
-                    )
                     spades_job = SpadesJob(
                         bbduk_job.rv("bbduk_rv", "out1_file", "id"),
                         bbduk_job.rv("bbduk_rv", "out2_file", "id"),
@@ -215,23 +206,6 @@ class WellAssemblyJob(Job):
                     )
 
                 elif self.preprocessing == "bbnorm":
-                    ## BBTools preprocessing
-                    bbduk_job = BBDukJob(
-                        self.read_one_file_id,
-                        self.read_two_file_id,
-                        self.config_file_id,
-                        self.config_file_name,
-                        self.adapters_file_id,
-                        self.adapters_file_name,
-                    )
-                    bbnorm_job = BBNormJob(
-                        bbduk_job.rv("bbduk_rv", "out1_file", "id"),
-                        bbduk_job.rv("bbduk_rv", "out2_file", "id"),
-                        self.config_file_id,
-                        self.config_file_name,
-                        chained_job=True,
-                        parent_rv=bbduk_job.rv(),
-                    )
                     spades_job = SpadesJob(
                         bbnorm_job.rv("bbnorm_rv", "out1_file", "id"),
                         bbnorm_job.rv("bbnorm_rv", "out2_file", "id"),
@@ -254,32 +228,6 @@ class WellAssemblyJob(Job):
                     )
 
                 elif self.preprocessing == "bbmerge":
-                    ## BBTools preprocessing
-                    bbduk_job = BBDukJob(
-                        self.read_one_file_id,
-                        self.read_two_file_id,
-                        self.config_file_id,
-                        self.config_file_name,
-                        self.adapters_file_id,
-                        self.adapters_file_name,
-                    )
-                    bbnorm_job = BBNormJob(
-                        bbduk_job.rv("bbduk_rv", "out1_file", "id"),
-                        bbduk_job.rv("bbduk_rv", "out2_file", "id"),
-                        self.config_file_id,
-                        self.config_file_name,
-                        chained_job=True,
-                        parent_rv=bbduk_job.rv(),
-                    )
-                    bbmerge_job = BBMergeJob(
-                        bbnorm_job.rv("bbnorm_rv", "out1_file", "id"),
-                        bbnorm_job.rv("bbnorm_rv", "out2_file", "id"),
-                        self.config_file_id,
-                        self.config_file_name,
-                        chained_job=True,
-                        parent_rv=bbnorm_job.rv(),
-                    )
-
                     spades_job = SpadesJob(
                         bbmerge_job.rv("bbmerge_rv", "outu1_file", "id"),
                         bbmerge_job.rv("bbmerge_rv", "outu2_file", "id"),
