@@ -36,7 +36,7 @@ class PlateAssemblyJob(Job):
         preprocessing=True,
         max_wells=None,
         *args,
-        **kwargs
+        **kwargs,
     ):
         """
         Parameters
@@ -90,11 +90,13 @@ class PlateAssemblyJob(Job):
                 if iW >= self.max_wells:
                     break
 
-            logger.info(f"""Creating WellAssemblyJob: 
+            logger.info(
+                f"""Creating WellAssemblyJob: 
                             Assembler: {self.assembler} 
                             Well: {self.plate_spec}_{self.well_specs[iW]}
                             Preprocessing: {self.preprocessing}
-                        """)
+                        """
+            )
             # Note that exceptions are caught in the well assembly job
             well_assembly_rvs.append(
                 self.addChild(
@@ -280,7 +282,7 @@ if __name__ == "__main__":
                 adapters_file_id,
                 options.adapters_file,
                 preprocessing=options.preprocessing,
-                max_wells=options.well_maximum
+                max_wells=options.well_maximum,
             )
             well_assembly_rvs = toil.start(plate_assembly_job)
 
@@ -297,5 +299,5 @@ if __name__ == "__main__":
             options.output_directory,
             well_specs,
             well_assembly_rvs,
-            options.well_maximum
+            options.well_maximum,
         )

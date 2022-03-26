@@ -125,7 +125,6 @@ class WellAssemblyJob(Job):
 
             elif self.assembler == "novoplasty":
 
-
                 if self.preprocessing:
 
                     novoplasty_job = NovoplastyJob(
@@ -138,8 +137,8 @@ class WellAssemblyJob(Job):
                     )
                     final_job = (
                         self.addChild(bbduk_job)
-                            .addChild(bbnorm_job)
-                            .addChild(novoplasty_job)
+                        .addChild(bbnorm_job)
+                        .addChild(novoplasty_job)
                     )
 
                 else:
@@ -181,7 +180,6 @@ class WellAssemblyJob(Job):
 
             if self.assembler == "spades":
 
-
                 if self.preprocessing == "bbduk":
                     ## BBTools preprocessing
                     bbduk_job = BBDukJob(
@@ -207,9 +205,7 @@ class WellAssemblyJob(Job):
                     )
 
                     final_job = (
-                        self.addChild(bbduk_job)
-                            .addChild(spades_job)
-                            .addChild(apc_job)
+                        self.addChild(bbduk_job).addChild(spades_job).addChild(apc_job)
                     )
 
                 elif self.preprocessing == "bbnorm":
@@ -246,9 +242,9 @@ class WellAssemblyJob(Job):
 
                     final_job = (
                         self.addChild(bbduk_job)
-                            .addChild(bbnorm_job)
-                            .addChild(spades_job)
-                            .addChild(apc_job)
+                        .addChild(bbnorm_job)
+                        .addChild(spades_job)
+                        .addChild(apc_job)
                     )
 
                 elif self.preprocessing == "bbmerge":
@@ -297,10 +293,10 @@ class WellAssemblyJob(Job):
 
                     final_job = (
                         self.addChild(bbduk_job)
-                            .addChild(bbnorm_job)
-                            .addChild(bbmerge_job)
-                            .addChild(spades_job)
-                            .addChild(apc_job)
+                        .addChild(bbnorm_job)
+                        .addChild(bbmerge_job)
+                        .addChild(spades_job)
+                        .addChild(apc_job)
                     )
 
                 elif self.preprocessing == "nextflow":
@@ -350,10 +346,10 @@ class WellAssemblyJob(Job):
 
                     final_job = (
                         self.addChild(bbduk_job)
-                            .addChild(bbnorm_job)
-                            .addChild(bbmerge_job)
-                            .addChild(spades_job)
-                            .addChild(apc_job)
+                        .addChild(bbnorm_job)
+                        .addChild(bbmerge_job)
+                        .addChild(spades_job)
+                        .addChild(apc_job)
                     )
 
                 else:
@@ -483,8 +479,10 @@ if __name__ == "__main__":
         help="keywork specification of bbtools preprocessing",
     )
     parser.add_argument(
-        "--export_intermediary_files", dest="export_intermediary_files", action="store_true",
-        help="With flag enabled all intermediate output files (including preprocessing) are saved"
+        "--export_intermediary_files",
+        dest="export_intermediary_files",
+        action="store_true",
+        help="With flag enabled all intermediate output files (including preprocessing) are saved",
     )
 
     options = parser.parse_args()
@@ -529,9 +527,9 @@ if __name__ == "__main__":
                 options.config_file,
                 adapters_file_id,
                 options.adapters_file,
-                options.output_directory,
+                os.path.join(options.output_directory, options.well_spec),
                 preprocessing=options.preprocessing,
-                export_intermediary_files=options.export_intermediary_files
+                export_intermediary_files=options.export_intermediary_files,
             )
             well_assembly_rv = toil.start(well_assembly_job)
 
