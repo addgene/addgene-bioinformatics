@@ -120,7 +120,9 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     Job.Runner.addToilOptions(parser)
     cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-1]
-    cmps.extend(["A11967A_sW0154_B01"])
+    cmps.extend(
+        ["output", os.path.basename(__file__).replace(".py", ""), "A11967A_sW0154", "B01"]
+    )
     parser.add_argument(
         "-d",
         "--data-path",
@@ -143,7 +145,7 @@ if __name__ == "__main__":
     if options.output_directory is None:
         options.output_directory = os.path.relpath(options.data_path)
     if not os.path.exists(options.output_directory):
-        os.mkdir(options.output_directory)
+        os.makedirs(options.output_directory)
 
     # Work within the Toil context manager
     with Toil(options) as toil:

@@ -189,9 +189,13 @@ if __name__ == "__main__":
     # Define and make the output directory, if needed
     options = parser.parse_args()
     if options.output_directory is None:
-        options.output_directory = options.plate_spec
+        options.output_directory = os.path.join(
+            "output",
+            os.path.basename(__file__).replace(".py", ""),
+            options.plate_spec,
+        )
     if not os.path.exists(options.output_directory):
-        os.mkdir(options.output_directory)
+        os.makedirs(options.output_directory)
 
     # Work within the Toil context manager
     with Toil(options) as toil:
