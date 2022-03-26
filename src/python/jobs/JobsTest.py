@@ -23,100 +23,33 @@ import utilities
 
 class ToilTestCase(unittest.TestCase):
     def setUp(self):
+
         cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-4]
         cmps.extend(["dat", "miscellaneous"])
         self.data_path = os.sep + os.path.join(*cmps)
+
         self.plate_spec_a = "A11967A_sW0154"
+        self.plate_spec_b = "A11967B_sW0154"
+        self.plate_spec_c = "A14735A_sW0248"
+
         self.well_spec_a = "A01"
         self.well_spec_b = "B01"
-
-        self.bbtools_plate_spec_a = "A14735A_sW0248"
-
-        self.assembler = "spades"
+        self.well_specs = ["G04", "G06"]
 
         cmps = str(os.path.abspath(__file__)).split(os.sep)[0:-1]
         self.config_path = os.sep + os.path.join(*cmps)
         self.config_file = "Assembler.ini"
-
         self.adapters_path = os.sep + os.path.join(*cmps)
         self.adapters_file = "adapters.fa"
 
-        self.output_directory_aa = "{0}_{1}".format(self.plate_spec_a, self.well_spec_a)
-        self.actual_directory_aa = self.output_directory_aa
-        self.test_directory_aa = self.output_directory_aa + "_TEST"
-        if not os.path.exists(self.test_directory_aa):
-            os.mkdir(self.test_directory_aa)
-
-        self.output_directory_ab = "{0}_{1}".format(self.plate_spec_a, self.well_spec_b)
-        self.actual_directory_ab = self.output_directory_ab
-        self.test_directory_ab = self.output_directory_ab + "_TEST"
-        if not os.path.exists(self.test_directory_ab):
-            os.mkdir(self.test_directory_ab)
-
-        self.output_directory_bbtools = "{0}_{1}".format(
-            self.bbtools_plate_spec_a, self.well_spec_a
-        )
-        self.actual_directory_bbtools = self.output_directory_bbtools
-        self.test_directory_bbtools = self.output_directory_bbtools + "_TEST"
-        if not os.path.exists(self.test_directory_bbtools):
-            os.mkdir(self.test_directory_bbtools)
-
-        self.plate_spec_b = "A11967B_sW0154"
-        self.well_specs = ["B01", "B02"]
-
-        self.actual_directory_bg = self.plate_spec_b
-        self.test_directory_bg = self.actual_directory_bg + "_TEST"
-        if not os.path.exists(self.test_directory_bg):
-            os.mkdir(self.test_directory_bg)
-
-        self.test_masurca_fasta = "final.genome.scf.fasta"
-        self.test_novoplasty_fasta = "Circularized_assembly_1_Toil.fasta"
-        self.test_shovill_fasta = "contigs.fa"
-        self.test_skesa_fasta = "contigs.fa"
-        self.test_spades_fasta = "contigs.fasta"
-        self.test_unicycler_fasta = "assembly.fasta"
-
-        self.test_bbduk_fastq1 = "trimmed_R1.fastq"
-        self.test_bbduk_fastq2 = "trimmed_R2.fastq"
-        self.test_bbnorm_fastq1 = "normed_R1.fastq"
-        self.test_bbnorm_fastq2 = "normed_R2.fastq"
-        self.test_bbmerge_outu1 = "unmerged_R1.fastq"
-        self.test_bbmerge_outu2 = "unmerged_R2.fastq"
-        self.test_bbmerge_fastq = "merged.fastq"
-
-        self.test_apc_fasta = "apc.1.fa"
-
-        self.actual_masurca_fasta = "assembly_masurca.fasta"
-        self.actual_novoplasty_fasta = "assembly_novoplasty.fasta"
-        self.actual_shovill_fasta = "assembly_shovill.fasta"
-        self.actual_skesa_fasta = "assembly_skesa.fasta"
-        self.actual_spades_fasta = "assembly_spades.fasta"
-        self.actual_well_spades_fasta = "well_assembly_spades.fasta"
-        self.actual_unicycler_fasta = "assembly_unicycler.fasta"
-
-        self.actual_bbduk_fastq1 = "bbduk1.fastq"
-        self.actual_bbduk_fastq2 = "bbduk2.fastq"
-        self.actual_bbnorm_fastq1 = "bbnorm1.fastq"
-        self.actual_bbnorm_fastq2 = "bbnorm2.fastq"
-        self.actual_bbmerge_outu1 = "bbmergeoutu1.fastq"
-        self.actual_bbmerge_outu2 = "bbmergeoutu2.fastq"
-        self.actual_bbmerge_fastq = "bbmerge.fastq"
-        self.actual_bbmerge_outu1_chained = "bbmergeoutu1_chained.fastq"
-        self.actual_bbmerge_outu2_chained = "bbmergeoutu2_chained.fastq"
-        self.actual_bbmerge_fastq_chained = "bbmerge_chained.fastq"
-
-        self.actual_apc_fasta = "apc_spades.1.fa"
-        self.actual_well_apc_fasta = "well_apc_spades.1.fa"
+        self.test_directory = os.path.join(os.sep + os.path.join(*cmps), "test")
+        if not os.path.exists(self.test_directory):
+            os.mkdir(self.test_directory)
+        self.output_directory = os.path.join(os.sep + os.path.join(*cmps), "output")
 
     def tearDown(self):
-        if os.path.exists(self.test_directory_bbtools):
-            shutil.rmtree(self.test_directory_bbtools)
-        if os.path.exists(self.test_directory_aa):
-            shutil.rmtree(self.test_directory_aa)
-        if os.path.exists(self.test_directory_ab):
-            shutil.rmtree(self.test_directory_ab)
-        if os.path.exists(self.test_directory_bg):
-            shutil.rmtree(self.test_directory_bg)
+        if os.path.exists(self.test_directory):
+            shutil.rmtree(self.test_directory)
 
     def _import_read_files(self, toil, plate_spec, well_specs):
         read_one_file_ids, read_two_file_ids = utilities.importReadFiles(
@@ -135,14 +68,6 @@ class ToilTestCase(unittest.TestCase):
             toil, os.path.join(self.adapters_path, self.adapters_file)
         )
         return adapters_file_id
-
-    def _import_contigs_file(self, toil):
-        contigs_file_id = utilities.importContigsFile(
-            toil,
-            os.path.abspath(self.output_directory_ab),
-            file_name="assembly_spades.fasta",
-        )
-        return contigs_file_id
 
     def _assert_true_cmp_fasta(
         self, test_directory, test_fasta, actual_directory, actual_fasta
@@ -170,6 +95,14 @@ class JobsTestCase(ToilTestCase):
 
         options = Job.Runner.getDefaultOptions("masurcaFileStore")
 
+        test_directory = os.path.join(
+            self.test_directory, "MasurcaJob", self.plate_spec_a, self.well_spec_b
+        )
+        os.makedirs(test_directory, exist_ok=True)
+        output_directory = os.path.join(
+            self.output_directory, "MasurcaJob", self.plate_spec_a, self.well_spec_b
+        )
+
         with Toil(options) as toil:
 
             read_one_file_ids, read_two_file_ids = self._import_read_files(
@@ -186,20 +119,26 @@ class JobsTestCase(ToilTestCase):
             )
             masurca_rv = toil.start(masurca_job)
 
-            utilities.exportFiles(
-                toil, self.test_directory_ab, masurca_rv["masurca_rv"]
-            )
+            utilities.exportFiles(toil, test_directory, masurca_rv["masurca_rv"])
 
         self._assert_true_cmp_fasta(
-            self.test_directory_ab,
-            self.test_masurca_fasta,
-            self.actual_directory_ab,
-            self.actual_masurca_fasta,
+            test_directory,
+            "final.genome.scf.fasta",
+            output_directory,
+            "final.genome.scf.fasta",
         )
 
     def test_novoplasty_job(self):
 
         options = Job.Runner.getDefaultOptions("novoplastyFileStore")
+
+        test_directory = os.path.join(
+            self.test_directory, "NovoplastyJob", self.plate_spec_a, self.well_spec_a
+        )
+        os.makedirs(test_directory, exist_ok=True)
+        output_directory = os.path.join(
+            self.output_directory, "NovoplastyJob", self.plate_spec_a, self.well_spec_a
+        )
 
         with Toil(options) as toil:
 
@@ -217,20 +156,26 @@ class JobsTestCase(ToilTestCase):
             )
             novoplasty_rv = toil.start(novoplasty_job)
 
-            utilities.exportFiles(
-                toil, self.test_directory_aa, novoplasty_rv["novoplasty_rv"]
-            )
+            utilities.exportFiles(toil, test_directory, novoplasty_rv["novoplasty_rv"])
 
         self._assert_true_cmp_fasta(
-            self.test_directory_aa,
-            self.test_novoplasty_fasta,
-            self.actual_directory_aa,
-            self.actual_novoplasty_fasta,
+            test_directory,
+            "Circularized_assembly_1_Toil.fasta",
+            output_directory,
+            "Circularized_assembly_1_Toil.fasta",
         )
 
     def test_shovill_job(self):
 
         options = Job.Runner.getDefaultOptions("shovillFileStore")
+
+        test_directory = os.path.join(
+            self.test_directory, "ShovillJob", self.plate_spec_a, self.well_spec_b
+        )
+        os.makedirs(test_directory, exist_ok=True)
+        output_directory = os.path.join(
+            self.output_directory, "ShovillJob", self.plate_spec_a, self.well_spec_b
+        )
 
         with Toil(options) as toil:
 
@@ -245,24 +190,30 @@ class JobsTestCase(ToilTestCase):
                 read_two_file_ids[0],
                 config_file_id,
                 self.config_file,
-                self.output_directory_ab,
             )
             shovill_rv = toil.start(shovill_job)
 
-            utilities.exportFiles(
-                toil, self.test_directory_ab, shovill_rv["shovill_rv"]
-            )
+            utilities.exportFiles(toil, test_directory, shovill_rv["shovill_rv"])
 
         self._assert_true_cmp_fasta(
-            self.test_directory_ab,
-            self.test_shovill_fasta,
-            self.actual_directory_ab,
-            self.actual_shovill_fasta,
+            test_directory,
+            "contigs.fa",
+            output_directory,
+            "contigs.fa",
+            os.path.join("test", "ShovillJob", self.plate_spec_a, self.well_spec_b),
         )
 
     def test_skesa_job(self):
 
         options = Job.Runner.getDefaultOptions("skesaFileStore")
+
+        test_directory = os.path.join(
+            self.test_directory, "SkesaJob", self.plate_spec_a, self.well_spec_b
+        )
+        os.makedirs(test_directory, exist_ok=True)
+        output_directory = os.path.join(
+            self.output_directory, "SkesaJob", self.plate_spec_a, self.well_spec_b
+        )
 
         with Toil(options) as toil:
 
@@ -280,18 +231,26 @@ class JobsTestCase(ToilTestCase):
             )
             skesa_rv = toil.start(skesa_job)
 
-            utilities.exportFiles(toil, self.test_directory_ab, skesa_rv["skesa_rv"])
+            utilities.exportFiles(toil, test_directory, skesa_rv["skesa_rv"])
 
         self._assert_true_cmp_fasta(
-            self.test_directory_ab,
-            self.test_skesa_fasta,
-            self.actual_directory_ab,
-            self.actual_skesa_fasta,
+            test_directory,
+            "contigs.fa",
+            output_directory,
+            "contigs.fa",
         )
 
     def test_spades_job(self):
 
         options = Job.Runner.getDefaultOptions("spadesFileStore")
+
+        test_directory = os.path.join(
+            self.test_directory, "SpadesJob", self.plate_spec_a, self.well_spec_b
+        )
+        os.makedirs(test_directory, exist_ok=True)
+        output_directory = os.path.join(
+            self.output_directory, "SpadesJob", self.plate_spec_a, self.well_spec_b
+        )
 
         with Toil(options) as toil:
 
@@ -306,22 +265,30 @@ class JobsTestCase(ToilTestCase):
                 read_two_file_ids[0],
                 config_file_id,
                 self.config_file,
-                self.output_directory_ab,
+                os.path.join("test", "SpadesJob", self.plate_spec_a, self.well_spec_b),
             )
             spades_rv = toil.start(spades_job)
 
-            utilities.exportFiles(toil, self.test_directory_ab, spades_rv["spades_rv"])
+            utilities.exportFiles(toil, test_directory, spades_rv["spades_rv"])
 
         self._assert_true_cmp_fasta(
-            self.test_directory_ab,
-            self.test_spades_fasta,
-            self.actual_directory_ab,
-            self.actual_spades_fasta,
+            test_directory,
+            "contigs.fasta",
+            output_directory,
+            "contigs.fasta",
         )
 
     def test_unicycler_job(self):
 
         options = Job.Runner.getDefaultOptions("unicyclerFileStore")
+
+        test_directory = os.path.join(
+            self.test_directory, "UnicyclerJob", self.plate_spec_a, self.well_spec_b
+        )
+        os.makedirs(test_directory, exist_ok=True)
+        output_directory = os.path.join(
+            self.output_directory, "UnicyclerJob", self.plate_spec_a, self.well_spec_b
+        )
 
         with Toil(options) as toil:
 
@@ -336,49 +303,74 @@ class JobsTestCase(ToilTestCase):
                 read_two_file_ids[0],
                 config_file_id,
                 self.config_file,
-                self.output_directory_ab,
+                os.path.join(
+                    "test", "UnicyclerJob", self.plate_spec_a, self.well_spec_b
+                ),
             )
             unicycler_rv = toil.start(unicycler_job)
 
-            utilities.exportFiles(
-                toil, self.test_directory_ab, unicycler_rv["unicycler_rv"]
-            )
+            utilities.exportFiles(toil, test_directory, unicycler_rv["unicycler_rv"])
 
         self._assert_true_cmp_fasta(
-            self.test_directory_ab,
-            self.test_unicycler_fasta,
-            self.actual_directory_ab,
-            self.actual_unicycler_fasta,
+            test_directory,
+            "assembly.fasta",
+            output_directory,
+            "assembly.fasta",
         )
 
     def test_apc_job(self):
 
         options = Job.Runner.getDefaultOptions("apcFileStore")
 
+        test_directory = os.path.join(
+            self.test_directory, "ApcJob", self.plate_spec_a, self.well_spec_b
+        )
+        os.makedirs(test_directory, exist_ok=True)
+        output_directory = os.path.join(
+            self.output_directory, "ApcJob", self.plate_spec_a, self.well_spec_b
+        )
+
         with Toil(options) as toil:
 
-            contigs_file_id = self._import_contigs_file(toil)
+            contigs_file_id = utilities.importContigsFile(
+                toil,
+                os.path.join(
+                    self.output_directory,
+                    "SpadesJob",
+                    self.plate_spec_a,
+                    self.well_spec_b,
+                ),
+                file_name="contigs.fasta",
+            )
 
             apc_job = ApcJob(contigs_file_id)
             apc_rv = toil.start(apc_job)
 
-            utilities.exportFiles(toil, self.test_directory_ab, apc_rv["apc_rv"])
+            utilities.exportFiles(toil, test_directory, apc_rv["apc_rv"])
 
         self._assert_true_cmp_fasta(
-            self.test_directory_ab,
-            self.test_apc_fasta,
-            self.actual_directory_ab,
-            self.actual_apc_fasta,
+            test_directory,
+            "apc.1.fa",
+            output_directory,
+            "apc.1.fa",
         )
 
     def test_bbduk_job(self):
 
         options = Job.Runner.getDefaultOptions("bbdukFileStore")
 
+        test_directory = os.path.join(
+            self.test_directory, "BBDukJob", self.plate_spec_c, self.well_spec_a
+        )
+        os.makedirs(test_directory, exist_ok=True)
+        output_directory = os.path.join(
+            self.output_directory, "BBDukJob", self.plate_spec_c, self.well_spec_a
+        )
+
         with Toil(options) as toil:
 
             read_one_file_ids, read_two_file_ids = self._import_read_files(
-                toil, self.bbtools_plate_spec_a, [self.well_spec_a]
+                toil, self.plate_spec_c, [self.well_spec_a]
             )
 
             config_file_id = self._import_config_file(toil)
@@ -394,32 +386,38 @@ class JobsTestCase(ToilTestCase):
             )
             bbduk_rv = toil.start(bbduk_job)
 
-            utilities.exportFiles(
-                toil, self.test_directory_bbtools, bbduk_rv["bbduk_rv"]
-            )
+            utilities.exportFiles(toil, test_directory, bbduk_rv["bbduk_rv"])
 
         self._assert_true_cmp_fasta(
-            self.test_directory_bbtools,
-            self.test_bbduk_fastq1,
-            self.actual_directory_bbtools,
-            self.actual_bbduk_fastq1,
+            test_directory,
+            "trimmed_R1.fastq",
+            output_directory,
+            "trimmed_R1.fastq",
         )
 
         self._assert_true_cmp_fasta(
-            self.test_directory_bbtools,
-            self.test_bbduk_fastq2,
-            self.actual_directory_bbtools,
-            self.actual_bbduk_fastq2,
+            test_directory,
+            "trimmed_R2.fastq",
+            output_directory,
+            "trimmed_R2.fastq",
         )
 
     def test_bbnorm_job(self):
 
         options = Job.Runner.getDefaultOptions("bbnormFileStore")
 
+        test_directory = os.path.join(
+            self.test_directory, "BBNormJob", self.plate_spec_c, self.well_spec_a
+        )
+        os.makedirs(test_directory, exist_ok=True)
+        output_directory = os.path.join(
+            self.test_directory, "BBNormJob", self.plate_spec_c, self.well_spec_a
+        )
+
         with Toil(options) as toil:
 
             read_one_file_ids, read_two_file_ids = self._import_read_files(
-                toil, self.bbtools_plate_spec_a, [self.well_spec_a]
+                toil, self.plate_spec_c, [self.well_spec_a]
             )
 
             config_file_id = self._import_config_file(toil)
@@ -432,32 +430,38 @@ class JobsTestCase(ToilTestCase):
             )
             bbnorm_rv = toil.start(bbnorm_job)
 
-            utilities.exportFiles(
-                toil, self.test_directory_bbtools, bbnorm_rv["bbnorm_rv"]
-            )
+            utilities.exportFiles(toil, test_directory, bbnorm_rv["bbnorm_rv"])
 
         self._assert_true_cmp_fasta(
-            self.test_directory_bbtools,
-            self.test_bbnorm_fastq1,
-            self.actual_directory_bbtools,
-            self.actual_bbnorm_fastq1,
+            test_directory,
+            "normed_R1.fastq",
+            output_directory,
+            "normed_R1.fastq",
         )
 
         self._assert_true_cmp_fasta(
-            self.test_directory_bbtools,
-            self.test_bbnorm_fastq2,
-            self.actual_directory_bbtools,
-            self.actual_bbnorm_fastq2,
+            test_directory,
+            "normed_R2.fastq",
+            output_directory,
+            "normed_R2.fastq",
         )
 
     def test_bbmerge_job(self):
 
         options = Job.Runner.getDefaultOptions("bbmergeFileStore")
 
+        test_directory = os.path.join(
+            self.test_directory, "BBMerge", self.plate_spec_c, self.well_spec_a
+        )
+        os.makedirs(test_directory, exist_ok=True)
+        output_directory = os.path.join(
+            self.output_directory, "BBMergeJob", self.plate_spec_c, self.well_spec_a
+        )
+
         with Toil(options) as toil:
 
             read_one_file_ids, read_two_file_ids = self._import_read_files(
-                toil, self.bbtools_plate_spec_a, [self.well_spec_a]
+                toil, self.plate_spec_c, [self.well_spec_a]
             )
 
             config_file_id = self._import_config_file(toil)
@@ -470,29 +474,27 @@ class JobsTestCase(ToilTestCase):
             )
             bbmerge_rv = toil.start(bbmerge_job)
 
-            utilities.exportFiles(
-                toil, self.test_directory_bbtools, bbmerge_rv["bbmerge_rv"]
-            )
+            utilities.exportFiles(toil, test_directory, bbmerge_rv["bbmerge_rv"])
 
         self._assert_true_cmp_sorted_fasta(
-            self.test_directory_bbtools,
-            self.test_bbmerge_outu1,
-            self.actual_directory_bbtools,
-            self.actual_bbmerge_outu1,
+            test_directory,
+            "unmerged_R1.fastq",
+            output_directory,
+            "unmerged_R1.fastq",
         )
 
         self._assert_true_cmp_sorted_fasta(
-            self.test_directory_bbtools,
-            self.test_bbmerge_outu2,
-            self.actual_directory_bbtools,
-            self.actual_bbmerge_outu2,
+            test_directory,
+            "unmerged_R2.fastq",
+            output_directory,
+            "unmerged_R2.fastq",
         )
 
         self._assert_true_cmp_sorted_fasta(
-            self.test_directory_bbtools,
-            self.test_bbmerge_fastq,
-            self.actual_directory_bbtools,
-            self.actual_bbmerge_fastq,
+            test_directory,
+            "merged.fastq",
+            output_directory,
+            "merged.fastq",
         )
 
 
@@ -500,6 +502,17 @@ class WellAssemblyJobTestCase(ToilTestCase):
     def test_well_assembly_job(self):
 
         options = Job.Runner.getDefaultOptions("wellAssemblyFileStore")
+
+        test_directory = os.path.join(
+            self.test_directory, "WellAssemblyJob", self.plate_spec_a, self.well_spec_b
+        )
+        os.makedirs(test_directory, exist_ok=True)
+        output_directory = os.path.join(
+            self.output_directory,
+            "WellAssemblyJob",
+            self.plate_spec_a,
+            self.well_spec_b,
+        )
 
         with Toil(options) as toil:
 
@@ -513,33 +526,33 @@ class WellAssemblyJobTestCase(ToilTestCase):
             well_assembly_job = WellAssemblyJob(
                 read_one_file_ids[0],
                 read_two_file_ids[0],
-                self.assembler,
+                "spades",
                 config_file_id,
                 self.config_file,
                 adapters_file_id,
                 self.adapters_file,
-                self.output_directory_ab,
+                os.path.join(
+                    "test", "WellAssemblyJob", self.plate_spec_a, self.well_spec_b
+                    ),
+                preprocessing=False,
+                export_intermediary_files=True,
             )
             well_assembly_rv = toil.start(well_assembly_job)
 
-            utilities.exportFiles(
-                toil, self.test_directory_ab, well_assembly_rv["spades_rv"]
-            )
-            utilities.exportFiles(
-                toil, self.test_directory_ab, well_assembly_rv["apc_rv"]
-            )
+            utilities.exportFiles(toil, test_directory, well_assembly_rv["spades_rv"])
+            utilities.exportFiles(toil, test_directory, well_assembly_rv["apc_rv"])
 
         self._assert_true_cmp_fasta(
-            self.test_directory_ab,
-            self.test_spades_fasta,
-            self.actual_directory_ab,
-            self.actual_well_spades_fasta,
+            test_directory,
+            "contigs.fasta",
+            output_directory,
+            "contigs.fasta",
         )
         self._assert_true_cmp_fasta(
-            self.test_directory_ab,
-            self.test_apc_fasta,
-            self.actual_directory_ab,
-            self.actual_well_apc_fasta,
+            test_directory,
+            "apc.1.fa",
+            output_directory,
+            "apc.1.fa",
         )
 
 
@@ -548,10 +561,15 @@ class PlateAssemblyJobTestCase(ToilTestCase):
 
         options = Job.Runner.getDefaultOptions("plateAssemblyFileStore")
 
+        test_directory = os.path.join(
+            self.test_directory, "PlateAssemblyJob", self.plate_spec_b
+        )
+        os.makedirs(test_directory, exist_ok=True)
+
         with Toil(options) as toil:
 
             read_one_file_ids, read_two_file_ids = self._import_read_files(
-                toil, self.plate_spec_a, self.well_specs
+                toil, self.plate_spec_b, self.well_specs
             )
 
             config_file_id = self._import_config_file(toil)
@@ -562,11 +580,12 @@ class PlateAssemblyJobTestCase(ToilTestCase):
                 read_one_file_ids,
                 read_two_file_ids,
                 self.plate_spec_a,
-                self.assembler,
+                "spades",
                 config_file_id,
                 self.config_file,
                 adapters_file_id,
                 self.adapters_file,
+                preprocessing=False,
                 cores=2,
                 disk="3G",
                 memory="4G",
@@ -575,24 +594,32 @@ class PlateAssemblyJobTestCase(ToilTestCase):
 
             utilities.exportWellAssemblyFiles(
                 toil,
-                self.assembler,
-                self.test_directory_ab,
+                "spades",
+                test_directory,
                 self.well_specs,
                 well_assembly_rvs,
             )
 
         for well_spec in self.well_specs:
+            test_directory = os.path.join(
+                self.test_directory, "PlateAssemblyJob", self.plate_spec_b, well_spec
+            )
+            os.makedirs(test_directory, exist_ok=True)
+            output_directory = os.path.join(
+                self.output_directory, "PlateAssemblyJob", self.plate_spec_b, well_spec
+            )
+
             self._assert_true_cmp_fasta(
-                os.path.join(self.test_directory_ab, well_spec),
-                self.test_spades_fasta,
-                os.path.join(self.actual_directory_ab, well_spec),
-                self.actual_spades_fasta,
+                test_directory,
+                "contigs.fasta",
+                output_directory,
+                "contigs.fasta",
             )
             self._assert_true_cmp_fasta(
-                os.path.join(self.test_directory_ab, well_spec),
-                self.test_apc_fasta,
-                os.path.join(self.actual_directory_ab, well_spec),
-                self.actual_apc_fasta,
+                test_directory,
+                "apc.1.fa",
+                output_directory,
+                "apc.1.fa",
             )
 
 
@@ -601,7 +628,7 @@ if __name__ == "__main__":
     jobsTestSuite = unittest.TestSuite()
 
     # TODO: Resolve
-    # jobsTestSuite.addTest(JobsTestCase("test_masurca_job"))
+    jobsTestSuite.addTest(JobsTestCase("test_masurca_job"))
     jobsTestSuite.addTest(JobsTestCase("test_novoplasty_job"))
     jobsTestSuite.addTest(JobsTestCase("test_shovill_job"))
     jobsTestSuite.addTest(JobsTestCase("test_skesa_job"))
