@@ -1,0 +1,78 @@
+
+
+-----------------------------------------------
+NOVOPlasty: The Organelle Assembler
+Version 4.2
+Author: Nicolas Dierckxsens, (c) 2015-2020
+-----------------------------------------------
+
+
+Input parameters from the configuration file:   *** Verify if everything is correct ***
+
+Project:
+----------------------
+Project name          = Toil
+Type                  = mito
+Genome range          = 1500-60000
+K-mer                 = 121
+Max memory            = 3
+Extended log          = 0
+Save assembled reads  = no
+Seed Input            = /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/e4fb26b40d425e5fb2c1072e32945bfe/64ae/4e74/Seed.fasta
+Extend seed directly  = no
+Reference sequence    = 
+Variance detection    = 
+Chloroplast sequence  = 
+
+Dataset 1:
+----------------------
+Read Length           = 251
+Insert size           = 500
+Platform              = illumina
+Single/Paired         = PE
+Combined reads        = 
+Forward reads         = /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/e4fb26b40d425e5fb2c1072e32945bfe/64ae/4e74/R1.fastq.gz
+Reverse reads         = /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/e4fb26b40d425e5fb2c1072e32945bfe/64ae/4e74/R2.fastq.gz
+
+Heteroplasmy:
+-----------------------
+Heteroplasmy          = 
+HP exclude list       = 
+PCR-free              = 
+
+Optional:
+----------------------
+Insert size auto      = yes
+Use Quality Scores    = 
+
+Subsampled fraction: 99.69 %
+Forward reads without pair: 212
+Reverse reads without pair: 179
+
+Retrieve Seed...
+
+Initial read retrieved successfully: CATAACACCCCTTGTTTGCCTGGCGGCAGTAGCGCGGTGGTCCCACCTGACCCCATGCCGAACTCAGAAGTGAAACGCCGTAGCGCCGATGGTAGTGTGGGGACTCCCCATGCGAGAGTAGGGAACTGCCAGGCATCAAATAAAACGAAAGGCTCAGTCGAAAGACTGGGCCTTTCGCCCGGGCTAATTATGGGGTGTCGCCCTTATTCGACTCTATAGTGAAGTTCCTATTCTCTAGAAAGTATAGGAA
+
+Start Assembly...
+
+
+-----------------Assembly 1 finished successfully: The genome has been circularized-----------------
+
+Contig 1                  : 5818 bp
+
+Total contigs              : 1
+Largest contig             : 5818 bp
+Smallest contig            : 5818 bp
+Average insert size        : 399 bp
+
+
+-----------------------------------------Input data metrics-----------------------------------------
+
+Total reads                : 75904
+Aligned reads              : 57418
+Assembled reads            : 38552
+Organelle genome %         : 75.65 %
+Average organelle coverage : 2477
+
+-----------------------------------------------------------------------------------------------------
+

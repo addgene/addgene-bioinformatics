@@ -1,0 +1,1 @@
+Input for apc from SPAdes.

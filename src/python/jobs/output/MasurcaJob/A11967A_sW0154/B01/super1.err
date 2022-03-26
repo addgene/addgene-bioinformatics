@@ -1,0 +1,34 @@
+mkdir work1
+ufasta sizes -H /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/guillaumeKUnitigsAtLeast32bases_all.fasta > work1/kUnitigLengths.txt; wc -l work1/kUnitigLengths.txt | awk '{print $1}' > work1/numKUnitigs.txt; tail -n 1 work1/kUnitigLengths.txt | awk '{print $1+1}' > work1/maxKUnitigNumber.txt
+touch work1/createLengthStatisticsFiles.success
+touch work1/createLengthStatisticsForMergedKUnitigsFiles.success
+/home/biodocker/bin/createKUnitigMaxOverlaps /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/guillaumeKUnitigsAtLeast32bases_all.fasta -kmervalue 127 -largest-kunitig-number 4812 work1/overlap
+input file = /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/guillaumeKUnitigsAtLeast32bases_all.fasta
+largestKUnitigNumber = 4812
+touch work1/createKUnitigMaxOverlaps.success
+/home/biodocker/bin/findMatchesBetweenKUnitigsAndReads -m 127 -t 1 -o /dev/fd/1 /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/guillaumeKUnitigsAtLeast32bases_all.fasta work1/maxKUnitigNumber.txt 157791 pe.cor.fa | /home/biodocker/bin/joinKUnitigs_v3 --max-nodes-allowed 2000 --mean-and-stdev-by-prefix-file meanAndStdevByPrefix.pe.txt --num-stdevs-allowed 5 --unitig-lengths-file work1/kUnitigLengths.txt --num-kunitigs-file work1/maxKUnitigNumber.txt --overlaps-file work1/overlap.overlaps --min-overlap-length 126 -o work1/readPositionsInSuperReads  -t 1 --join-aggressive 0 /dev/fd/0
+Allocating 38504 bytes for startOverlapByUnitig.
+Allocating 38504 bytes for startOverlapIndexByUnitig2.
+Allocating 19252 bytes for unitigLengths.
+Allocating 71744 bytes for unitig2OverlapIndex.
+Num pairs with both reads in same unitig: 511
+Num pairs uniquely joinable: 8237
+Num pairs after disambiguation to beginning of insert: 5296
+Num pairs after disambiguation to end of insert: 3063
+Num still joinable but not uniquely joinable: 2626
+Num pairs unjoinable due to missing sequence: 1374
+Num pairs unjoinable because there are too many nodes: 0
+joiner thread 0 returned 0
+touch work1/joinKUnitigs.success
+/home/biodocker/bin/getSuperReadInsertCountsFromReadPlacementFileTwoPasses -n `cat work1/numKUnitigs.txt | perl -ane '{print $F[0]*50}'` -o work1/superReadCounts.all work1/readPositionsInSuperReads
+touch work1/getSuperReadInsertCounts.success
+cat work1/superReadCounts.all | /home/biodocker/bin/createFastaSuperReadSequences work1 /dev/fd/0 -seqdiffmax 0 -min-ovl-len 126 -minreadsinsuperread 2  -good-sr-filename work1/superReadNames.txt -kunitigsfile /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/guillaumeKUnitigsAtLeast32bases_all.fasta -good-sequence-output-file work1/superReadSequences.fasta.all -super-read-name-and-lengths-file work1/sr_sizes.tmp -rename-super-reads 2> work1/createFastaSuperReadSequences.errors.txt
+touch work1/createFastaSuperReadSequences.success
+/home/biodocker/bin/reduce_sr 4811 work1/kUnitigLengths.txt 127 work1/sr_sizes.tmp -o work1/reduce.tmp
+touch work1/reduceSuperReads.success
+/home/biodocker/bin/translateReduceFile.perl work1/superReadNames.txt work1/reduce.tmp > work1/reduce.tmp.renamed
+touch work1/translateReduceFile.success
+/home/biodocker/bin/eliminateBadSuperReadsUsingList --read-placement-file work1/readPositionsInSuperReads --good-super-reads-file work1/superReadNames.txt --translate-super-read-names --reduce-file work1/reduce.tmp.renamed > work1/readPlacementsInSuperReads.final.read.superRead.offset.ori.txt
+touch work1/createFinalReadPlacementFile.success
+/home/biodocker/bin/outputRecordsNotOnList work1/reduce.tmp.renamed work1/superReadSequences.fasta.all 0 --fld-num 0 > work1/superReadSequences.fasta
+touch work1/createFinalSuperReadFastaSequences.success

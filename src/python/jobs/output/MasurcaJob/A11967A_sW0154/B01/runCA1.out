@@ -1,0 +1,75 @@
+No need to run meryl for OBT (OBT is disabled).
+----------------------------------------START Fri Mar 25 20:45:50 2022
+/home/biodocker/CA8/Linux-amd64/bin/meryl  -B -C -v -m 30 -memory 32768 -threads 1 -c 0  -L 2  -s /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/genome.gkpStore:chain  -o /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/0-mercounts/genome-C-ms30-cm0 > /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/0-mercounts/meryl.err 2>&1
+----------------------------------------END Fri Mar 25 20:45:51 2022 (1 seconds)
+----------------------------------------START Fri Mar 25 20:45:51 2022
+/home/biodocker/CA8/Linux-amd64/bin/estimate-mer-threshold  -m /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/0-mercounts/genome-C-ms30-cm0  > /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/0-mercounts/genome-C-ms30-cm0.estMerThresh.out 2> /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/0-mercounts/genome-C-ms30-cm0.estMerThresh.err
+----------------------------------------END Fri Mar 25 20:45:51 2022 (0 seconds)
+----------------------------------------START Fri Mar 25 20:45:51 2022
+/home/biodocker/CA8/Linux-amd64/bin/meryl -Dt -n 80 -s /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/0-mercounts/genome-C-ms30-cm0 > /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/0-mercounts/genome.nmers.ovl.fasta 2> /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/0-mercounts/genome.nmers.ovl.fasta.err 
+----------------------------------------END Fri Mar 25 20:45:51 2022 (0 seconds)
+Reset OVL mer threshold from  to 80.
+----------------------------------------START Fri Mar 25 20:45:51 2022
+/home/biodocker/CA8/Linux-amd64/bin/overlap_partition \
+ -g  /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/genome.gkpStore \
+ -bl 10000000 \
+ -bs 0 \
+ -rs 100000 \
+ -rl 0 \
+ -o  /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/1-overlapper \
+> /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/1-overlapper/overlap_partition.err 2>&1
+----------------------------------------END Fri Mar 25 20:45:51 2022 (0 seconds)
+Created 1 overlap jobs.  Last batch '001', last job '000001'.
+----------------------------------------START CONCURRENT Fri Mar 25 20:45:51 2022
+/var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/1-overlapper/overlap.sh 1 > /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/1-overlapper/000001.out 2>&1
+----------------------------------------END CONCURRENT Fri Mar 25 20:45:52 2022 (1 seconds)
+----------------------------------------START Fri Mar 25 20:45:52 2022
+find -L /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/1-overlapper \( -name \*ovb.gz -or -name \*ovb \) -print > /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/genome.ovlStore.list
+----------------------------------------END Fri Mar 25 20:45:52 2022 (0 seconds)
+----------------------------------------START Fri Mar 25 20:45:52 2022
+/home/biodocker/CA8/Linux-amd64/bin/overlapStoreBuild  -o /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/genome.ovlStore.BUILDING  -g /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/genome.gkpStore  -M 32768 -L /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/genome.ovlStore.list  > /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/genome.ovlStore.err 2>&1
+----------------------------------------END Fri Mar 25 20:45:53 2022 (1 seconds)
+----------------------------------------START Fri Mar 25 20:45:53 2022
+/home/biodocker/CA8/Linux-amd64/bin/bogart  -O /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/genome.ovlStore  -G /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/genome.gkpStore  -T /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/genome.tigStore  -B 10000  -eg 0.015  -Eg 1000  -em 0.025  -Em 1000  -o /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/4-unitigger/genome  > /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/4-unitigger/unitigger.err 2>&1
+----------------------------------------END Fri Mar 25 20:45:53 2022 (0 seconds)
+----------------------------------------START Fri Mar 25 20:45:53 2022
+/home/biodocker/CA8/Linux-amd64/bin/gatekeeper  -P /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/4-unitigger/genome.partitioning  /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/genome.gkpStore > /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/5-consensus/genome.partitioned.err 2>&1
+----------------------------------------END Fri Mar 25 20:45:53 2022 (0 seconds)
+----------------------------------------START CONCURRENT Fri Mar 25 20:45:53 2022
+/var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/5-consensus/consensus.sh 1 > /dev/null 2>&1
+----------------------------------------END CONCURRENT Fri Mar 25 20:45:54 2022 (1 seconds)
+----------------------------------------START Fri Mar 25 20:45:54 2022
+/home/biodocker/CA8/Linux-amd64/bin/tigStore -g /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/genome.gkpStore -t /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/genome.tigStore 2 -N -R /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/5-consensus/genome.fixes > genome.fixes.err 2>&1
+----------------------------------------END Fri Mar 25 20:45:54 2022 (0 seconds)
+----------------------------------------START Fri Mar 25 20:45:54 2022
+/home/biodocker/CA8/Linux-amd64/bin/tigStore \
+ -g /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/genome.gkpStore \
+ -t /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/5-consensus-insert-sizes/genome.tigStore 3 \
+ -d matepair -U \
+> /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/5-consensus-insert-sizes/estimates.out 2>&1
+----------------------------------------END Fri Mar 25 20:45:54 2022 (0 seconds)
+----------------------------------------START Fri Mar 25 20:45:54 2022
+/home/biodocker/CA8/Linux-amd64/bin/gatekeeper \
+ --edit /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/5-consensus-insert-sizes/genome.tigStore.distupdate \
+        /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/genome.gkpStore \
+> /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/5-consensus-insert-sizes/updates.err 2>&1
+----------------------------------------END Fri Mar 25 20:45:54 2022 (0 seconds)
+----------------------------------------START Fri Mar 25 20:45:54 2022
+/home/biodocker/CA8/Linux-amd64/bin/computeCoverageStat \
+ -g /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/genome.gkpStore \
+ -t /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/genome.tigStore 5 \
+ -s 0 \
+ -o /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/5-consensus-coverage-stat/genome \
+> /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/5-consensus-coverage-stat/computeCoverageStat.err 2>&1
+----------------------------------------END Fri Mar 25 20:45:54 2022 (0 seconds)
+----------------------------------------START Fri Mar 25 20:45:54 2022
+/home/biodocker/CA8/Linux-amd64/bin/markRepeatUnique \
+ -g /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/genome.gkpStore \
+ -t /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/genome.tigStore 5 \
+ -j 1 \
+ -k 5 \
+ -o /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/5-consensus-coverage-stat/genome.markRepeatUnique \
+> /var/folders/bj/2v1nrn290tzcgfs91v9xgjcw0000gn/T/5dfeb1aa70085996a02a522a46d59bc4/3e13/1fa0/CA/5-consensus-coverage-stat/markRepeatUnique.err 2>&1
+----------------------------------------END Fri Mar 25 20:45:54 2022 (0 seconds)
+Stop requested before 'scaffolder'.
+Stop requested before 'scaffolder'.
