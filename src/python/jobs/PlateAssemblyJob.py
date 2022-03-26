@@ -185,6 +185,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-b",
         "--preprocessing",
+        action="store_false",
         help="keyword specification of bbtools preprocessing",
     )
 
