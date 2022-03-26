@@ -190,6 +190,7 @@ class JobsTestCase(ToilTestCase):
                 read_two_file_ids[0],
                 config_file_id,
                 self.config_file,
+                os.path.join("test", "ShovillJob", self.plate_spec_a, self.well_spec_b),
             )
             shovill_rv = toil.start(shovill_job)
 
@@ -200,7 +201,6 @@ class JobsTestCase(ToilTestCase):
             "contigs.fa",
             output_directory,
             "contigs.fa",
-            os.path.join("test", "ShovillJob", self.plate_spec_a, self.well_spec_b),
         )
 
     def test_skesa_job(self):
