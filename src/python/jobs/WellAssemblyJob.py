@@ -544,7 +544,7 @@ if __name__ == "__main__":
         utilities.exportWellAssemblyFiles(
             toil,
             options.assembler,
-            options.plate_spec,
+            options.output_directory,
             [options.well_spec],
             [well_assembly_rv],
         )
