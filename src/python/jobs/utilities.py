@@ -115,17 +115,17 @@ def importConfigFile(toil, config_path, scheme="file"):
     return config_file_id
 
 
-def importContigsFile(toil, data_path, file_name="contigs.fasta", scheme="file"):
+def importAdaptersFile(toil, adapters_path, scheme="file"):
     """
     Import the contigs source from the data path containing the FASTA
     source.
 
     Parameters
     ----------
-    data_path : str
-        path containing the FASTA source
+    adapters_path : str
+        path containing the adapters file
     file_name : str
-        name of file containing the FASTA source
+        name of adapters file
     scheme : str
         scheme used for the source URL
 
@@ -134,8 +134,9 @@ def importContigsFile(toil, data_path, file_name="contigs.fasta", scheme="file")
     str
         id of the imported contigs file in the file store
     """
-    contigs_file_id = importFile(toil, os.path.join(data_path, file_name), scheme)
-    return contigs_file_id
+    adapters_file_id = importFile(toil, adapters_path, scheme)
+    return adapters_file_id
+
 
 def readGlobalFile(fileStore, file_id, *cmps):
     """

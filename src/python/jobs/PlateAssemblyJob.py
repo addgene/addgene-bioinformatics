@@ -37,7 +37,7 @@ class PlateAssemblyJob(Job):
         max_wells=None,
         seed_file_id=None,
         *args,
-        **kwargs
+        **kwargs,
     ):
         """
         Parameters
@@ -92,11 +92,13 @@ class PlateAssemblyJob(Job):
                 if iW >= self.max_wells:
                     break
 
-            logger.info(f"""Creating WellAssemblyJob: 
+            logger.info(
+                f"""Creating WellAssemblyJob: 
                             Assembler: {self.assembler} 
                             Well: {self.plate_spec}_{self.well_specs[iW]}
                             Preprocessing: {self.preprocessing}
-                        """)
+                        """
+            )
             # Note that exceptions are caught in the well assembly job
             well_assembly_rvs.append(
                 self.addChild(
@@ -196,15 +198,20 @@ if __name__ == "__main__":
     parser.add_argument(
         "-b",
         "--preprocessing",
+        action="store_false",
         help="keyword specification of bbtools preprocessing",
     )
 
     # Define and make the output directory, if needed
     options = parser.parse_args()
     if options.output_directory is None:
-        options.output_directory = options.plate_spec
+        options.output_directory = os.path.join(
+            "output",
+            os.path.basename(__file__).replace(".py", ""),
+            options.plate_spec,
+        )
     if not os.path.exists(options.output_directory):
-        os.mkdir(options.output_directory)
+        os.makedirs(options.output_directory)
 
     # Work within the Toil context manager
     with Toil(options) as toil:
@@ -315,5 +322,5 @@ if __name__ == "__main__":
             options.output_directory,
             well_specs,
             well_assembly_rvs,
-            options.well_maximum
+            options.well_maximum,
         )
