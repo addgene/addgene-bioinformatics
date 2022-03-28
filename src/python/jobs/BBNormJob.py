@@ -127,7 +127,6 @@ class BBNormJob(Job):
                     f"-Xmx{self.maxmem}"
                 ]
 
-
             if len(bbnorm_params) > 0:
                 for arg, value in bbnorm_params.items():
                     if arg != "read_one_file_name" and arg != "read_two_file_name":
