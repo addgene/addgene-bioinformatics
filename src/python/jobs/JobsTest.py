@@ -332,15 +332,15 @@ class JobsTestCase(ToilTestCase):
 
         with Toil(options) as toil:
 
-            contigs_file_id = utilities.importContigsFile(
+            contigs_file_id = utilities.importFile(
                 toil,
                 os.path.join(
                     self.output_directory,
                     "SpadesJob",
                     self.plate_spec_a,
                     self.well_spec_b,
+                    "contigs.fasta",
                 ),
-                file_name="contigs.fasta",
             )
 
             apc_job = ApcJob(contigs_file_id)
@@ -533,7 +533,7 @@ class WellAssemblyJobTestCase(ToilTestCase):
                 self.adapters_file,
                 os.path.join(
                     "test", "WellAssemblyJob", self.plate_spec_a, self.well_spec_b
-                    ),
+                ),
                 preprocessing=False,
                 export_intermediary_files=True,
             )
