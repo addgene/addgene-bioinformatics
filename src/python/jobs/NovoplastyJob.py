@@ -112,7 +112,7 @@ class NovoplastyJob(Job):
 
                 # Create seed file from first read - read must be in FASTQ format
                 with open(seed_file_path, "w+") as f:
-                    with open(read_one_file_path, "rt") as g:
+                    with gzip.open(read_one_file_path, "rt") as g:
                         do_write = False
                         for line in g:
                             if line[0] == "@":
