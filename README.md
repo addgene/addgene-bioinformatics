@@ -25,8 +25,7 @@ setting (minimum) CPUs to 2 and memory to at least 8.0 GB
 $ git clone git@github.com:addgene/addgene-bioinformatics.git
 ```
 
-## Create a virtual environment (using a Python 3 version), optionally
-   update python dependencies, and install the requirements:
+## Create a virtual environment (using a Python 3 version), optionally update python dependencies, and install the requirements:
 
 ### Update python dependencies (optional)
 
@@ -67,8 +66,7 @@ $ python src/python/jobs/WellAssemblyJob.py wajfs
 $ python src/python/jobs/PlateAssemblyJob.py pajfs
 ```
 
-## Run a well or sample plate assembly job locally with data imported
-   from S3:
+## Run a well or sample plate assembly job locally with data imported from S3:
 
 ```shell
 $ python src/python/jobs/WellAssemblyJob.py  -s s3 -d addgene-sequencing-data/2018/FASTQ -l A11935X_sW0148 -w A01 wajfs
@@ -104,8 +102,7 @@ $ toil ssh-cluster --zone us-east-1a assembly-cluster
 # tar -zxvf miscellaneous.tar.gz
 ```
 
-### Login to the cluster leader, run the default plate assembly job on
-    the cluster leader only with a local or S3 file store:
+### Login to the cluster leader, run the default plate assembly job on the cluster leader only with a local or S3 file store:
 
 ```shell
 $ toil ssh-cluster --zone us-east-1a assembly-cluster
@@ -114,8 +111,7 @@ $ toil ssh-cluster --zone us-east-1a assembly-cluster
 # python PlateAssemblyJob.py --data-path miscellaneous --plate-spec A11967B_sW0154 aws:us-east-1:pajfs
 ```
 
-## Login to the cluster leader, run a well, or sample plate assembly
-   job on the cluster leader only with data imported from S3:
+## Login to the cluster leader, run a well, or sample plate assembly job on the cluster leader only with data imported from S3:
 
 ```bash
 $ toil ssh-cluster --zone us-east-1a assembly-cluster
@@ -124,8 +120,7 @@ $ toil ssh-cluster --zone us-east-1a assembly-cluster
 # python PlateAssemblyJob.py -s s3 -d addgene-sequencing-data/2018/FASTQ -l A11935X_sW0148 pajfs
 ```
 
-### Login to the cluster leader, run the default or a larger plate
-    assembly job using auto-scaling with an S3 file store:
+### Login to the cluster leader, run the default or a larger plate assembly job using auto-scaling with an S3 file store:
 
 ```shell
 $ toil ssh-cluster --zone us-east-1a assembly-cluster
