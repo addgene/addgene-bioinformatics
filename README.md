@@ -73,7 +73,7 @@ $ python src/python/jobs/WellAssemblyJob.py  -s s3 -d addgene-sequencing-data/20
 $ python src/python/jobs/PlateAssemblyJob.py -s s3 -d addgene-sequencing-data/2018/FASTQ -l A11935X_sW0148 pajfs
 ```
 
-## Run one of the jobs on EC2
+## Run one of the jobs on EC2 (experimental)
 
 The following assumes the instructions for [preparing your AWS
 environment](https://toil.readthedocs.io/en/latest/running/cloud/amazon.html#preparing-your-aws-environment)
