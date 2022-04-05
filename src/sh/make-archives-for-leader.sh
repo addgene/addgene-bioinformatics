@@ -2,8 +2,8 @@
 
 HOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd | sed s%/src/sh%% )"
 
-pushd $HOME/src/python
-tar -czvf python.tar.gz A11967* *.py
+pushd $HOME/src/python/jobs
+tar -czvf python.tar.gz *.py Assembler.ini adapters.fa oriSeed.fasta output
 mv python.tar.gz $HOME
 popd
 

@@ -12,11 +12,12 @@ daemon should be started by default.
 
 Docker will need to mount the directory Toil creates for a job. When
 using Docker Desktop on macOS, this mount is accomplished in
-"Preferences > Resources > File Sharing" by adding "/var/folders" to the list.
+"Preferences > Resources > File Sharing" by adding "/var/folders" to
+the list.
 
-Additionally, Docker will need to be allocated enough resources to run a job.
-This can be done in "Preferences > Resources > Advanced" by setting (minimum)
-CPUs to 2 and memory to 4.0GB
+Additionally, Docker will need to be allocated enough resources to run
+a job.  This can be done in "Preferences > Resources > Advanced" by
+setting (minimum) CPUs to 2 and memory to at least 8.0 GB
 
 ## Clone the repository:
 
@@ -24,7 +25,16 @@ CPUs to 2 and memory to 4.0GB
 $ git clone git@github.com:addgene/addgene-bioinformatics.git
 ```
 
-## Create a virtual environment (using a Python 3 version), and install the requirements:
+## Create a virtual environment (using a Python 3 version), optionally update python dependencies, and install the requirements:
+
+### Update python dependencies (optional)
+
+```shell
+pip install pip-tools
+pip-compile -U
+```
+
+### Install the requirements
 
 ```shell
 $ mkvirtualenv addgene-bioinformatics
@@ -63,7 +73,7 @@ $ python src/python/jobs/WellAssemblyJob.py  -s s3 -d addgene-sequencing-data/20
 $ python src/python/jobs/PlateAssemblyJob.py -s s3 -d addgene-sequencing-data/2018/FASTQ -l A11935X_sW0148 pajfs
 ```
 
-## Run one of the jobs on EC2
+## Run one of the jobs on EC2 (experimental)
 
 The following assumes the instructions for [preparing your AWS
 environment](https://toil.readthedocs.io/en/latest/running/cloud/amazon.html#preparing-your-aws-environment)
@@ -78,7 +88,7 @@ $ toil launch-cluster --zone us-east-1a --keyPairName id_rsa --leaderNodeType t2
 ### Synchronize code and data:
 
 ```shell
-$ sh src/sh/make-archives-for-leader.sh
+$ src/sh/make-archives-for-leader.sh
 $ toil rsync-cluster --zone us-east-1a assembly-cluster python.tar.gz :/root
 $ toil rsync-cluster --zone us-east-1a assembly-cluster miscellaneous.tar.gz :/root
 ```
@@ -87,43 +97,40 @@ $ toil rsync-cluster --zone us-east-1a assembly-cluster miscellaneous.tar.gz :/r
 
 ```shell
 $ toil ssh-cluster --zone us-east-1a assembly-cluster
-$ tar -zxvf python.tar.gz
-$ tar -zxvf miscellaneous.tar.gz
+# cd
+# tar -zxvf python.tar.gz
+# tar -zxvf miscellaneous.tar.gz
 ```
 
-### Run the default plate assembly job on the cluster leader only with a local or S3 file store:
+### Login to the cluster leader, run the default plate assembly job on the cluster leader only with a local or S3 file store:
 
 ```shell
-$ cd python/src/toil
-$ python PlateAssemblyJob.py --data-directory miscellaneous --plate-spec A11967B_sW0154 pajfs
-$ python PlateAssemblyJob.py --data-directory miscellaneous --plate-spec A11967B_sW0154 aws:us-east-1:pajfs
+$ toil ssh-cluster --zone us-east-1a assembly-cluster
+# cd
+# python PlateAssemblyJob.py --data-path miscellaneous --plate-spec A11967B_sW0154 pajfs
+# python PlateAssemblyJob.py --data-path miscellaneous --plate-spec A11967B_sW0154 aws:us-east-1:pajfs
 ```
 
-## Run a well, or sample plate assembly job on the cluster leader only with data imported from S3:
+## Login to the cluster leader, run a well, or sample plate assembly job on the cluster leader only with data imported from S3:
 
 ```bash
-$ cd python/src/toil
-$ python WellAssemblyJob.py  -s s3 -d addgene-sequencing-data/2018/FASTQ -l A11935X_sW0148 -w A01 wajfs
-$ python PlateAssemblyJob.py -s s3 -d addgene-sequencing-data/2018/FASTQ -l A11935X_sW0148 pajfs
+$ toil ssh-cluster --zone us-east-1a assembly-cluster
+# cd
+# python WellAssemblyJob.py  -s s3 -d addgene-sequencing-data/2018/FASTQ -l A11935X_sW0148 -w A01 wajfs
+# python PlateAssemblyJob.py -s s3 -d addgene-sequencing-data/2018/FASTQ -l A11935X_sW0148 pajfs
 ```
 
-### Run the default or a larger plate assembly job using auto-scaling with an S3 file store:
+### Login to the cluster leader, run the default or a larger plate assembly job using auto-scaling with an S3 file store:
 
 ```shell
-$ cd python/src/toil
-$ python PlateAssemblyJob.py --data-directory miscellaneous --plate-spec A11967B_sW0154 --provisioner aws --nodeTypes c3.large --maxNodes 2 --batchSystem mesos aws:us-east-1:pajfs
-$ python PlateAssemblyJob.py --data-directory miscellaneous --plate-spec A11967A_sW0154 --provisioner aws --nodeTypes c3.large --maxNodes 2 --batchSystem mesos aws:us-east-1:pajfs
+$ toil ssh-cluster --zone us-east-1a assembly-cluster
+# cd
+# python PlateAssemblyJob.py --data-path miscellaneous --plate-spec A11967B_sW0154 --provisioner aws --nodeTypes c3.large --maxNodes 2 --batchSystem mesos aws:us-east-1:pajfs
+# python PlateAssemblyJob.py --data-path miscellaneous --plate-spec A11967A_sW0154 --provisioner aws --nodeTypes c3.large --maxNodes 2 --batchSystem mesos aws:us-east-1:pajfs
 ```
 
 ### Destroy the cluster leader:
 
 ```shell
 $ toil destroy-cluster --zone us-east-1a assembly-cluster
-```
-
-### Update python dependencies
-
-```shell
-pip install pip-tools
-pip-compile -U
 ```
