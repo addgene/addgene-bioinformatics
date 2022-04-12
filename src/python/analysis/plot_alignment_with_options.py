@@ -4,7 +4,7 @@ import os
 import pickle
 from random import choice, choices
 
-import utilities
+from algorithm import utilities
 
 from Bio.Alphabet import IUPAC
 from Bio.Seq import Seq

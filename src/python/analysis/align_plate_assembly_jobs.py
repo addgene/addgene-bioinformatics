@@ -13,7 +13,7 @@ import numpy as np
 
 sys.path.append(os.path.join(os.sep, *os.path.abspath(__file__).split(os.sep)[0:-2]))
 
-import utilities
+from algorithm import utilities
 from jobs.utilities import ASSEMBLERS_REQUIRING_APC
 
 
