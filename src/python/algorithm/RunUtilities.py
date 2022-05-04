@@ -176,6 +176,40 @@ def get_kmc_read_format(read_file_names):
     return valid_read_format
 
 
+def get_bio_read_format(read_file_name):
+    """
+    Determine a valid read format implied by the read file name
+    extension.
+
+    Parameters
+    ----------
+    read_file_name : str
+        Read file name
+
+    Returns
+    -------
+    tuple(str, boolean)
+        Valid read format: "fasta" or "fastq", and flag indicating
+        gzip extension, or not
+    """
+    read_format = ""
+    is_gzipped = False
+    p_fa = re.compile(r"\.f(ast)?a(\.gz)?$")
+    p_fq = re.compile(r"\.f(ast)?q(\.gz)?$")
+    p_gz = re.compile(r"(\.gz)$")
+    if p_fa.search(read_file_name) is not None:
+        read_format = "fasta"
+
+    elif p_fq.search(read_file_name) is not None:
+        read_format = "fastq"
+
+    else:
+        raise (Exception("Unknown read file format"))
+    if p_gz.search(read_file_name) is not None:
+        is_gzipped = True
+    return read_format, is_gzipped
+
+
 def kmc(
     read_file_names,
     database_file_name,
