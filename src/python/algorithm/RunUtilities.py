@@ -1,17 +1,12 @@
-import gzip
 import logging
 import math
 import os
-import random
 import re
 
-from Bio import Align
 from Bio import SeqIO
-# from Bio.Alphabet import IUPAC
-from Bio.Seq import Seq
+
 from Bio.SeqRecord import SeqRecord
 import docker
-import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -24,14 +19,15 @@ def csc(a_seq, o_seq):
     Parameters
     ----------
     a_seq : Bio.Seq.Seq
-        thought of as the reference sequence
+        Thought of as the reference sequence
     o_seq : Bio.Seq.Seq
-        thought of as the candidate sequence
+        Thought of as the candidate sequence
 
     Returns
     -------
-    tpl
-        tuple containing the rotated reference and candidate sequences
+    tpl : tuple
+        Contains the rotated reference and candidate sequences
+
     """
     # Define image, Docker run parameters, and CSC command
     image = "ralatsdio/csc:v0.1.0"
@@ -104,7 +100,10 @@ def csc(a_seq, o_seq):
     # Run the command in the Docker image
     client = docker.from_env()
     client.containers.run(
-        image, command=command, volumes=volumes, working_dir=working_dir,
+        image,
+        command=command,
+        volumes=volumes,
+        working_dir=working_dir,
     )
 
     # Read the multi-FASTA output file
@@ -120,15 +119,72 @@ def csc(a_seq, o_seq):
     return (r_a_seq, r_o_seq)
 
 
+def get_kmc_read_format(read_file_names):
+    """
+    Determine a valid read format implied by the read file name
+    extension(s).
+
+    Parameters
+    ----------
+    read_file_names : list(str)
+        list of read file names
+
+    Returns
+    -------
+    valid_read_format : str
+        valid read format: FASTA is "-fa", FASTQ is "-fq", multi
+        FASTA is "-fm", or BAM is "-fbam"; default is "-fq"
+    """
+    valid_read_format = ""
+    p_fa = re.compile(r"\.f(ast)?a(\.gz)?$")
+    p_fq = re.compile(r"\.f(ast)?q(\.gz)?$")
+    p_bm = re.compile(r"\.bam$")
+    p_ss = re.compile(r"^>")
+    for input_file_name in read_file_names:
+        if p_fa.search(input_file_name) is not None:  # FASTA
+
+            # Count number of sequences
+            with open(input_file_name, "r") as f:
+                n_seq = 0
+                for ln in f:
+                    if p_ss.search(ln) is not None:
+                        n_seq += 1
+            if n_seq == 0:
+                raise (Exception("No sequence found in FASTA file"))
+
+            elif n_seq == 1:  # FASTA
+                read_format = "-fa"
+
+            else:  # n_seq > 1 -- multi FASTA
+                read_format = "-fm"
+
+        elif p_fq.search(input_file_name) is not None:
+            read_format = "-fq"  # FASTQ
+
+        elif p_bm.search(input_file_name) is not None:
+            read_format = "-fbam"  # BAM
+
+        else:
+            raise (Exception("Unknown sequence file format"))
+
+        if valid_read_format == "":
+            valid_read_format = read_format
+
+        elif read_format != valid_read_format:
+            raise (Exception("Input files must use the same format"))
+
+    return valid_read_format
+
+
 def kmc(
-        read_file_names,
-        database_file_name,
-        k_mer_length=25,
-        signature_length=9,
-        count_min=2,
-        max_count=255,
-        count_max=1e9,
-        canonical_form=True,
+    read_file_names,
+    database_file_name,
+    k_mer_length=25,
+    signature_length=9,
+    count_min=2,
+    max_count=255,
+    count_max=1e9,
+    canonical_form=True,
 ):
     """
     Counts k-mers.
@@ -174,6 +230,33 @@ def kmc(
     Examples:
         $ kmc -k27 -m24 NA19238.fastq NA.res /data/kmc_tmp_dir/
         $ kmc -k27 -m24 @files.lst NA.res /data/kmc_tmp_dir/
+
+    Parameters
+    ----------
+    read_file_names : str
+        File name of reads, or file containing file names of reads
+    database_file_name : str
+        File name to which results are written
+    k_mer_length : int
+        K-mer length (k from 1 to 256; default: 25)
+    signature_length : int
+        Signature length (5, 6, 7, 8, 9, 10, 11); default: 9
+    count_min : int
+        Exclude k-mers occurring less than <value> times (default: 2)
+    max_count : int
+        Maximal value of a counter (default: 255)
+    count_max : int
+        Exclude k-mers occurring more of than <value> times (default:
+            1e9)
+    canonical_form : boolean
+        Flag to transform k-mers into canonical form
+
+    Returns
+    -------
+    str
+        The container logs, either STDOUT, STDERR, or both, depending
+        on the value of the stdout and stderr arguments
+
     """
     # Determine the read file format
     read_format = get_kmc_read_format(read_file_names)
@@ -207,25 +290,34 @@ def kmc(
     if not canonical_form:
         command = " ".join([command, "-b"])
     command = " ".join(
-        [command, read_format, input_str, database_file_name, working_dir, ]
+        [
+            command,
+            read_format,
+            input_str,
+            database_file_name,
+            working_dir,
+        ]
     )
 
     # Run the command in the Docker image
     client = docker.from_env()
-    client.containers.run(
-        image, command=command, volumes=volumes, working_dir=working_dir,
+    return client.containers.run(
+        image,
+        command=command,
+        volumes=volumes,
+        working_dir=working_dir,
     )
 
 
 def kmc_transform(
-        inp_database_file_name,
-        operation,
-        out_database_file_name,
-        inp_count_min=2,
-        inp_count_max=1e9,
-        out_count_min=2,
-        out_count_max=1e9,
-        is_sorted=False,
+    inp_database_file_name,
+    operation,
+    out_database_file_name,
+    inp_count_min=2,
+    inp_count_max=1e9,
+    out_count_min=2,
+    out_count_max=1e9,
+    is_sorted=False,
 ):
     """
     Transforms single input database to output (text file or KMC database).
@@ -278,6 +370,36 @@ def kmc_transform(
             reduce valid_kmers -ci11 \
             histogram histo.txt \
             dump dump.txt
+
+    Parameters
+    ----------
+    inp_database_file_name : str
+        Path to database generated by KMC
+    operation : str
+        Transform operation name
+    out_database_file_name : str
+        Path to output
+    inp_count_min : int
+        Exclude k-mers occurring less than <value> times on input
+        (default: 2)
+    inp_count_max : int
+        Exclude k-mers occurring more of than <value> times on input
+        (default: 1e9)
+    out_count_min : int
+        Exclude k-mers occurring less than <value> times on output
+        (default: 2)
+    out_count_max : int
+        Exclude k-mers occurring more of than <value> times on output
+        (default: 1e9)
+    is_sorted : boolean
+        Flag to sort output (default: False)
+
+    Returns
+    -------
+    str
+        The container logs, either STDOUT, STDERR, or both, depending
+        on the value of the stdout and stderr arguments
+
     """
     # Check input arguments
     if operation not in ["reduce", "histogram", "dump"]:
@@ -308,25 +430,27 @@ def kmc_transform(
 
     # Run the command in the Docker image
     client = docker.from_env()
-    client.containers.run(
-        image, command=command, volumes=volumes, working_dir=working_dir,
+    return client.containers.run(
+        image,
+        command=command,
+        volumes=volumes,
+        working_dir=working_dir,
     )
 
 
-# TODO: Validate
 def kmc_simple(
-        inp_database_file_name_a,
-        operation,
-        inp_database_file_name_b,
-        out_database_file_name,
-        inp_count_min_a=2,
-        inp_count_max_a=1e9,
-        inp_count_min_b=2,
-        inp_count_max_b=1e9,
-        out_count_min=2,
-        out_max_count=255,
-        out_count_max=1e9,
-        out_calc_mode="",
+    inp_database_file_name_a,
+    operation,
+    inp_database_file_name_b,
+    out_database_file_name,
+    inp_count_min_a=2,
+    inp_count_max_a=1e9,
+    inp_count_min_b=2,
+    inp_count_max_b=1e9,
+    out_count_min=2,
+    out_max_count=255,
+    out_count_max=1e9,
+    out_calc_mode="",
 ):
     """
     Performs set operation on two input KMC databases.
@@ -395,6 +519,46 @@ def kmc_simple(
             intersect intersect_max_kmers1_kmers2 -ocmax
 
     kmc_tools ver. 3.1.1 (2019-05-19)
+
+    Parameters
+    ----------
+    inp_database_file_name_a : str
+        Path to database generated by KMC
+    operation,
+        Set operations to be performed on inputs
+    inp_database_file_name_b : str
+        Path to database generated by KMC
+    out_database_file_name,
+        Path to output k-mer database
+    inp_count_min_a : int
+        Exclude k-mers occurring less than <value> times on input 'a'
+        (default: 2)
+    inp_count_max_a : int
+        Exclude k-mers occurring more of than <value> times on input
+        'a' (default: 1e9)
+    inp_count_min_b : int
+        Exclude k-mers occurring less than <value> times on input 'b'
+        (default: 2)
+    inp_count_max_b : int
+        Exclude k-mers occurring more of than <value> times on input
+        'b' (default: 1e9)
+    out_count_min : int
+        Exclude k-mers occurring less than <value> times on output
+        (default: 2)
+    out_max_count : int
+        Maximal value of a counter on output (default: 255)
+    out_count_max : int
+        Exclude k-mers occurring more of than <value> times on output
+        (default: 1e9)
+    out_calc_mode : str
+        Redefine counter calculation mode for equal k-mers
+
+    Returns
+    -------
+    str
+        The container logs, either STDOUT, STDERR, or both, depending
+        on the value of the stdout and stderr arguments
+
     """
     # Check input arguments
     if operation not in [
@@ -438,12 +602,14 @@ def kmc_simple(
 
     # Run the command in the Docker image
     client = docker.from_env()
-    client.containers.run(
-        image, command=command, volumes=volumes, working_dir=working_dir,
+    return client.containers.run(
+        image,
+        command=command,
+        volumes=volumes,
+        working_dir=working_dir,
     )
 
 
-# TODO: Validate
 def kmc_complex():
     """
     Performs set operations for more than two input k-mers sets.
@@ -510,21 +676,29 @@ def kmc_complex():
             result = (set3 + min set1) * right set2
 
     kmc_tools ver. 3.1.1 (2019-05-19)
+
+    Returns
+    -------
+    None
+
+    Returns
+    -------
+    None
+
     """
     raise (NotImplementedError("utility.kmc_complex() has not been implemented"))
 
 
-# TODO: Validate
 def kmc_filter(
-        inp_database_file_name,
-        inp_read_file_name,
-        out_read_file_name,
-        trim_reads=False,
-        hard_mask=False,
-        inp_db_count_min=2,
-        inp_db_count_max=1e9,
-        inp_rd_count_min=2,
-        inp_rd_count_max=1e9,
+    inp_database_file_name,
+    inp_read_file_name,
+    out_read_file_name,
+    trim_reads=False,
+    hard_mask=False,
+    inp_db_count_min=2,
+    inp_db_count_max=1e9,
+    inp_rd_count_min=2,
+    inp_rd_count_max=1e9,
 ):
     """
     Filters out reads with too small number of k-mers.
@@ -570,6 +744,39 @@ def kmc_filter(
     Example:
         kmc_tools filter kmc_db -ci3 input.fastq -ci0.5 -cx1.0 filtered.fastq
         kmc_tools filter kmc_db input.fastq -ci10 -cx100 filtered.fastq
+
+    Parameters
+    ----------
+    inp_database_file_name : str
+        Path to database generated by KMC
+    inp_read_file_name : str
+        Path to input set of reads
+    out_read_file_name : str
+        Path to output set of reads
+    trim_reads : boolean
+        Trim reads on first invalid k-mer instead of remove entirely
+        (default: False)
+    hard_mask : boolean
+        Hard mask invalid k-mers in a read (default: False)
+    inp_db_count_min : int
+        Exclude k-mers occurring less than <value> times in database
+        (default: 2)
+    inp_db_count_max : int
+        Exclude k-mers occurring more than <value> times in database
+        (default: 1e9)
+    inp_rd_count_min : int
+        Remove reads containing less k-mers than value. It can be
+        integer or floating number in range [0.0;1.0] (default: 2)
+    inp_rd_count_max : int
+        Remove reads containing more k-mers than value. It can be
+        integer or floating number in range [0.0;1.0] (default: 1e9)
+
+    Returns
+    -------
+    str
+        The container logs, either STDOUT, STDERR, or both, depending
+        on the value of the stdout and stderr arguments
+
     """
     # Determine the input file format
     read_format = get_kmc_read_format([inp_read_file_name])
@@ -604,37 +811,42 @@ def kmc_filter(
 
     # Run the command in the Docker image
     client = docker.from_env()
-    client.containers.run(
-        image, command=command, volumes=volumes, working_dir=working_dir,
+    return client.containers.run(
+        image,
+        command=command,
+        volumes=volumes,
+        working_dir=working_dir,
     )
 
 
 def ssake(
-        inp_fq_one_fNm,
-        inp_fq_two_fNm,
-        out_base_fNm,
-        fragment_len,
-        phred_threshold=20,  # -x
-        n_consec_bases=70,  # -n
-        ascii_offset=33,  # -d
-        min_coverage=5,  # -w
-        n_ovrlap_bases=20,  # -m
-        n_reads_to_call=2,  # -o
-        base_ratio=0.7,  # -r
-        n_bases_to_trim=0,  # -t
-        contig_size=100,  # -z
-        do_track_cvrg=0,  # -c
-        do_ignore_mppng=0,  # -y
-        do_ignore_headr=0,  # -k
-        do_break_ties=0,  # -q
-        do_run_verbose=0,
+    inp_fq_one_fNm,
+    inp_fq_two_fNm,
+    out_base_fNm,
+    fragment_len,
+    phred_threshold=20,  # -x
+    n_consec_bases=70,  # -n
+    ascii_offset=33,  # -d
+    min_coverage=5,  # -w
+    n_ovrlap_bases=20,  # -m
+    n_reads_to_call=2,  # -o
+    base_ratio=0.7,  # -r
+    n_bases_to_trim=0,  # -t
+    contig_size=100,  # -z
+    do_track_cvrg=0,  # -c
+    do_ignore_mppng=0,  # -y
+    do_ignore_headr=0,  # -k
+    do_break_ties=0,  # -q
+    do_run_verbose=0,
 ):  # -v
     """
     Run a simple pipeline using SSAKE to assemble reads in a docker
-    container.  SSAKE is a genomics application for de novo assembly
-    of millions of very short DNA sequences. It is an easy-to-use,
-    robust, reliable and tractable assembly algorithm for short
-    sequence reads, such as those generated by Illumina Ltd. See:
+    container.
+
+    SSAKE is a genomics application for de novo assembly of millions
+    of very short DNA sequences. It is an easy-to-use, robust,
+    reliable and tractable assembly algorithm for short sequence
+    reads, such as those generated by Illumina Ltd. See:
     https://github.com/ralatsdc/SSAKE/blob/master/readme.md.
 
     Documentation for SSAKE version 4.0
@@ -710,6 +922,61 @@ def ssake(
     -p   Paired-end reads used? (-p 1 = yes, default = no, optional)
               ! Implicitly used in this script
     -v   Runs in verbose mode (-v 1 = yes, default = no, optional)
+
+    Parameters
+    ----------
+    inp_fq_one_fNm : str
+        File name containine read one of paired reads
+    inp_fq_two_fNm : str
+        File name containine read two of paired reads
+    out_base_fNm : str
+        Base name for your output files
+    fragment_len : int
+        Target insert size [bp]
+    phred_threshold : int  # -x
+        Phred quality score threshold (bases less than -x XX will be
+        clipped) (default: 20)
+    n_consec_bases : int  # -n
+        Number of consecutive -x XX bases (default: 70)
+    ascii_offset : int  # -d
+       ASCII offset (33=standard 64=illumina) (default: 33)
+    min_coverage : int  # -w
+        Minimum depth of coverage allowed for contigs (default: 5)
+    n_ovrlap_bases : int  # -m
+        Minimum number of overlapping bases with the seed/contig
+        during overhang consensus build up (default: 20)
+    n_reads_to_call : int  # -o
+        Minimum number of reads needed to call a base during an
+        extension (default: 2)
+    base_ratio : float  # -r
+        Minimum base ratio used to accept a overhang consensus base
+        (default: 0.7)
+    n_bases_to_trim : int  # -t
+        Trim up to -t base(s) on the contig end when all possibilities
+        have been exhausted for an extension (default: 0)
+    contig_size : int  # -z
+        Minimum contig size to track base coverage and read position
+        (default: 100)
+    do_track_cvrg : int  # -c
+        Track base coverage and read position for each contig
+        (default: 0)
+    do_ignore_mppng : int  # -y
+        Ignore read mapping to consensus (-y 1 = yes) (default: no)
+    do_ignore_headr : int  # -k
+        Ignore read name/header *will use less RAM if set to -k 1* (-k
+        1 = yes) (default: no)
+    do_break_ties : int  # -q
+        Break tie when no consensus base at position, pick random base
+        (-q 1 = yes) (default: no)
+    do_run_verbose : int
+        Runs in verbose mode (-v 1 = yes) (default: no)
+
+    Returns
+    -------
+    str
+        The container logs, either STDOUT, STDERR, or both, depending
+        on the value of the stdout and stderr arguments
+
     """
     # Define image, and Docker run parameters
     image = "ralatsdio/ssake:v4.0.1"
@@ -758,19 +1025,15 @@ def ssake(
 
     # Run the command in the Docker image
     client = docker.from_env()
-    client.containers.run(
-        image, command=command, volumes=volumes, working_dir=working_dir,
+    return client.containers.run(
+        image,
+        command=command,
+        volumes=volumes,
+        working_dir=working_dir,
     )
-    return command
 
 
 def spades(inp_fq_one_fNm, inp_fq_two_fNm, out_dir, *args, **kwargs):
-    # TODO: Resolve
-    """
-    trusted_contigs_fNm=None,
-    cov_cutoff="off",
-    phred_offset="auto",
-    """
     """
     Run SPAdes genome assembler v3.13.1 in a docker container.
 
@@ -784,7 +1047,7 @@ def spades(inp_fq_one_fNm, inp_fq_two_fNm, out_dir, *args, **kwargs):
     --meta                         this flag is required for metagenomic
                                        sample data
     --rna                          this flag is required for RNA-Seq
-                                       data 
+                                       data
     --plasmid                      runs plasmidSPAdes pipeline for plasmid
                                        detection
     --iontorrent                   this flag is required for IonTorrent data
@@ -884,6 +1147,30 @@ def spades(inp_fq_one_fNm, inp_fq_two_fNm, out_dir, *args, **kwargs):
                                        [default: 'off']
     --phred-offset <33 or 64>      PHRED quality offset in the input reads
                                        (33 or 64) [default: auto]
+
+    Parameters
+    ----------
+    inp_fq_one_fNm : str  # -1
+        File with forward paired-end reads
+    inp_fq_two_fNm : str  # -2
+        File with reverse paired-end reads
+    out_dir : str  # -o
+        Directory to store all the resulting files
+    args : tuple
+        Values to be added as is to the command, each separated by a
+        space from each other and the command
+    kwargs : dict
+        Key-value pairs to be added to the command, appending a double
+        dash to the key, and replacing dash with underscore in the
+        key, each separated by a space from each other and the
+        command. Use a kwarg to provide trusted or untrusted contigs
+
+    Returns
+    -------
+    str
+        The container logs, either STDOUT, STDERR, or both, depending
+        on the value of the stdout and stderr arguments
+
     """
     # Define image, and Docker run parameters
     image = "ralatsdio/spades:v3.13.1"
@@ -892,28 +1179,46 @@ def spades(inp_fq_one_fNm, inp_fq_two_fNm, out_dir, *args, **kwargs):
     volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
 
     # Define SPAdes command
-    command = " ".join(["spades.py", "-1", inp_fq_one_fNm, "-2", inp_fq_two_fNm, ])
-    # TODO: Resolve
-    """
-    if trusted_contigs_fNm is not None:
-        command = " ".join(
-            [command,
-             "--trusted-contigs", trusted_contigs_fNm,
-             ]
-        )
-    """
-    command = " ".join([command, "-o", out_dir, ])
+    command = " ".join(
+        [
+            "spades.py",
+            "-1",
+            inp_fq_one_fNm,
+            "-2",
+            inp_fq_two_fNm,
+        ]
+    )
+    command = " ".join(
+        [
+            command,
+            "-o",
+            out_dir,
+        ]
+    )
     for arg in args:
-        command = " ".join([command, arg, ])
+        command = " ".join(
+            [
+                command,
+                arg,
+            ]
+        )
     for key, val in kwargs.items():
-        command = " ".join([command, "--" + key.replace("_", "-"), str(val), ])
+        command = " ".join(
+            [
+                command,
+                "--" + key.replace("_", "-"),
+                str(val),
+            ]
+        )
 
     # Run the command in the Docker image
     client = docker.from_env()
-    client.containers.run(
-        image, command=command, volumes=volumes, working_dir=working_dir,
+    return client.containers.run(
+        image,
+        command=command,
+        volumes=volumes,
+        working_dir=working_dir,
     )
-    return command
 
 
 def apc(base_file_name, contigs_file_name):
@@ -939,6 +1244,20 @@ def apc(base_file_name, contigs_file_name):
     -b <text>   basename for output files (alphanumeric and underscore
                 characters)
     -r <fastq>	high accuracy long reads to use for validation
+
+    Parameters
+    ----------
+    base_file_name : str
+        Basename for output files
+    contigs_file_name : str
+        File containing contigs to circularize
+
+    Returns
+    -------
+    str
+        The container logs, either STDOUT, STDERR, or both, depending
+        on the value of the stdout and stderr arguments
+
     """
     # Define image, and Docker run parameters
     image = "ralatsdio/apc:v0.1.0"
@@ -947,34 +1266,45 @@ def apc(base_file_name, contigs_file_name):
     volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
 
     # Define apc command
-    command = " ".join(["apc.pl", "-b", base_file_name, contigs_file_name, ])
+    command = " ".join(
+        [
+            "apc.pl",
+            "-b",
+            base_file_name,
+            contigs_file_name,
+        ]
+    )
 
     # Run the command in the Docker image
     client = docker.from_env()
-    client.containers.run(
-        image, command=command, volumes=volumes, working_dir=working_dir,
+    return client.containers.run(
+        image,
+        command=command,
+        volumes=volumes,
+        working_dir=working_dir,
     )
-    return command
 
 
-def BBDuk(inp_fq_one_fNm,
-          inp_fq_two_fNm,
-          outp_fNm="output1.fastq",
-          outp2_fNm="output2.fastq",
-          ktrimright="t",
-          k="27",
-          hdist="1",
-          edist="0",
-          ref="adapters.fa",
-          qtrim="rl",
-          trimq="25",
-          minlength="30",
-          trimbyoverlap="t",
-          minoverlap="24",
-          ordered="t",
-          qin="33",
-          *args,
-          **kwargs):
+def BBDuk(
+    inp_fq_one_fNm,
+    inp_fq_two_fNm,
+    outp_fNm="output1.fastq",
+    outp2_fNm="output2.fastq",
+    ktrimright="t",
+    k="27",
+    hdist="1",
+    edist="0",
+    ref="adapters.fa",
+    qtrim="rl",
+    trimq="25",
+    minlength="30",
+    trimbyoverlap="t",
+    minoverlap="24",
+    ordered="t",
+    qin="33",
+    *args,
+    **kwargs,
+):
     """
     Compares reads to the kmers in a reference dataset, optionally
     allowing an edit distance. Splits the reads into two outputs - those that
@@ -1279,56 +1609,126 @@ def BBDuk(inp_fq_one_fNm,
         -eoom               This flag will cause the process to exit if an
                                 out-of-memory exception occurs.  Requires Java 8u92+.
         -da                 Disable assertions.
+
+
+    Parameters
+    ----------
+    inp_fq_one_fNm : str
+        Main input
+    inp_fq_two_fNm : str
+        Input for 2nd read of pairs in a different file
+    outp_fNm : str
+        Write reads here that do not contain kmers matching the
+        database (default: 'output1.fastq')
+    outp2_fNm : str
+        Use this to write 2nd read of pairs to a different file
+        (default: 'output2.fastq')
+    ktrimright : str
+        Flag to trim to the right (default: 't')
+    k : int
+        Kmer length used for finding contaminants (default: 27)
+    hdist : int
+        Maximum Hamming distance for ref kmers (subs only) (default:
+        1)
+    edist : int
+        Maximum edit distance from ref kmers (subs and indels)
+        (default: 0)
+    ref : str
+        Name of reference file (default: 'adapters.fa')
+    qtrim : str
+        Trim neither, right, left or sliding window read ends to
+        remove bases with quality below trimq (default: 'rl')
+    trimq : int
+        Regions with average quality BELOW this will be trimmed, if
+        qtrim is set to something other than f (default: 25)
+    minlength : int
+        Reads shorter than this after trimming will be discarded.
+        Pairs will be discarded if both are shorter. (default: 30)
+    trimbyoverlap : str
+        Trim adapters based on where paired reads overlap (default:
+        't')
+    minoverlap : int
+        Require this many bases of overlap for detection (default: 24)
+    ordered : str
+        Set to true to output reads in same order as input (default:
+        't')
+    qin : int
+        Input quality offset: 33 (Sanger), 64, or auto (default: 33)
+    args : tuple
+        Values to be added as is to the command, each separated by a
+        space from each other and the command
+    kwargs : dict
+        Key-value pairs to be added to the command, appending a double
+        dash to the key, and replacing dash with underscore in the
+        key, each separated by a space from each other and the
+        command. Use a kwarg to provide trusted or untrusted contigs
+
+    Returns
+    -------
+    str
+        The container logs, either STDOUT, STDERR, or both, depending
+        on the value of the stdout and stderr arguments
+
     """
-
-    # Run the command in the Docker image
-    image = "ralatsdio/bbtools:v38.90"
-
-    client = docker.from_env()
-
-    hosting_dir = os.getcwd()
-    working_dir = "/data"
-    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
-
     # Define BBDuk command
-    command = " ".join(["bbduk.sh",
-                        f'in={inp_fq_one_fNm}',
-                        f'in2={inp_fq_two_fNm}',
-                        f'out={outp_fNm}',
-                        f'out2={outp2_fNm}',
-                        f'ktrimright={ktrimright}',
-                        f'k={k}',
-                        f'hdist={hdist}',
-                        f'edist={edist}',
-                        f'ref={ref}',
-                        f'qtrim={qtrim}',
-                        f'trimq={trimq}',
-                        f'minlength={minlength}',
-                        f'trimbyoverlap={trimbyoverlap}',
-                        f'minoverlap={minoverlap}',
-                        f'ordered={ordered}',
-                        f'qin={qin}'])
-
+    command = " ".join(
+        [
+            "bbduk.sh",
+            f"in={inp_fq_one_fNm}",
+            f"in2={inp_fq_two_fNm}",
+            f"out={outp_fNm}",
+            f"out2={outp2_fNm}",
+            f"ktrimright={ktrimright}",
+            f"k={k}",
+            f"hdist={hdist}",
+            f"edist={edist}",
+            f"ref={ref}",
+            f"qtrim={qtrim}",
+            f"trimq={trimq}",
+            f"minlength={minlength}",
+            f"trimbyoverlap={trimbyoverlap}",
+            f"minoverlap={minoverlap}",
+            f"ordered={ordered}",
+            f"qin={qin}",
+        ]
+    )
     for arg in args:
         command = " ".join([command, arg])
     for key, val in kwargs.items():
-        command = " ".join([command, "--" + key.replace("_", "-"), str(val), ])
+        command = " ".join(
+            [
+                command,
+                "--" + key.replace("_", "-"),
+                str(val),
+            ]
+        )
 
+    # Run the command in the Docker image
+    image = "ralatsdio/bbtools:v38.90"
+    client = docker.from_env()
+    hosting_dir = os.getcwd()
+    working_dir = "/data"
+    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
     return client.containers.run(
-        image, command=command, volumes=volumes, working_dir=working_dir,
+        image,
+        command=command,
+        volumes=volumes,
+        working_dir=working_dir,
     )
 
 
-def BBNorm(inp_fq_one_fNm,
-           inp_fq_two_fNm,
-           outp_fNm="output1.fastq",
-           outp2_fNm="output2.fastq",
-           target="100",
-           mindepth="6",
-           threads="8",
-           qin="33",
-           *args,
-           **kwargs):
+def BBNorm(
+    inp_fq_one_fNm,
+    inp_fq_two_fNm,
+    outp_fNm="output1.fastq",
+    outp2_fNm="output2.fastq",
+    target="100",
+    mindepth="6",
+    threads="8",
+    qin="33",
+    *args,
+    **kwargs,
+):
     """
     Description:  Normalizes read depth based on kmer counts.
     Can also error-correct, bin reads by kmer depth, and generate a kmer depth histogram.
@@ -1441,47 +1841,97 @@ def BBNorm(inp_fq_one_fNm,
         -eoom                   This flag will cause the process to exit if an
                                     out-of-memory exception occurs.  Requires Java 8u92+.
         -da                     Disable assertions.
+
+    Parameters
+    ----------
+    inp_fq_one_fNm : str
+        Primary input
+    inp_fq_two_fNm : str
+        Second input file for paired reads in two files
+    outp_fNm : str
+        File for normalized or corrected reads (default:
+        'output1.fastq')
+    outp2_fNm : str
+        Second output file for paired reads in two files (default:
+        'output2.fastq')
+    target : int
+        Target normalization depth.  All depth parameters control kmer
+        depth, not read depth. (default: 100)
+    mindepth : int
+        Kmers with depth below this number will not be included when
+        calculating the depth of a read (default: 6)
+    threads : int
+        Spawn exactly X hashing threads (default is number of logical
+        processors) (default: 8)
+    qin : int
+        ASCII offset for input quality.  May be 33 (Sanger), 64
+        (Illumina), or auto. (default: 33)
+    args : tuple
+        Values to be added as is to the command, each separated by a
+        space from each other and the command
+    kwargs : dict
+        Key-value pairs to be added to the command, appending a double
+        dash to the key, and replacing dash with underscore in the
+        key, each separated by a space from each other and the
+        command. Use a kwarg to provide trusted or untrusted contigs
+
+    Returns
+    -------
+    str
+        The container logs, either STDOUT, STDERR, or both, depending
+        on the value of the stdout and stderr arguments
+
     """
-
-    # Run the command in the Docker image
-    image = "ralatsdio/bbtools:v38.90"
-
-    client = docker.from_env()
-
-    hosting_dir = os.getcwd()
-    working_dir = "/data"
-    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
-
     # Define BBNorm command
-    command = " ".join(["bbnorm.sh",
-                        f'in={inp_fq_one_fNm}',
-                        f'in2={inp_fq_two_fNm}',
-                        f'out={outp_fNm}',
-                        f'out2={outp2_fNm}',
-                        f'target={target}',
-                        f'mindepth={mindepth}',
-                        f'threads={threads}',
-                        f'qin={qin}'])
-
+    command = " ".join(
+        [
+            "bbnorm.sh",
+            f"in={inp_fq_one_fNm}",
+            f"in2={inp_fq_two_fNm}",
+            f"out={outp_fNm}",
+            f"out2={outp2_fNm}",
+            f"target={target}",
+            f"mindepth={mindepth}",
+            f"threads={threads}",
+            f"qin={qin}",
+        ]
+    )
     for arg in args:
         command = " ".join([command, arg])
     for key, val in kwargs.items():
-        command = " ".join([command, "--" + key.replace("_", "-"), str(val), ])
+        command = " ".join(
+            [
+                command,
+                "--" + key.replace("_", "-"),
+                str(val),
+            ]
+        )
 
+    # Run the command in the Docker image
+    image = "ralatsdio/bbtools:v38.90"
+    client = docker.from_env()
+    hosting_dir = os.getcwd()
+    working_dir = "/data"
+    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
     return client.containers.run(
-        image, command=command, volumes=volumes, working_dir=working_dir,
+        image,
+        command=command,
+        volumes=volumes,
+        working_dir=working_dir,
     )
 
 
-def BBMerge(inp_fq_one_fNm,
-            inp_fq_two_fNm,
-            outp_fNm="merged.fastq",
-            outpu1_fNm="unmerged1.fastq",
-            outpu2_fNm="unmerged2.fastq",
-            strictness="vloose=t",
-            qin="33",
-            *args,
-            **kwargs):
+def BBMerge(
+    inp_fq_one_fNm,
+    inp_fq_two_fNm,
+    outp_fNm="merged.fastq",
+    outpu1_fNm="unmerged1.fastq",
+    outpu2_fNm="unmerged2.fastq",
+    strictness="vloose=t",
+    qin="33",
+    *args,
+    **kwargs,
+):
     """
     Description:  Merges paired reads into single reads by overlap detection.
     With sufficient coverage, can merge nonoverlapping reads by kmer extension.
@@ -1693,70 +2143,126 @@ def BBMerge(inp_fq_one_fNm,
     -eoom                    This flag will cause the process to exit if an
                                  out-of-memory exception occurs.  Requires Java 8u92+.
     -da                      Disable assertions.
+
+    Parameters
+    ----------
+    inp_fq_one_fNm : str
+        Primary input
+    inp_fq_two_fNm : str
+        A second file
+    outp_fNm : str
+        File for merged reads (default: 'merged.fastq')
+    outpu1_fNm : str
+        File for unmerged reads (default: 'unmerged1.fastq')
+    outpu2_fNm : str
+        A second file (default: 'unmerged2.fastq')
+    strictness : str
+        False positive and merging rate (default: 'vloose=t')
+    qin : int
+        ASCII offset for input quality.  May be 33 (Sanger), 64
+        (Illumina), or auto. (default: 33)
+    args : tuple
+        Values to be added as is to the command, each separated by a
+        space from each other and the command
+    kwargs : dict
+        Key-value pairs to be added to the command, appending a double
+        dash to the key, and replacing dash with underscore in the
+        key, each separated by a space from each other and the
+        command. Use a kwarg to provide trusted or untrusted contigs
+
+    Returns
+    -------
+    str
+        The container logs, either STDOUT, STDERR, or both, depending
+        on the value of the stdout and stderr arguments
+
     """
-
-    # Run the command in the Docker image
-    image = "ralatsdio/bbtools:v38.90"
-
-    client = docker.from_env()
-
-    hosting_dir = os.getcwd()
-    working_dir = "/data"
-    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
-
     # Define BBMerge command
-    command = " ".join(["bbmerge.sh",
-                        f'in1={inp_fq_one_fNm}',
-                        f'in2={inp_fq_two_fNm}',
-                        f'out={outp_fNm}',
-                        f'outu1={outpu1_fNm}',
-                        f'outu2={outpu2_fNm}',
-                        strictness,
-                        f'qin={qin}'])
-
+    command = " ".join(
+        [
+            "bbmerge.sh",
+            f"in1={inp_fq_one_fNm}",
+            f"in2={inp_fq_two_fNm}",
+            f"out={outp_fNm}",
+            f"outu1={outpu1_fNm}",
+            f"outu2={outpu2_fNm}",
+            strictness,
+            f"qin={qin}",
+        ]
+    )
     for arg in args:
         command = " ".join([command, arg])
     for key, val in kwargs.items():
-        command = " ".join([command, "--" + key.replace("_", "-"), str(val), ])
+        command = " ".join(
+            [
+                command,
+                "--" + key.replace("_", "-"),
+                str(val),
+            ]
+        )
 
+    # Run the command in the Docker image
+    image = "ralatsdio/bbtools:v38.90"
+    client = docker.from_env()
+    hosting_dir = os.getcwd()
+    working_dir = "/data"
+    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
     return client.containers.run(
-        image, command=command, volumes=volumes, working_dir=working_dir,
+        image,
+        command=command,
+        volumes=volumes,
+        working_dir=working_dir,
     )
 
 
-# Using BBTools BBMap reformat.sh to split interleaved reads into two separated fastq files
-def BBSplit(inp_fq_fNm,
-            *args,
-            **kwargs):
+def BBSplit(inp_fq_fNm, *args, **kwargs):
+    """Using BBTools BBMap reformat.sh to split interleaved reads into
+    two separated fastq files.
+
+    Parameters
+    ----------
+    inp_fq_fNm : str
+        File containing interleaved reads in FASTQ format
+
+    Returns
+    -------
+    str
+        The container logs, either STDOUT, STDERR, or both, depending
+        on the value of the stdout and stderr arguments
+
     """
-    TODO: Complete
-    """
-    # Run the command in the Docker image
-    image = "ralatsdio/bbtools:v38.90"
-
-    client = docker.from_env()
-
-    hosting_dir = os.getcwd()
-    working_dir = "/data"
-    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
-
-    basename = inp_fq_fNm.split('.', 1)
-
-    outp1_fNm = f'{basename[0]}_R1.{basename[1]}'
-    outp2_fNm = f'{basename[0]}_R2.{basename[1]}'
-
     # Define BBMerge command
-    command = " ".join(["reformat.sh",
-                        f'in={inp_fq_fNm}',
-                        f'out1={outp1_fNm}',
-                        f'out2={outp2_fNm}',
-                        ])
-
+    basename = inp_fq_fNm.split(".", 1)
+    outp1_fNm = f"{basename[0]}_R1.{basename[1]}"
+    outp2_fNm = f"{basename[0]}_R2.{basename[1]}"
+    command = " ".join(
+        [
+            "reformat.sh",
+            f"in={inp_fq_fNm}",
+            f"out1={outp1_fNm}",
+            f"out2={outp2_fNm}",
+        ]
+    )
     for arg in args:
         command = " ".join([command, arg])
     for key, val in kwargs.items():
-        command = " ".join([command, "--" + key.replace("_", "-"), str(val), ])
+        command = " ".join(
+            [
+                command,
+                "--" + key.replace("_", "-"),
+                str(val),
+            ]
+        )
 
+    # Run the command in the Docker image
+    image = "ralatsdio/bbtools:v38.90"
+    client = docker.from_env()
+    hosting_dir = os.getcwd()
+    working_dir = "/data"
+    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
     return client.containers.run(
-        image, command=command, volumes=volumes, working_dir=working_dir,
+        image,
+        command=command,
+        volumes=volumes,
+        working_dir=working_dir,
     )
