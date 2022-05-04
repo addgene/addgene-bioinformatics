@@ -2,6 +2,7 @@
 .dir-locals.el
 .idea
 .mypy_cache/
+.pre-commit-config.yaml
 .requirements.txt
 .vscode/
 .venv
