@@ -358,8 +358,8 @@ def kmc_transform(
         -cs<value> - maximal value of a counter
 
     Histogram output parameters:
-        -ci<value> - minimum value of counter to be stored in the otput file
-        -cx<value> - maximum value of counter to be stored in the otput file
+        -ci<value> - minimum value of counter to be stored in the output file
+        -cx<value> - maximum value of counter to be stored in the output file
 
     Dump operation parameters:
         -s - sorted output
@@ -659,7 +659,7 @@ def kmc_complex():
                 priorities. Order of operations can be changed with
                 parentheses. For {*,~,+} it is possible to redefine
                 counter calculation mode ([c_mode]). Available values:
-                min, max, diff, sum, left, right (detailet description
+                min, max, diff, sum, left, right (detailed description
                 available in simple help message).
 
         Output parameters:
@@ -926,9 +926,9 @@ def ssake(
     Parameters
     ----------
     inp_fq_one_fNm : str
-        File name containine read one of paired reads
+        File name containing read one of paired reads
     inp_fq_two_fNm : str
-        File name containine read two of paired reads
+        File name containing read two of paired reads
     out_base_fNm : str
         Base name for your output files
     fragment_len : int
@@ -1350,7 +1350,7 @@ def BBDuk(
                                    different file.
         outs=<file>            (outsingle) Use this to write singleton reads whose mate
                                    was trimmed shorter than minlen.
-        stats=<file>           Write statistics about which contamininants were detected.
+        stats=<file>           Write statistics about which contaminants were detected.
         refstats=<file>        Write statistics on a per-reference-file basis.
         rpkm=<file>            Write RPKM for each reference sequence (for RNA-seq).
         dump=<file>            Dump kmer tables to a file, in fasta format.
@@ -1745,7 +1745,7 @@ def BBNorm(
         tablereads=-1          Use at most this many reads when building the hashtable (-1 means all)
         kmersample=1           Process every nth kmer, and skip the rest
         readsample=1           Process every nth read, and skip the rest
-        interleaved=auto       May be set to true or false to force the input read file to ovverride autodetection of the input file as paired interleaved.
+        interleaved=auto       May be set to true or false to force the input read file to override autodetection of the input file as paired interleaved.
         qin=auto               ASCII offset for input quality.  May be 33 (Sanger), 64 (Illumina), or auto.
 
     Output parameters:
@@ -1787,7 +1787,7 @@ def BBNorm(
         percentile=54.0        (dp) Read depth is by default inferred from the 54th percentile of kmer depth, but this may be changed to any number 1-100.
         uselowerdepth=t        (uld) For pairs, use the depth of the lower read as the depth proxy.
         deterministic=t        (dr) Generate random numbers deterministically to ensure identical output between multiple runs.  May decrease speed with a huge number of threads.
-        passes=2               (p) 1 pass is the basic mode.  2 passes (default) allows greater accuracy, error detection, better contol of output depth.
+        passes=2               (p) 1 pass is the basic mode.  2 passes (default) allows greater accuracy, error detection, better control of output depth.
 
     Error detection parameters:
         hdp=90.0                (highdepthpercentile) Position in sorted kmer depth array used as proxy of a read's high kmer depth.
