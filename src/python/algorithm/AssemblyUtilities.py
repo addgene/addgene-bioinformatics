@@ -34,12 +34,12 @@ def pushd(new_dir):
     None
 
     """
-    previous_dir = os.getcwd()
+    old_dir = os.getcwd()
     os.chdir(new_dir)
     try:
         yield
     finally:
-        os.chdir(previous_dir)
+        os.chdir(old_dir)
 
 
 def copy_actual_reads(plate, well, working_dir, sequencing_data_dir):
@@ -64,7 +64,7 @@ def copy_actual_reads(plate, well, working_dir, sequencing_data_dir):
 
     """
     # Find the plate directory given that we only know the Addgene,
-    # but not the seqWell identifier
+    # but not the seqWell, identifier
     plate_dir = os.path.basename(
         glob.glob(os.path.join(sequencing_data_dir, plate + "*"))[0]
     )
@@ -83,19 +83,19 @@ def copy_actual_reads(plate, well, working_dir, sequencing_data_dir):
     return rd_fnms
 
 
-def assemble_using_spades(case_dir, rd1_fnm, rd2_fnm, force=False):
+def assemble_using_spades(working_diur, rd1_fnm, rd2_fnm, force=False):
     """Assemble reads using SPAdes, then circularize using apc.
 
     Parameters
     ----------
-    case_dir : str
+    working_diur : str
         Directory in which the assembly occurs
     rd1_fnm : str
         Name of read one file
     rd2_fnm : str
         Name of read two file
     force=False : boolean
-        Flag to force assembly output directory exists
+        Flag to force assembly if output directory exists
 
     Returns
     -------
@@ -103,14 +103,12 @@ def assemble_using_spades(case_dir, rd1_fnm, rd2_fnm, force=False):
 
     """
     # Assemble only if the output directory does not exist
-    spades_dir = os.path.join(case_dir, SPADES_OUTPUT_DIR)
+    spades_dir = os.path.join(working_diur, SPADES_OUTPUT_DIR)
     if not os.path.exists(spades_dir) or force:
-        with pushd(case_dir):
-
-            # if os.path.exists(SPADES_OUTPUT_DIR):
-            #     shutil.rmtree(SPADES_OUTPUT_DIR)
+        with pushd(working_diur):
 
             # Run SPAdes
+            # TODO: Check parameters
             start_time = time.time()
             print("Assembling using SPAdes ...", end=" ", flush=True)
             command = ru.spades(rd1_fnm, rd2_fnm, SPADES_OUTPUT_DIR, cov_cutoff=100)
@@ -141,7 +139,7 @@ def count_k_mers_in_seq(seq, seq_id=0, k_mer_len=25, k_mers=None):
     seq : Bio.Seq.Seq
         The sequence in which to count
     seq_id : int
-        The sequence identifer
+        The source sequence identifer
     k_mer_len : int
         The length of k-mers to count
     k_mers : None or dct
@@ -171,7 +169,8 @@ def count_k_mers_in_seq(seq, seq_id=0, k_mer_len=25, k_mers=None):
 
 def count_k_mers_in_rds(rd_fNm, k_mer_len=25, k_mers=None, seq_rcds=None):
     """Count k-mers of a specified length in a gzipped file of reads
-    in the specified format.
+    in the specified format. Optionally update dictionary and list
+    returned by this method.
 
     Parameters
     ----------
@@ -210,7 +209,8 @@ def count_k_mers_in_rds(rd_fNm, k_mer_len=25, k_mers=None, seq_rcds=None):
 
 
 def write_k_mer_counts_in_rds(k_mers_in_rd1, k_mers_in_rd2, k_mer_counts_fNm):
-    """Write the k-mer counts corresponding to paired reads.
+    """Write the k-mer counts corresponding to paired reads to the
+    specified file.
 
     Parameters
     ----------
@@ -233,14 +233,16 @@ def write_k_mer_counts_in_rds(k_mers_in_rd1, k_mers_in_rd2, k_mer_counts_fNm):
             if k_mer in k_mer_set_rd2:
                 k_mer_cnt_rd2 = k_mers_in_rd2[k_mer]["cnt"]
             f.write(
-                "{0} {1:10d} {1:10d}\n".format(
+                "{0} {1:10d} {2:10d}\n".format(
                     k_mer, int(k_mer_cnt_rd1), int(k_mer_cnt_rd2)
                 )
             )
 
 
 def read_k_mer_counts(k_mer_counts_fNm, seq_id=0, k_mers=None):
-    """Read k-mer counts from the specified file.
+    """Read the k-mer counts corresponding to paired reads from the
+    specified file. Optionally update dictionary returned by
+    count_k_mers_in_seq().
 
     Parameters
     ----------
@@ -254,7 +256,7 @@ def read_k_mer_counts(k_mer_counts_fNm, seq_id=0, k_mers=None):
     Returns
     -------
     dict
-        Dictionay containing k-mer keys, and counts and source
+        Dictionay containing k-mer keys and counts, and source
         sequence identifiers values
     """
     if k_mers is None:
@@ -353,6 +355,7 @@ def write_paired_reads_for_cnt(
     return (rd1_wr_file_name, rd1_wo_file_name, rd2_wr_file_name, rd2_wo_file_name)
 
 
+# TODO: Step through to validate
 def find_seq_rcds_for_cnt(k_mer_cnt_rds, coverage, k_mers):
     """Use k-means clustering to identify reads containing a k-mer
     with the expected count.
@@ -380,7 +383,6 @@ def find_seq_rcds_for_cnt(k_mer_cnt_rds, coverage, k_mers):
     # Cluster counts in the expected number of clusters
     kmeans = KMeans(n_clusters=len(K_MER_CNT_REP) + 1, random_state=0).fit(
         (k_mer_cnt_rds / coverage).reshape(-1, 1)
-    )
 
     # Identify the cluster and sequence records (reads) corresponding
     # to the expected count
@@ -434,7 +436,7 @@ def write_reads_for_cnt(i_rcds, seq_rcds, case):
 
 
 # TODO: Name and review
-def abc(rd1_file_name, rd2_file_name):
+def ghi(rd1_file_name, rd2_file_name):
     # TODO: Settle
     BASE_FILE_NAME = "random_seq"
     EXP_CNT = 16
@@ -461,8 +463,8 @@ def abc(rd1_file_name, rd2_file_name):
     k_mer_cnt_rd2 = collect_k_mer_cnt(k_mers_rd2, seq_cnt=1)
     # coverage_rd1 = int(np.sum(k_mer_cnt_rd1) / np.sum(k_mer_cnt_seq))
     # coverage_rd2 = int(np.sum(k_mer_cnt_rd2) / np.sum(k_mer_cnt_seq))
-    coverage_rd1 = 1
-    coverage_rd2 = 1
+    # coverage_rd1 = 1
+    # coverage_rd2 = 1
 
     # Separate reads into those containing a k-mer with the
     # expected count, and all others
@@ -543,14 +545,14 @@ def abc(rd1_file_name, rd2_file_name):
     print("Command: {0}".format(command), flush=True)
 
 
-def align_assembly_output(aligner, case_dir, seq):
+def align_assembly_output(aligner, working_diur, seq):
     """Align SPAdes and apc assembly output to a sequence.
 
     Parameters
     ----------
     aligner : Align.PairwiseAligner
         A Biopython pairwise aligner
-    case_dir
+    working_diur
         Directory containing output of an assembly case
     seq : Bio.Seq.Seq
         A Biopython sequence to which to align
@@ -563,9 +565,9 @@ def align_assembly_output(aligner, case_dir, seq):
     """
     # Read the multi-FASTA SPAdes output file, and align
     start_time = time.time()
-    case = os.path.basename(case_dir)
+    case = os.path.basename(working_diur)
     print("Aligning {0} assemblies ...".format(case), end=" ", flush=True)
-    output_pth = os.path.join(case_dir, SPADES_OUTPUT_DIR, SPADES_OUTPUT_FNM)
+    output_pth = os.path.join(working_diur, SPADES_OUTPUT_DIR, SPADES_OUTPUT_FNM)
     spd_scr = -1.0
     if os.path.exists(output_pth):
         spd_scr = 0.0
@@ -574,7 +576,7 @@ def align_assembly_output(aligner, case_dir, seq):
             spd_scr = aligner.score(seq + seq, seq_rcds[0].seq)
 
     # Read the FASTA apc output file, and align
-    output_pth = os.path.join(case_dir, APC_OUTPUT_FNM)
+    output_pth = os.path.join(working_diur, APC_OUTPUT_FNM)
     apc_scr = -1.0
     if os.path.exists(output_pth):
         apc_scr = 0.0
