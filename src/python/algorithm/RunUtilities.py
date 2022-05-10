@@ -1197,7 +1197,8 @@ def spades(inp_fq_one_fNm, inp_fq_two_fNm, out_dir, *args, **kwargs):
         Key-value pairs to be added to the command, appending a double
         dash to the key, and replacing dash with underscore in the
         key, each separated by a space from each other and the
-        command. Use a kwarg to provide trusted or untrusted contigs
+        command. Use a kwarg to provide merged reads, and trusted or
+        untrusted contigs.
 
     Returns
     -------
