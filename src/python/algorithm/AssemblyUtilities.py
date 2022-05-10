@@ -20,6 +20,9 @@ APC_BASE_FNM = "apc"
 APC_OUTPUT_FNM = APC_BASE_FNM + ".1.fa"
 
 
+# TODO: Use pathlib?
+
+
 @contextlib.contextmanager
 def pushd(new_dir):
     """Change to a new working directory, and back.
@@ -42,20 +45,23 @@ def pushd(new_dir):
         os.chdir(old_dir)
 
 
-def copy_actual_reads(plate, well, working_dir, sequencing_data_dir):
-    """Copy actual read files for a given plate and well to a working
+# TODO: Add context manager for timing?
+
+
+def copy_reads(sequencing_data_dir, plate, well, working_dir):
+    """Copy read files for a given plate and well to a working
     directory, if they don't already exist there.
 
     Parameters
     ----------
+    sequencing_data_dir : str
+        Path to directory containing sequencing data
     plate : str
         Plate identifier
     well : str
         Well identifier
     working_dir : str
         Path to working directory
-    sequencing_data_dir : str
-        Path to directory containing sequencing data
 
     Returns
     -------
@@ -83,12 +89,105 @@ def copy_actual_reads(plate, well, working_dir, sequencing_data_dir):
     return rd_fnms
 
 
-def assemble_using_spades(working_diur, rd1_fnm, rd2_fnm, force=False):
+def copy_adapters(sequencing_data_dir, working_dir):
+    """Copy adapters file to a working directory, if it doesn't
+    already exist there.
+
+    Parameters
+    ----------
+    sequencing_data_dir : str
+        Path to directory containing sequencing data
+    working_dir : str
+        Path to working directory
+
+    Returns
+    -------
+    adapter_fnm : str
+        Adapte file name
+
+    """
+    # Copy each file, if needed
+    adapter_fnm = "adapters.fa"
+    adapter_file_path = os.path.join(sequencing_data_dir, adapter_fnm)
+    if not os.path.exists(adapter_fnm):
+        shutil.copy(adapter_file_path, working_dir)
+
+    return adapter_fnm
+
+
+def preprocess_using_bbtools(working_dir, rd1_fnm, rd2_fnm, force=False):
+    """Preprocess uings BBTools BBduk, BBnorm, and BBMerge.
+
+    Parameters
+    ----------
+    working_dir : str
+        Directory in which preprocessing occurs
+    rd1_fnm : str
+        Name of read one file
+    rd2_fnm : str
+        Name of read two file
+    force=False : boolean
+        Flag to force preprocessing if output directory exists
+
+    Returns
+    -------
+    None
+
+    """
+    # Preprocess only if the output directory does not exist
+    if not os.path.exists(working_dir) or force:
+        with pushd(working_dir):
+
+            # Run BBDuk
+            start_time = time.time()
+            print("Trimming using BBDuk ...", end=" ", flush=True)
+            rd1_trimmed_fnm = rd1_fnm.replace(".fastq.gz", "_trimmed.fastq.gz")
+            rd2_trimmed_fnm = rd2_fnm.replace(".fastq.gz", "_trimmed.fastq.gz")
+            ru.BBDuk(
+                rd1_fnm, rd2_fnm, outp_fNm=rd1_trimmed_fnm, outp2_fNm=rd2_trimmed_fnm
+            )
+            print("done in {0} s".format(time.time() - start_time), flush=True)
+
+            # Run BBNorm
+            start_time = time.time()
+            print("Normalizing using BBNorm ...", end=" ", flush=True)
+            rd1_normalized_fnm = rd1_fnm.replace(".fastq.gz", "_normalized.fastq.gz")
+            rd2_normalized_fnm = rd2_fnm.replace(".fastq.gz", "_normalized.fastq.gz")
+            ru.BBNorm(
+                rd1_trimmed_fnm,
+                rd2_trimmed_fnm,
+                outp_fNm=rd1_normalized_fnm,
+                outp2_fNm=rd2_normalized_fnm,
+            )
+            print("done in {0} s".format(time.time() - start_time), flush=True)
+
+            # Run BBMerge
+            start_time = time.time()
+            print("Merging using BBMerge ...", end=" ", flush=True)
+            rds_merged_fnm = rd1_fnm.replace("_R1", "_Rs").replace(
+                ".fastq.gz", "_merged.fastq.gz"
+            )
+            rd1_unmerged_fnm = rd1_fnm.replace(".fastq.gz", "_unmerged.fastq.gz")
+            rd2_unmerged_fnm = rd2_fnm.replace(".fastq.gz", "_unmerged.fastq.gz")
+            ru.BBMerge(
+                rd1_normalized_fnm,
+                rd2_normalized_fnm,
+                outp_fNm=rds_merged_fnm,
+                outpu1_fNm=rd1_unmerged_fnm,
+                outpu2_fNm=rd2_unmerged_fnm,
+            )
+            print("done in {0} s".format(time.time() - start_time), flush=True)
+        return rds_merged_fnm, rd1_unmerged_fnm, rd2_unmerged_fnm
+    else:
+        return ()
+
+
+def assemble_using_spades(working_dir, rd1_fnm, rd2_fnm, preprocess=True, force=False):
     """Assemble reads using SPAdes, then circularize using apc.
 
     Parameters
     ----------
-    working_diur : str
+    working_dir : str
         Directory in which the assembly occurs
     rd1_fnm : str
         Name of read one file
@@ -103,17 +202,41 @@ def assemble_using_spades(working_diur, rd1_fnm, rd2_fnm, force=False):
 
     """
     # Assemble only if the output directory does not exist
-    spades_dir = os.path.join(working_diur, SPADES_OUTPUT_DIR)
+    spades_dir = os.path.join(working_dir, SPADES_OUTPUT_DIR)
     if not os.path.exists(spades_dir) or force:
-        with pushd(working_diur):
+        with pushd(working_dir):
 
-            # Run SPAdes
-            # TODO: Check parameters
-            start_time = time.time()
-            print("Assembling using SPAdes ...", end=" ", flush=True)
-            command = ru.spades(rd1_fnm, rd2_fnm, SPADES_OUTPUT_DIR, cov_cutoff=100)
-            print("done in {0} s".format(time.time() - start_time), flush=True)
-            print("Command: {0}".format(command), flush=True)
+            # Optionally preprocess
+            if preprocess:
+                (
+                    rds_merged_fnm,
+                    rd1_unmerged_fnm,
+                    rd2_unmerged_fnm,
+                ) = preprocess_using_bbtools(working_dir, rd1_fnm, rd2_fnm, force=force)
+
+                # Run SPAdes with merged reads
+                start_time = time.time()
+                print("Assembling using SPAdes ...", end=" ", flush=True)
+                command = ru.spades(
+                    rd1_unmerged_fnm,
+                    rd2_unmerged_fnm,
+                    SPADES_OUTPUT_DIR,
+                    merged=rds_merged_fnm,
+                    cov_cutoff=100,
+                )
+                print("done in {0} s".format(time.time() - start_time), flush=True)
+
+            else:
+                # Run SPAdes without merged reads
+                start_time = time.time()
+                print("Assembling using SPAdes ...", end=" ", flush=True)
+                command = ru.spades(
+                    rd1_fnm,
+                    rd2_fnm,
+                    SPADES_OUTPUT_DIR,
+                    cov_cutoff=100,
+                )
+                print("done in {0} s".format(time.time() - start_time), flush=True)
 
             # Copy SPAdes output file
             output_pth = os.path.join(SPADES_OUTPUT_DIR, SPADES_OUTPUT_FNM)
@@ -125,7 +248,6 @@ def assemble_using_spades(working_diur, rd1_fnm, rd2_fnm, force=False):
             print("Circularize using apc ...", end=" ", flush=True)
             command = ru.apc(APC_BASE_FNM, SPADES_OUTPUT_FNM)
             print("done in {0} s".format(time.time() - start_time), flush=True)
-            print("Command: {0}".format(command), flush=True)
             print("Directory: {0}".format(os.getcwd()))
 
 
@@ -383,6 +505,7 @@ def find_seq_rcds_for_cnt(k_mer_cnt_rds, coverage, k_mers):
     # Cluster counts in the expected number of clusters
     kmeans = KMeans(n_clusters=len(K_MER_CNT_REP) + 1, random_state=0).fit(
         (k_mer_cnt_rds / coverage).reshape(-1, 1)
+    )
 
     # Identify the cluster and sequence records (reads) corresponding
     # to the expected count
@@ -463,8 +586,8 @@ def ghi(rd1_file_name, rd2_file_name):
     k_mer_cnt_rd2 = collect_k_mer_cnt(k_mers_rd2, seq_cnt=1)
     # coverage_rd1 = int(np.sum(k_mer_cnt_rd1) / np.sum(k_mer_cnt_seq))
     # coverage_rd2 = int(np.sum(k_mer_cnt_rd2) / np.sum(k_mer_cnt_seq))
-    # coverage_rd1 = 1
-    # coverage_rd2 = 1
+    coverage_rd1 = 1
+    coverage_rd2 = 1
 
     # Separate reads into those containing a k-mer with the
     # expected count, and all others
@@ -542,17 +665,16 @@ def ghi(rd1_file_name, rd2_file_name):
             trusted_contigs_fNm=trusted_contigs_fNm,
         )
     print("done in {0} s".format(time.time() - start_time), flush=True)
-    print("Command: {0}".format(command), flush=True)
 
 
-def align_assembly_output(aligner, working_diur, seq):
+def align_assembly_output(aligner, working_dir, seq):
     """Align SPAdes and apc assembly output to a sequence.
 
     Parameters
     ----------
     aligner : Align.PairwiseAligner
         A Biopython pairwise aligner
-    working_diur
+    working_dir
         Directory containing output of an assembly case
     seq : Bio.Seq.Seq
         A Biopython sequence to which to align
@@ -565,9 +687,9 @@ def align_assembly_output(aligner, working_diur, seq):
     """
     # Read the multi-FASTA SPAdes output file, and align
     start_time = time.time()
-    case = os.path.basename(working_diur)
+    case = os.path.basename(working_dir)
     print("Aligning {0} assemblies ...".format(case), end=" ", flush=True)
-    output_pth = os.path.join(working_diur, SPADES_OUTPUT_DIR, SPADES_OUTPUT_FNM)
+    output_pth = os.path.join(working_dir, SPADES_OUTPUT_DIR, SPADES_OUTPUT_FNM)
     spd_scr = -1.0
     if os.path.exists(output_pth):
         spd_scr = 0.0
@@ -576,7 +698,7 @@ def align_assembly_output(aligner, working_diur, seq):
             spd_scr = aligner.score(seq + seq, seq_rcds[0].seq)
 
     # Read the FASTA apc output file, and align
-    output_pth = os.path.join(working_diur, APC_OUTPUT_FNM)
+    output_pth = os.path.join(working_dir, APC_OUTPUT_FNM)
     apc_scr = -1.0
     if os.path.exists(output_pth):
         apc_scr = 0.0
