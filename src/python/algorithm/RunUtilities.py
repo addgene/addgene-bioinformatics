@@ -207,6 +207,7 @@ def get_bio_read_format(read_file_name):
         raise (Exception("Unknown read file format"))
     if p_gz.search(read_file_name) is not None:
         is_gzipped = True
+
     return read_format, is_gzipped
 
 
@@ -854,9 +855,9 @@ def kmc_filter(
 
 
 def ssake(
-    inp_fq_one_fNm,
-    inp_fq_two_fNm,
-    out_base_fNm,
+    inp_fq_one_fnm,
+    inp_fq_two_fnm,
+    out_base_fnm,
     fragment_len,
     phred_threshold=20,  # -x
     n_consec_bases=70,  # -n
@@ -959,11 +960,11 @@ def ssake(
 
     Parameters
     ----------
-    inp_fq_one_fNm : str
+    inp_fq_one_fnm : str
         File name containing read one of paired reads
-    inp_fq_two_fNm : str
+    inp_fq_two_fnm : str
         File name containing read two of paired reads
-    out_base_fNm : str
+    out_base_fnm : str
         Base name for your output files
     fragment_len : int
         Target insert size [bp]
@@ -1050,10 +1051,10 @@ def ssake(
             str(do_break_ties),
             "-v",
             str(do_run_verbose),
-            inp_fq_one_fNm,
-            inp_fq_two_fNm,
+            inp_fq_one_fnm,
+            inp_fq_two_fnm,
             str(fragment_len),
-            out_base_fNm,
+            out_base_fnm,
         ]
     )
 
@@ -1067,7 +1068,7 @@ def ssake(
     )
 
 
-def spades(inp_fq_one_fNm, inp_fq_two_fNm, out_dir, *args, **kwargs):
+def spades(inp_fq_one_fnm, inp_fq_two_fnm, out_dir, *args, **kwargs):
     """
     Run SPAdes genome assembler v3.13.1 in a docker container.
 
@@ -1184,9 +1185,9 @@ def spades(inp_fq_one_fNm, inp_fq_two_fNm, out_dir, *args, **kwargs):
 
     Parameters
     ----------
-    inp_fq_one_fNm : str  # -1
+    inp_fq_one_fnm : str  # -1
         File with forward paired-end reads
-    inp_fq_two_fNm : str  # -2
+    inp_fq_two_fnm : str  # -2
         File with reverse paired-end reads
     out_dir : str  # -o
         Directory to store all the resulting files
@@ -1218,9 +1219,9 @@ def spades(inp_fq_one_fNm, inp_fq_two_fNm, out_dir, *args, **kwargs):
         [
             "spades.py",
             "-1",
-            inp_fq_one_fNm,
+            inp_fq_one_fnm,
             "-2",
-            inp_fq_two_fNm,
+            inp_fq_two_fnm,
         ]
     )
     command = " ".join(
@@ -1321,10 +1322,10 @@ def apc(base_file_name, contigs_file_name):
 
 
 def BBDuk(
-    inp_fq_one_fNm,
-    inp_fq_two_fNm,
-    outp_fNm="output1.fastq",
-    outp2_fNm="output2.fastq",
+    inp_fq_one_fnm,
+    inp_fq_two_fnm,
+    outp_fnm="output1.fastq",
+    outp2_fnm="output2.fastq",
     ktrimright="t",
     k="27",
     hdist="1",
@@ -1648,14 +1649,14 @@ def BBDuk(
 
     Parameters
     ----------
-    inp_fq_one_fNm : str
+    inp_fq_one_fnm : str
         Main input
-    inp_fq_two_fNm : str
+    inp_fq_two_fnm : str
         Input for 2nd read of pairs in a different file
-    outp_fNm : str
+    outp_fnm : str
         Write reads here that do not contain kmers matching the
         database (default: 'output1.fastq')
-    outp2_fNm : str
+    outp2_fnm : str
         Use this to write 2nd read of pairs to a different file
         (default: 'output2.fastq')
     ktrimright : str
@@ -1709,10 +1710,10 @@ def BBDuk(
     command = " ".join(
         [
             "bbduk.sh",
-            f"in={inp_fq_one_fNm}",
-            f"in2={inp_fq_two_fNm}",
-            f"out={outp_fNm}",
-            f"out2={outp2_fNm}",
+            f"in={inp_fq_one_fnm}",
+            f"in2={inp_fq_two_fnm}",
+            f"out={outp_fnm}",
+            f"out2={outp2_fnm}",
             f"ktrimright={ktrimright}",
             f"k={k}",
             f"hdist={hdist}",
@@ -1753,10 +1754,10 @@ def BBDuk(
 
 
 def BBNorm(
-    inp_fq_one_fNm,
-    inp_fq_two_fNm,
-    outp_fNm="output1.fastq",
-    outp2_fNm="output2.fastq",
+    inp_fq_one_fnm,
+    inp_fq_two_fnm,
+    outp_fnm="output1.fastq",
+    outp2_fnm="output2.fastq",
     target="100",
     mindepth="6",
     threads="8",
@@ -1879,14 +1880,14 @@ def BBNorm(
 
     Parameters
     ----------
-    inp_fq_one_fNm : str
+    inp_fq_one_fnm : str
         Primary input
-    inp_fq_two_fNm : str
+    inp_fq_two_fnm : str
         Second input file for paired reads in two files
-    outp_fNm : str
+    outp_fnm : str
         File for normalized or corrected reads (default:
         'output1.fastq')
-    outp2_fNm : str
+    outp2_fnm : str
         Second output file for paired reads in two files (default:
         'output2.fastq')
     target : int
@@ -1921,10 +1922,10 @@ def BBNorm(
     command = " ".join(
         [
             "bbnorm.sh",
-            f"in={inp_fq_one_fNm}",
-            f"in2={inp_fq_two_fNm}",
-            f"out={outp_fNm}",
-            f"out2={outp2_fNm}",
+            f"in={inp_fq_one_fnm}",
+            f"in2={inp_fq_two_fnm}",
+            f"out={outp_fnm}",
+            f"out2={outp2_fnm}",
             f"target={target}",
             f"mindepth={mindepth}",
             f"threads={threads}",
@@ -2181,15 +2182,15 @@ def BBMerge(
 
     Parameters
     ----------
-    inp_fq_one_fNm : str
+    inp_fq_one_fnm : str
         Primary input
-    inp_fq_two_fNm : str
+    inp_fq_two_fnm : str
         A second file
-    outp_fNm : str
+    outp_fnm : str
         File for merged reads (default: 'merged.fastq')
-    outpu1_fNm : str
+    outpu1_fnm : str
         File for unmerged reads (default: 'unmerged1.fastq')
-    outpu2_fNm : str
+    outpu2_fnm : str
         A second file (default: 'unmerged2.fastq')
     strictness : str
         False positive and merging rate (default: 'vloose=t')
@@ -2216,11 +2217,11 @@ def BBMerge(
     command = " ".join(
         [
             "bbmerge.sh",
-            f"in1={inp_fq_one_fNm}",
-            f"in2={inp_fq_two_fNm}",
-            f"out={outp_fNm}",
-            f"outu1={outpu1_fNm}",
-            f"outu2={outpu2_fNm}",
+            f"in1={inp_fq_one_fnm}",
+            f"in2={inp_fq_two_fnm}",
+            f"out={outp_fnm}",
+            f"outu1={outpu1_fnm}",
+            f"outu2={outpu2_fnm}",
             strictness,
             f"qin={qin}",
         ]
@@ -2256,7 +2257,7 @@ def BBSplit(inp_fq_fNm, *args, **kwargs):
 
     Parameters
     ----------
-    inp_fq_fNm : str
+    inp_fq_fnm : str
         File containing interleaved reads in FASTQ format
 
     Returns
@@ -2267,15 +2268,15 @@ def BBSplit(inp_fq_fNm, *args, **kwargs):
 
     """
     # Define BBMerge command
-    basename = inp_fq_fNm.split(".", 1)
-    outp1_fNm = f"{basename[0]}_R1.{basename[1]}"
-    outp2_fNm = f"{basename[0]}_R2.{basename[1]}"
+    basename = inp_fq_fnm.split(".", 1)
+    outp1_fnm = f"{basename[0]}_R1.{basename[1]}"
+    outp2_fnm = f"{basename[0]}_R2.{basename[1]}"
     command = " ".join(
         [
             "reformat.sh",
-            f"in={inp_fq_fNm}",
-            f"out1={outp1_fNm}",
-            f"out2={outp2_fNm}",
+            f"in={inp_fq_fnm}",
+            f"out1={outp1_fnm}",
+            f"out2={outp2_fnm}",
         ]
     )
     for arg in args:
