@@ -3,6 +3,7 @@ import glob
 import gzip
 import os
 import shutil
+import subprocess
 import time
 
 from Bio import Align, SeqIO
@@ -246,10 +247,14 @@ def assemble_using_spades(working_dir, rd1_fnm, rd2_fnm, preprocess=True, force=
                 )
                 print("done in {0} s".format(time.time() - start_time), flush=True)
 
-            # Copy SPAdes output file
+            # Copy SPAdes output file, and parse
+            spades_seq = None
             output_pth = os.path.join(SPADES_OUTPUT_DIR, SPADES_OUTPUT_FNM)
             if os.path.exists(output_pth):
                 shutil.copy(output_pth, ".")
+                spades_seq = [
+                    seq_rcd for seq_rcd in SeqIO.parse(SPADES_OUTPUT_FNM, "fasta")
+                ][0].seq
 
             # Run apc
             start_time = time.time()
@@ -257,6 +262,75 @@ def assemble_using_spades(working_dir, rd1_fnm, rd2_fnm, preprocess=True, force=
             command = ru.apc(APC_BASE_FNM, SPADES_OUTPUT_FNM)
             print("done in {0} s".format(time.time() - start_time), flush=True)
             print("Directory: {0}".format(os.getcwd()))
+
+            # Parse apc output file
+            apc_seq = None
+            if os.path.exists(APC_OUTPUT_FNM):
+                apc_seq = [seq_rcd for seq_rcd in SeqIO.parse(APC_OUTPUT_FNM, "fasta")][
+                    0
+                ].seq
+
+            return (
+                spades_seq,
+                apc_seq,
+                rd1_unmerged_fnm,
+                rd2_unmerged_fnm,
+                rds_merged_fnm,
+            )
+
+
+def compute_coverage_using_bbtools(working_dir, rd1_fnm, rd2_fnm, ref_fnm, force=False):
+    """Compute coverage uings BBTools BBMap.
+
+    Parameters
+    ----------
+    working_dir : str
+        Directory in which preprocessing occurs
+    rd1_fnm : str
+        Name of read one file
+    rd2_fnm : str
+        Name of read two file
+    ref_fnm : str
+        Name of reference sequence file
+    force=False : boolean
+        Flag to force preprocessing if output directory exists
+
+    Returns
+    -------
+    None
+
+    """
+    # Preprocess only if the output directory does not exist
+    if not os.path.exists(working_dir) or force:
+        with pushd(working_dir):
+
+            # Run BBMap
+            start_time = time.time()
+            print("Mapping using BBMap ...", end=" ", flush=True)
+            out_fnm = rd1_fnm.replace("_R1", "_Rs").replace(
+                ".fastq.gz", "_output.fastq.gz"
+            )
+            covstats_fnm = rd1_fnm.replace("_R1", "_Rs").replace(
+                ".fastq.gz", "_covstats.txt"
+            )
+            ru.BBMap(rd1_fnm, rd2_fnm, out_fnm, ref_fnm, covstats_fnm)
+            print("done in {0} s".format(time.time() - start_time), flush=True)
+
+            # Parse BBMap coverage statistics
+            cp = subprocess.run(
+                f"head -n 2 {covstats_fnm} | tail -n 1 | cut -wf 2",
+                shell=True,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            coverage = float(cp.stdout.strip())
+
+        return coverage, out_fnm, covstats_fnm
+
+    else:
+
+        return ()
 
 
 def count_k_mers_in_seq(seq, seq_id=0, k_mer_len=25, k_mers=None):
