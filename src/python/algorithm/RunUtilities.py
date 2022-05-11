@@ -1342,11 +1342,12 @@ def BBDuk(
     **kwargs,
 ):
     """
-    Compares reads to the kmers in a reference dataset, optionally
-    allowing an edit distance. Splits the reads into two outputs - those that
-    match the reference, and those that don't. Can also trim (remove) the matching
-    parts of the reads rather than binning the reads.
-    Please read bbmap/docs/guides/BBDukGuide.txt for more information.
+    BBMap compares reads to the kmers in a reference dataset,
+    optionally allowing an edit distance. Splits the reads into two
+    outputs - those that match the reference, and those that
+    don't. Can also trim (remove) the matching parts of the reads
+    rather than binning the reads.  Please read
+    bbmap/docs/guides/BBDukGuide.txt for more information.
 
     Usage:  bbduk.sh in=<input file> out=<output file> ref=<contaminant files>
 
@@ -1766,10 +1767,11 @@ def BBNorm(
     **kwargs,
 ):
     """
-    Description:  Normalizes read depth based on kmer counts.
-    Can also error-correct, bin reads by kmer depth, and generate a kmer depth histogram.
-    However, Tadpole has superior error-correction to BBNorm.
-    Please read bbmap/docs/guides/BBNormGuide.txt for more information.
+    BBNorm normalizes read depth based on kmer counts.  Can also
+    error-correct, bin reads by kmer depth, and generate a kmer depth
+    histogram.  However, Tadpole has superior error-correction to
+    BBNorm.  Please read bbmap/docs/guides/BBNormGuide.txt for more
+    information.
 
     Usage:     bbnorm.sh in=<input> out=<reads to keep> outt=<reads to toss> hist=<histogram output>
 
@@ -1958,22 +1960,23 @@ def BBNorm(
 
 
 def BBMerge(
-    inp_fq_one_fNm,
-    inp_fq_two_fNm,
-    outp_fNm="merged.fastq",
-    outpu1_fNm="unmerged1.fastq",
-    outpu2_fNm="unmerged2.fastq",
+    inp_fq_one_fnm,
+    inp_fq_two_fnm,
+    outp_fnm="merged.fastq",
+    outpu1_fnm="unmerged1.fastq",
+    outpu2_fnm="unmerged2.fastq",
     strictness="vloose=t",
     qin="33",
     *args,
     **kwargs,
 ):
     """
-    Description:  Merges paired reads into single reads by overlap detection.
-    With sufficient coverage, can merge nonoverlapping reads by kmer extension.
-    Kmer modes (Tadpole or Bloom Filter) require much more memory, and should
-    be used with the bbmerge-auto.sh script rather than bbmerge.sh.
-    Please read bbmap/docs/guides/BBMergeGuide.txt for more information.
+    BBmerge merges paired reads into single reads by overlap
+    detection.  With sufficient coverage, can merge nonoverlapping
+    reads by kmer extension.  Kmer modes (Tadpole or Bloom Filter)
+    require much more memory, and should be used with the
+    bbmerge-auto.sh script rather than bbmerge.sh.  Please read
+    bbmap/docs/guides/BBMergeGuide.txt for more information.
 
     Usage for interleaved files:    bbmerge.sh in=<reads> out=<merged reads> outu=<unmerged reads>
     Usage for paired files:         bbmerge.sh in1=<read1> in2=<read2> out=<merged reads> outu1=<unmerged1> outu2=<unmerged2>
@@ -2254,6 +2257,80 @@ def BBMerge(
 def BBSplit(inp_fq_fNm, *args, **kwargs):
     """Using BBTools BBMap reformat.sh to split interleaved reads into
     two separated fastq files.
+
+    BBSplit maps reads to multiple references simultaneously.  Outputs
+    reads to a file for the reference they best match, with multiple
+    options for dealing with ambiguous mappings.
+
+    To index:     bbsplit.sh build=<1> ref_x=<reference fasta> ref_y=<another reference fasta>
+    To map:       bbsplit.sh build=<1> in=<reads> out_x=<output file> out_y=<another output file>
+
+    To be concise, and do everything in one command:
+    bbsplit.sh ref=x.fa,y.fa in=reads.fq basename=o%.fq
+
+    that is equivalent to
+    bbsplit.sh build=1 in=reads.fq ref_x=x.fa ref_y=y.fa out_x=ox.fq out_y=oy.fq
+
+    By default paired reads will yield interleaved output, but you can use the # symbol to produce twin output files.
+    For example, basename=o%_#.fq will produce ox_1.fq, ox_2.fq, oy_1.fq, and oy_2.fq.
+
+
+    Indexing Parameters (required when building the index):
+    ref=<file,file>     A list of references, or directories containing fasta files.
+    ref_<name>=<ref.fa> Alternate, longer way to specify references. e.g., ref_ecoli=ecoli.fa
+                        These can also be comma-delimited lists of files; e.g., ref_a=a1.fa,a2.fa,a3.fa
+    build=<1>           If multiple references are indexed in the same directory, each needs a unique build ID.
+    path=<.>            Specify the location to write the index, if you don't want it in the current working directory.
+
+    Input Parameters:
+    build=<1>           Designate index to use.  Corresponds to the number specified when building the index.
+    in=<reads.fq>       Primary reads input; required parameter.
+    in2=<reads2.fq>     For paired reads in two files.
+    qin=<auto>          Set to 33 or 64 to specify input quality value ASCII offset.
+    interleaved=<auto>  True forces paired/interleaved input; false forces single-ended mapping.
+                        If not specified, interleaved status will be autodetected from read names.
+
+    Mapping Parameters:
+    maxindel=<20>       Don't look for indels longer than this.  Lower is faster.  Set to >=100k for RNA-seq.
+    minratio=<0.56>     Fraction of max alignment score required to keep a site.  Higher is faster.
+    minhits=<1>         Minimum number of seed hits required for candidate sites.  Higher is faster.
+    ambiguous=<best>    Set behavior on ambiguously-mapped reads (with multiple top-scoring mapping locations).
+                           best   (use the first best site)
+                           toss   (consider unmapped)
+                           random   (select one top-scoring site randomly)
+                           all   (retain all top-scoring sites.  Does not work yet with SAM output)
+    ambiguous2=<best>   Set behavior only for reads that map ambiguously to multiple different references.
+                        Normal 'ambiguous=' controls behavior on all ambiguous reads;
+                        Ambiguous2 excludes reads that map ambiguously within a single reference.
+                           best   (use the first best site)
+                           toss   (consider unmapped)
+                           all   (write a copy to the output for each reference to which it maps)
+                           split   (write a copy to the AMBIGUOUS_ output for each reference to which it maps)
+    qtrim=<true>        Quality-trim ends to Q5 before mapping.  Options are 'l' (left), 'r' (right), and 'lr' (both).
+    untrim=<true>       Undo trimming after mapping.  Untrimmed bases will be soft-clipped in cigar strings.
+
+    Output Parameters:
+    out_<name>=<file>   Output reads that map to the reference <name> to <file>.
+    basename=prefix%suffix     Equivalent to multiple out_%=prefix%suffix expressions, in which each % is replaced by the name of a reference file.
+    bs=<file>           Write a shell script to 'file' that will turn the sam output into a sorted, indexed bam file.
+    scafstats=<file>    Write statistics on how many reads mapped to which scaffold to this file.
+    refstats=<file>     Write statistics on how many reads were assigned to which reference to this file.
+                        Unmapped reads whose mate mapped to a reference are considered assigned and will be counted.
+    nzo=t               Only print lines with nonzero coverage.
+
+    ***** Notes *****
+    Almost all BBMap parameters can be used; run bbmap.sh for more details.
+    Exceptions include the 'nodisk' flag, which BBSplit does not support.
+    BBSplit is recommended for fastq and fasta output, not for sam/bam output.
+    When the reference sequences are shorter than read length, use Seal instead of BBSplit.
+
+    Java Parameters:
+    -Xmx                This will set Java's memory usage, overriding autodetection.
+                        -Xmx20g will specify 20 gigs of RAM, and -Xmx200m will specify 200 megs.
+                        The max is typically 85% of physical memory.
+    -eoom               This flag will cause the process to exit if an
+                        out-of-memory exception occurs.  Requires Java 8u92+.
+    -da                 Disable assertions.
 
     Parameters
     ----------
