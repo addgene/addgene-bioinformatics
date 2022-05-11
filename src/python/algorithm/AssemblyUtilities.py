@@ -115,8 +115,8 @@ def copy_adapters(sequencing_data_dir, working_dir):
     return adapter_fnm
 
 
-def preprocess_using_bbtools(working_dir, rd1_fnm, rd2_fnm, force=False):
-    """Preprocess uings BBTools BBduk, BBnorm, and BBMerge.
+def preprocess_reads_using_bbtools(working_dir, rd1_fnm, rd2_fnm, force=False):
+    """Preprocess reads uings BBTools BBduk, BBnorm, and BBMerge.
 
     Parameters
     ----------
@@ -144,7 +144,7 @@ def preprocess_using_bbtools(working_dir, rd1_fnm, rd2_fnm, force=False):
             rd1_trimmed_fnm = rd1_fnm.replace(".fastq.gz", "_trimmed.fastq.gz")
             rd2_trimmed_fnm = rd2_fnm.replace(".fastq.gz", "_trimmed.fastq.gz")
             ru.BBDuk(
-                rd1_fnm, rd2_fnm, outp_fNm=rd1_trimmed_fnm, outp2_fNm=rd2_trimmed_fnm
+                rd1_fnm, rd2_fnm, outp_fnm=rd1_trimmed_fnm, outp2_fnm=rd2_trimmed_fnm
             )
             print("done in {0} s".format(time.time() - start_time), flush=True)
 
@@ -156,8 +156,8 @@ def preprocess_using_bbtools(working_dir, rd1_fnm, rd2_fnm, force=False):
             ru.BBNorm(
                 rd1_trimmed_fnm,
                 rd2_trimmed_fnm,
-                outp_fNm=rd1_normalized_fnm,
-                outp2_fNm=rd2_normalized_fnm,
+                outp_fnm=rd1_normalized_fnm,
+                outp2_fnm=rd2_normalized_fnm,
             )
             print("done in {0} s".format(time.time() - start_time), flush=True)
 
@@ -172,13 +172,16 @@ def preprocess_using_bbtools(working_dir, rd1_fnm, rd2_fnm, force=False):
             ru.BBMerge(
                 rd1_normalized_fnm,
                 rd2_normalized_fnm,
-                outp_fNm=rds_merged_fnm,
-                outpu1_fNm=rd1_unmerged_fnm,
-                outpu2_fNm=rd2_unmerged_fnm,
+                outp_fnm=rds_merged_fnm,
+                outpu1_fnm=rd1_unmerged_fnm,
+                outpu2_fnm=rd2_unmerged_fnm,
             )
             print("done in {0} s".format(time.time() - start_time), flush=True)
+
         return rds_merged_fnm, rd1_unmerged_fnm, rd2_unmerged_fnm
+
     else:
+
         return ()
 
 
@@ -207,12 +210,17 @@ def assemble_using_spades(working_dir, rd1_fnm, rd2_fnm, preprocess=True, force=
         with pushd(working_dir):
 
             # Optionally preprocess
+            rds_merged_fnm = None
+            rd1_unmerged_fnm = None
+            rd2_unmerged_fnm = None
             if preprocess:
                 (
                     rds_merged_fnm,
                     rd1_unmerged_fnm,
                     rd2_unmerged_fnm,
-                ) = preprocess_using_bbtools(working_dir, rd1_fnm, rd2_fnm, force=force)
+                ) = preprocess_reads_using_bbtools(
+                    working_dir, rd1_fnm, rd2_fnm, force=force
+                )
 
                 # Run SPAdes with merged reads
                 start_time = time.time()
@@ -286,17 +294,18 @@ def count_k_mers_in_seq(seq, seq_id=0, k_mer_len=25, k_mers=None):
         else:
             k_mers[k_mer]["src"].add(seq_id)
             k_mers[k_mer]["cnt"] += 1
+
     return k_mers
 
 
-def count_k_mers_in_rds(rd_fNm, k_mer_len=25, k_mers=None, seq_rcds=None):
+def count_k_mers_in_rds(rd_fnm, k_mer_len=25, k_mers=None, seq_rcds=None):
     """Count k-mers of a specified length in a gzipped file of reads
     in the specified format. Optionally update dictionary and list
     returned by this method.
 
     Parameters
     ----------
-    rd_fNm : str
+    rd_fnm : str
         The name of the gzipped read file
     k_mer_len : int
         The length of k-mers to count
@@ -316,21 +325,22 @@ def count_k_mers_in_rds(rd_fNm, k_mer_len=25, k_mers=None, seq_rcds=None):
         k_mers = {}
     if seq_rcds is None:
         seq_rcds = []
-    read_format, is_gzipped = ru.get_bio_read_format(rd_fNm)
+    read_format, is_gzipped = ru.get_bio_read_format(rd_fnm)
     _open = open
     if is_gzipped:
         _open = gzip.open
-    with _open(rd_fNm, "rt") as f:
+    with _open(rd_fnm, "rt") as f:
         seq_rcd_gen = SeqIO.parse(f, format=read_format)
         i_seq = -1
         for seq_rcd in seq_rcd_gen:
             i_seq += 1
             k_mers = count_k_mers_in_seq(seq_rcd.seq, i_seq, k_mers=k_mers)
             seq_rcds.append(seq_rcd)
+
     return k_mers, seq_rcds
 
 
-def write_k_mer_counts_in_rds(k_mers_in_rd1, k_mers_in_rd2, k_mer_counts_fNm):
+def write_k_mer_counts_in_rds(k_mers_in_rd1, k_mers_in_rd2, k_mer_counts_fnm):
     """Write the k-mer counts corresponding to paired reads to the
     specified file.
 
@@ -340,10 +350,10 @@ def write_k_mer_counts_in_rds(k_mers_in_rd1, k_mers_in_rd2, k_mer_counts_fNm):
         dictionary returned by count_k_mers_in_seq()
     k_mers_in_rd2 : dct
         dictionary returned by count_k_mers_in_seq()
-    k_mer_counts_fNm
+    k_mer_counts_fnm
         file name to which to write k-mers and their counts
     """
-    with open(k_mer_counts_fNm, "w") as f:
+    with open(k_mer_counts_fnm, "w") as f:
         k_mer_set_rd1 = set(k_mers_in_rd1.keys())
         k_mer_set_rd2 = set(k_mers_in_rd2.keys())
         k_mer_set = k_mer_set_rd1.union(k_mer_set_rd2)
@@ -361,14 +371,14 @@ def write_k_mer_counts_in_rds(k_mers_in_rd1, k_mers_in_rd2, k_mer_counts_fNm):
             )
 
 
-def read_k_mer_counts(k_mer_counts_fNm, seq_id=0, k_mers=None):
+def read_k_mer_counts(k_mer_counts_fnm, seq_id=0, k_mers=None):
     """Read the k-mer counts corresponding to paired reads from the
     specified file. Optionally update dictionary returned by
     count_k_mers_in_seq().
 
     Parameters
     ----------
-    k_mers_counts_fNm : str
+    k_mers_counts_fnm : str
         The name of the file containing k-mers and their counts
     seq_id : int
         The sequence identifer
@@ -383,7 +393,7 @@ def read_k_mer_counts(k_mer_counts_fNm, seq_id=0, k_mers=None):
     """
     if k_mers is None:
         k_mers = {}
-    with open(k_mer_counts_fNm) as f:
+    with open(k_mer_counts_fnm) as f:
         for ln in f:
             flds = ln.split()
             k_mer = flds[0]
@@ -396,6 +406,7 @@ def read_k_mer_counts(k_mer_counts_fNm, seq_id=0, k_mers=None):
                 k_mers[k_mer]["src"] = set([seq_id])
                 k_mers[k_mer]["rd1"] = cnt_rd1
                 k_mers[k_mer]["rd2"] = cnt_rd2
+
     return k_mers
 
 
@@ -474,11 +485,11 @@ def write_paired_reads_for_cnt(
     rd2_wr_file_name, rd2_wo_file_name = write_reads_for_cnt(
         i_rcds, seq_rcds_rd2, "rd2"
     )
-    return (rd1_wr_file_name, rd1_wo_file_name, rd2_wr_file_name, rd2_wo_file_name)
+    return rd1_wr_file_name, rd1_wo_file_name, rd2_wr_file_name, rd2_wo_file_name
 
 
 # TODO: Step through to validate
-def find_seq_rcds_for_cnt(k_mer_cnt_rds, coverage, k_mers):
+def find_seq_rcds_for_cnt(k_mer_cnt_rds, coverage, k_mers, n_clusters):
     """Use k-means clustering to identify reads containing a k-mer
     with the expected count.
 
@@ -653,7 +664,7 @@ def ghi(rd1_file_name, rd2_file_name):
         flush=True,
     )
     spades_wc_out_dir = BASE_FILE_NAME + "_spades_wc"
-    trusted_contigs_fNm = os.path.join(
+    trusted_contigs_fnm = os.path.join(
         ssake_out_base_name, ssake_out_base_name + "_scaffolds.fa"
     )
     if os.path.exists(spades_wc_out_dir):
@@ -662,7 +673,7 @@ def ghi(rd1_file_name, rd2_file_name):
             rd1_file_name,
             rd2_file_name,
             spades_wc_out_dir,
-            trusted_contigs_fNm=trusted_contigs_fNm,
+            trusted_contigs_fnm=trusted_contigs_fnm,
         )
     print("done in {0} s".format(time.time() - start_time), flush=True)
 
@@ -706,6 +717,7 @@ def align_assembly_output(aligner, working_dir, seq):
         if len(seq_rcds) > 0:
             apc_scr = aligner.score(seq + seq, seq_rcds[0].seq)
     print("done in {0} s".format(time.time() - start_time), flush=True)
+
     return spd_scr, apc_scr
 
 
