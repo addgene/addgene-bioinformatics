@@ -1,6 +1,7 @@
 import contextlib
 import glob
 import gzip
+import logging
 import os
 import shutil
 import subprocess
@@ -20,6 +21,19 @@ APC_OUTPUT_DIR = "apc"
 APC_BASE_FNM = "apc"
 APC_OUTPUT_FNM = APC_BASE_FNM + ".1.fa"
 
+# Logging configuration
+root = logging.getLogger()
+if not root.handlers:
+    ch = logging.StreamHandler()
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+    ch.setFormatter(formatter)
+    root.addHandler(ch)
+
+logger = logging.getLogger("AssemblyUtilities")
+logger.setLevel(logging.INFO)
+
 
 # TODO: Use pathlib?
 
@@ -38,15 +52,35 @@ def pushd(new_dir):
     None
 
     """
-    old_dir = os.getcwd()
-    os.chdir(new_dir)
     try:
+        old_dir = os.getcwd()
+        os.chdir(new_dir)
         yield
     finally:
         os.chdir(old_dir)
 
 
 # TODO: Add context manager for timing?
+@contextlib.contextmanager
+def timing(message):
+    """Time a chunk of code and print timing messages.
+
+    Parameters
+    ----------
+    message : str
+        Message to log
+
+    Returns
+    -------
+    None
+
+    """
+    try:
+        start_time = time.time()
+        logger.info(message + " started")
+        yield
+    finally:
+        logger.info(message + f" finished in {time.time() - start_time} s")
 
 
 def copy_reads(sequencing_data_dir, plate, well, working_dir):
@@ -145,44 +179,45 @@ def preprocess_reads_using_bbtools(working_dir, rd1_fnm, rd2_fnm, force=False):
         with pushd(working_dir):
 
             # Run BBDuk
-            start_time = time.time()
-            print("Trimming using BBDuk ...", end=" ", flush=True)
-            rd1_trimmed_fnm = rd1_fnm.replace(".fastq.gz", "_trimmed.fastq.gz")
-            rd2_trimmed_fnm = rd2_fnm.replace(".fastq.gz", "_trimmed.fastq.gz")
-            ru.BBDuk(
-                rd1_fnm, rd2_fnm, outp_fnm=rd1_trimmed_fnm, outp2_fnm=rd2_trimmed_fnm
-            )
-            print("done in {0} s".format(time.time() - start_time), flush=True)
+            with timing("Trimming using BBDuk"):
+                rd1_trimmed_fnm = rd1_fnm.replace(".fastq.gz", "_trimmed.fastq.gz")
+                rd2_trimmed_fnm = rd2_fnm.replace(".fastq.gz", "_trimmed.fastq.gz")
+                ru.BBDuk(
+                    rd1_fnm,
+                    rd2_fnm,
+                    outp_fnm=rd1_trimmed_fnm,
+                    outp2_fnm=rd2_trimmed_fnm,
+                )
 
             # Run BBNorm
-            start_time = time.time()
-            print("Normalizing using BBNorm ...", end=" ", flush=True)
-            rd1_normalized_fnm = rd1_fnm.replace(".fastq.gz", "_normalized.fastq.gz")
-            rd2_normalized_fnm = rd2_fnm.replace(".fastq.gz", "_normalized.fastq.gz")
-            ru.BBNorm(
-                rd1_trimmed_fnm,
-                rd2_trimmed_fnm,
-                outp_fnm=rd1_normalized_fnm,
-                outp2_fnm=rd2_normalized_fnm,
-            )
-            print("done in {0} s".format(time.time() - start_time), flush=True)
+            with timing("Normalizing using BBNorm"):
+                rd1_normalized_fnm = rd1_fnm.replace(
+                    ".fastq.gz", "_normalized.fastq.gz"
+                )
+                rd2_normalized_fnm = rd2_fnm.replace(
+                    ".fastq.gz", "_normalized.fastq.gz"
+                )
+                ru.BBNorm(
+                    rd1_trimmed_fnm,
+                    rd2_trimmed_fnm,
+                    outp_fnm=rd1_normalized_fnm,
+                    outp2_fnm=rd2_normalized_fnm,
+                )
 
             # Run BBMerge
-            start_time = time.time()
-            print("Merging using BBMerge ...", end=" ", flush=True)
-            rds_merged_fnm = rd1_fnm.replace("_R1", "_Rs").replace(
-                ".fastq.gz", "_merged.fastq.gz"
-            )
-            rd1_unmerged_fnm = rd1_fnm.replace(".fastq.gz", "_unmerged.fastq.gz")
-            rd2_unmerged_fnm = rd2_fnm.replace(".fastq.gz", "_unmerged.fastq.gz")
-            ru.BBMerge(
-                rd1_normalized_fnm,
-                rd2_normalized_fnm,
-                outp_fnm=rds_merged_fnm,
-                outpu1_fnm=rd1_unmerged_fnm,
-                outpu2_fnm=rd2_unmerged_fnm,
-            )
-            print("done in {0} s".format(time.time() - start_time), flush=True)
+            with timing("Merging using BBMerge"):
+                rds_merged_fnm = rd1_fnm.replace("_R1", "_Rs").replace(
+                    ".fastq.gz", "_merged.fastq.gz"
+                )
+                rd1_unmerged_fnm = rd1_fnm.replace(".fastq.gz", "_unmerged.fastq.gz")
+                rd2_unmerged_fnm = rd2_fnm.replace(".fastq.gz", "_unmerged.fastq.gz")
+                ru.BBMerge(
+                    rd1_normalized_fnm,
+                    rd2_normalized_fnm,
+                    outp_fnm=rds_merged_fnm,
+                    outpu1_fnm=rd1_unmerged_fnm,
+                    outpu2_fnm=rd2_unmerged_fnm,
+                )
 
         return rd1_unmerged_fnm, rd2_unmerged_fnm, rds_merged_fnm
 
@@ -229,37 +264,34 @@ def assemble_using_spades(working_dir, rd1_fnm, rd2_fnm, preprocess=True, force=
             rd1_unmerged_fnm = None
             rd2_unmerged_fnm = None
             if preprocess:
-                (
-                    rds_merged_fnm,
-                    rd1_unmerged_fnm,
-                    rd2_unmerged_fnm,
-                ) = preprocess_reads_using_bbtools(
-                    working_dir, rd1_fnm, rd2_fnm, force=force
-                )
+                with timing("Preprocessing using BBTools"):
+                    (
+                        rd1_unmerged_fnm,
+                        rd2_unmerged_fnm,
+                        rds_merged_fnm,
+                    ) = preprocess_reads_using_bbtools(
+                        working_dir, rd1_fnm, rd2_fnm, force=force
+                    )
 
                 # Run SPAdes with merged reads
-                start_time = time.time()
-                print("Assembling using SPAdes ...", end=" ", flush=True)
-                command = ru.spades(
-                    rd1_unmerged_fnm,
-                    rd2_unmerged_fnm,
-                    SPADES_OUTPUT_DIR,
-                    merged=rds_merged_fnm,
-                    cov_cutoff=100,
-                )
-                print("done in {0} s".format(time.time() - start_time), flush=True)
+                with timing("Assembling preprocessed reads using SPAdes"):
+                    ru.spades(
+                        rd1_unmerged_fnm,
+                        rd2_unmerged_fnm,
+                        SPADES_OUTPUT_DIR,
+                        merged=rds_merged_fnm,
+                        cov_cutoff=100,
+                    )
 
             else:
                 # Run SPAdes without merged reads
-                start_time = time.time()
-                print("Assembling using SPAdes ...", end=" ", flush=True)
-                command = ru.spades(
-                    rd1_fnm,
-                    rd2_fnm,
-                    SPADES_OUTPUT_DIR,
-                    cov_cutoff=100,
-                )
-                print("done in {0} s".format(time.time() - start_time), flush=True)
+                with timing("Assembling original reads using SPAdes"):
+                    ru.spades(
+                        rd1_fnm,
+                        rd2_fnm,
+                        SPADES_OUTPUT_DIR,
+                        cov_cutoff=100,
+                    )
 
             # Copy SPAdes output file, and parse
             spades_seq = None
@@ -271,11 +303,11 @@ def assemble_using_spades(working_dir, rd1_fnm, rd2_fnm, preprocess=True, force=
                 ][0].seq
 
             # Run apc
-            start_time = time.time()
-            print("Circularize using apc ...", end=" ", flush=True)
-            command = ru.apc(APC_BASE_FNM, SPADES_OUTPUT_FNM)
-            print("done in {0} s".format(time.time() - start_time), flush=True)
-            print("Directory: {0}".format(os.getcwd()))
+            with timing("Circularize using apc"):
+                ru.apc(APC_BASE_FNM, SPADES_OUTPUT_FNM)
+            logger.info(
+                f"Results of assembling usng SPAdes in directory: {os.getcwd()}"
+            )
 
             # Parse apc output file
             apc_seq = None
@@ -323,16 +355,14 @@ def compute_coverage_using_bbtools(working_dir, rd1_fnm, rd2_fnm, ref_fnm, force
         with pushd(working_dir):
 
             # Run BBMap
-            start_time = time.time()
-            print("Mapping using BBMap ...", end=" ", flush=True)
-            out_fnm = rd1_fnm.replace("_R1", "_Rs").replace(
-                ".fastq.gz", "_output.fastq.gz"
-            )
-            covstats_fnm = rd1_fnm.replace("_R1", "_Rs").replace(
-                ".fastq.gz", "_covstats.txt"
-            )
-            ru.BBMap(rd1_fnm, rd2_fnm, out_fnm, ref_fnm, covstats_fnm)
-            print("done in {0} s".format(time.time() - start_time), flush=True)
+            with timing("Mapping using BBMap"):
+                out_fnm = rd1_fnm.replace("_R1", "_Rs").replace(
+                    ".fastq.gz", "_output.fastq.gz"
+                )
+                covstats_fnm = rd1_fnm.replace("_R1", "_Rs").replace(
+                    ".fastq.gz", "_covstats.txt"
+                )
+                ru.BBMap(rd1_fnm, rd2_fnm, out_fnm, ref_fnm, covstats_fnm)
 
             # Parse BBMap coverage statistics
             cp = subprocess.run(
@@ -499,7 +529,7 @@ def read_k_mer_counts(k_mer_counts_fnm, seq_id=0, k_mers=None):
             cnt_rd1 = int(flds[1])
             cnt_rd2 = int(flds[2])
             if k_mer in k_mers:
-                print("Second occurance of k-mer: {0} unexpected".format(k_mer))
+                logger.ingof(f"Second occurance of k-mer: {k_mer} unexpected")
             else:
                 k_mers[k_mer] = {}
                 k_mers[k_mer]["src"] = set([seq_id])
@@ -679,7 +709,7 @@ def write_reads_for_cnt(i_rcds, seq_rcds, case):
 
 
 # TODO: Name and review
-def ghi(rd1_file_name, rd2_file_name):
+def ghi(initial_seq, rd1_file_name, rd2_file_name):
     # TODO: Settle
     BASE_FILE_NAME = "random_seq"
     EXP_CNT = 16
@@ -689,22 +719,16 @@ def ghi(rd1_file_name, rd2_file_name):
 
     # Count k-mers in the random sequence, doubled to represent
     # circular DNA
-    start_time = time.time()
-    print("Counting k_mers in initial sequence ...", end=" ", flush=True)
-    k_mers_seq = count_k_mers_in_seq(initial_seq + initial_seq)
-    print("done in {0} s".format(time.time() - start_time), flush=True)
+    with timing("Counting k_mers in initial sequence"):
+        k_mers_seq = count_k_mers_in_seq(initial_seq + initial_seq)
 
     # Count k-mers in the paired reads, and write the result to a
     # file
-    start_time = time.time()
-    print("Counting k_mers in reads ...", end=" ", flush=True)
-    k_mers_rd1, seq_rcds_rd1 = count_k_mers_in_rds(rd1_file_name)
-    k_mers_rd2, seq_rcds_rd2 = count_k_mers_in_rds(rd2_file_name)
-    print("done in {0} s".format(time.time() - start_time), flush=True)
-    start_time = time.time()
-    print("Writing k_mers and counts in reads ...", end=" ", flush=True)
-    write_k_mer_counts_in_rds(k_mers_rd1, k_mers_rd2, BASE_FILE_NAME + "_cnt.txt")
-    print("done in {0} s".format(time.time() - start_time), flush=True)
+    with timing("Counting k_mers in reads"):
+        k_mers_rd1, seq_rcds_rd1 = count_k_mers_in_rds(rd1_file_name)
+        k_mers_rd2, seq_rcds_rd2 = count_k_mers_in_rds(rd2_file_name)
+    with timing("Writing k_mers and counts in reads"):
+        write_k_mer_counts_in_rds(k_mers_rd1, k_mers_rd2, BASE_FILE_NAME + "_cnt.txt")
 
     # Collect k-mer counts, and compute coverage
     k_mer_cnt_seq = collect_k_mer_cnt(k_mers_seq, seq_cnt=2)
@@ -715,75 +739,67 @@ def ghi(rd1_file_name, rd2_file_name):
 
     # Separate reads into those containing a k-mer with the
     # expected count, and all others
-    print("Writing reads based on read count ...", end=" ", flush=True)
-    (
-        rd1_wr_file_name,
-        rd1_wo_file_name,
-        rd2_wr_file_name,
-        rd2_wo_file_name,
-    ) = write_paired_reads_for_cnt(
-        k_mer_cnt_rd1,
-        coverage_rd1,
-        k_mers_rd1,
-        seq_rcds_rd1,
-        k_mer_cnt_rd2,
-        coverage_rd2,
-        k_mers_rd2,
-        seq_rcds_rd2,
-        K_MER_CNT_REP,
-        EXP_CNT,
-    )
-    print("done in {0} s".format(time.time() - start_time), flush=True)
+    with timing("Writing reads based on read count"):
+        (
+            rd1_wr_file_name,
+            rd1_wo_file_name,
+            rd2_wr_file_name,
+            rd2_wo_file_name,
+        ) = write_paired_reads_for_cnt(
+            k_mer_cnt_rd1,
+            coverage_rd1,
+            k_mers_rd1,
+            seq_rcds_rd1,
+            k_mer_cnt_rd2,
+            coverage_rd2,
+            k_mers_rd2,
+            seq_rcds_rd2,
+            K_MER_CNT_REP,
+            EXP_CNT,
+        )
 
     # Assemble paired reads with repeats using SSAKE
-    start_time = time.time()
-    print("Assembling paired reads with repeats using SSAKE ...", end=" ", flush=True)
-    ssake_out_base_name = BASE_FILE_NAME + "_ssake"
-    if os.path.exists(ssake_out_base_name):
-        shutil.rmtree(ssake_out_base_name)
-        ru.ssake(
-            rd1_wr_file_name,
-            rd2_wr_file_name,
-            ssake_out_base_name,
-            FRAGMENT_LEN,
-            phred_threshold=20,  # -x
-            n_consec_bases=70,  # -n
-            ascii_offset=33,  # -d
-            min_coverage=5,  # -w
-            n_ovrlap_bases=20,  # -m
-            n_reads_to_call=2,  # -o
-            base_ratio=0.7,  # -r
-            n_bases_to_trim=0,  # -t
-            contig_size=100,  # -z
-            do_track_cvrg=0,  # -c
-            do_ignore_mppng=0,  # -y
-            do_ignore_headr=0,  # -k
-            do_break_ties=0,  # -q
-            do_run_verbose=0,
-        )  # -v
-    print("done in {0} s".format(time.time() - start_time), flush=True)
+    with timing("Assembling paired reads with repeats using SSAKE"):
+        ssake_out_base_name = BASE_FILE_NAME + "_ssake"
+        if os.path.exists(ssake_out_base_name):
+            shutil.rmtree(ssake_out_base_name)
+            ru.ssake(
+                rd1_wr_file_name,
+                rd2_wr_file_name,
+                ssake_out_base_name,
+                FRAGMENT_LEN,
+                phred_threshold=20,  # -x
+                n_consec_bases=70,  # -n
+                ascii_offset=33,  # -d
+                min_coverage=5,  # -w
+                n_ovrlap_bases=20,  # -m
+                n_reads_to_call=2,  # -o
+                base_ratio=0.7,  # -r
+                n_bases_to_trim=0,  # -t
+                contig_size=100,  # -z
+                do_track_cvrg=0,  # -c
+                do_ignore_mppng=0,  # -y
+                do_ignore_headr=0,  # -k
+                do_break_ties=0,  # -q
+                do_run_verbose=0,
+            )  # -v
 
     # Assemble paired reads with trusted contigs using SPAdes
-    start_time = time.time()
-    print(
-        "Assembling paired reads repeats "
-        + "and with trusted contigs using SPAdes ...",
-        end=" ",
-        flush=True,
-    )
-    spades_wc_out_dir = BASE_FILE_NAME + "_spades_wc"
-    trusted_contigs_fnm = os.path.join(
-        ssake_out_base_name, ssake_out_base_name + "_scaffolds.fa"
-    )
-    if os.path.exists(spades_wc_out_dir):
-        shutil.rmtree(spades_wc_out_dir)
-        command = ru.spades(
+    with timing(
+        "Assembling paired reads repeats and with trusted contigs using SPAdes"
+    ):
+        spades_wc_out_dir = BASE_FILE_NAME + "_spades_wc"
+        trusted_contigs_fnm = os.path.join(
+            ssake_out_base_name, ssake_out_base_name + "_scaffolds.fa"
+        )
+        if os.path.exists(spades_wc_out_dir):
+            shutil.rmtree(spades_wc_out_dir)
+        ru.spades(
             rd1_file_name,
             rd2_file_name,
             spades_wc_out_dir,
             trusted_contigs_fnm=trusted_contigs_fnm,
         )
-    print("done in {0} s".format(time.time() - start_time), flush=True)
 
 
 def align_assembly_output(aligner, working_dir, seq):
@@ -806,27 +822,26 @@ def align_assembly_output(aligner, working_dir, seq):
         Alignment score for the apc output
 
     """
-    # Read the multi-FASTA SPAdes output file, and align
-    start_time = time.time()
     case = os.path.basename(working_dir)
-    print("Aligning {0} assemblies ...".format(case), end=" ", flush=True)
-    output_pth = os.path.join(working_dir, SPADES_OUTPUT_DIR, SPADES_OUTPUT_FNM)
-    spd_scr = -1.0
-    if os.path.exists(output_pth):
-        spd_scr = 0.0
-        seq_rcds = [seq_rcd for seq_rcd in SeqIO.parse(output_pth, "fasta")]
-        if len(seq_rcds) > 0:
-            spd_scr = aligner.score(seq + seq, seq_rcds[0].seq)
+    with timing(f"Aligning {case} assemblies"):
 
-    # Read the FASTA apc output file, and align
-    output_pth = os.path.join(working_dir, APC_OUTPUT_FNM)
-    apc_scr = -1.0
-    if os.path.exists(output_pth):
-        apc_scr = 0.0
-        seq_rcds = [seq_rcd for seq_rcd in SeqIO.parse(output_pth, "fasta")]
-        if len(seq_rcds) > 0:
-            apc_scr = aligner.score(seq + seq, seq_rcds[0].seq)
-    print("done in {0} s".format(time.time() - start_time), flush=True)
+        # Read the multi-FASTA SPAdes output file, and align
+        output_pth = os.path.join(working_dir, SPADES_OUTPUT_DIR, SPADES_OUTPUT_FNM)
+        spd_scr = -1.0
+        if os.path.exists(output_pth):
+            spd_scr = 0.0
+            seq_rcds = [seq_rcd for seq_rcd in SeqIO.parse(output_pth, "fasta")]
+            if len(seq_rcds) > 0:
+                spd_scr = aligner.score(seq + seq, seq_rcds[0].seq)
+
+        # Read the FASTA apc output file, and align
+        output_pth = os.path.join(working_dir, APC_OUTPUT_FNM)
+        apc_scr = -1.0
+        if os.path.exists(output_pth):
+            apc_scr = 0.0
+            seq_rcds = [seq_rcd for seq_rcd in SeqIO.parse(output_pth, "fasta")]
+            if len(seq_rcds) > 0:
+                apc_scr = aligner.score(seq + seq, seq_rcds[0].seq)
 
     return spd_scr, apc_scr
 
