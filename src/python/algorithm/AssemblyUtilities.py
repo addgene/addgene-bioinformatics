@@ -132,7 +132,12 @@ def preprocess_reads_using_bbtools(working_dir, rd1_fnm, rd2_fnm, force=False):
 
     Returns
     -------
-    None
+    rd1_unmerged_fnm : str
+        File name of reads one, after optional preprocessing
+    rd2_unmerged_fnm : str
+        File name of reads two, after optional preprocessing
+    rds_merged_fnm : str
+        File name of Merged reads, after optional preprocessing
 
     """
     # Preprocess only if the output directory does not exist
@@ -179,7 +184,7 @@ def preprocess_reads_using_bbtools(working_dir, rd1_fnm, rd2_fnm, force=False):
             )
             print("done in {0} s".format(time.time() - start_time), flush=True)
 
-        return rds_merged_fnm, rd1_unmerged_fnm, rd2_unmerged_fnm
+        return rd1_unmerged_fnm, rd2_unmerged_fnm, rds_merged_fnm
 
     else:
 
@@ -202,7 +207,16 @@ def assemble_using_spades(working_dir, rd1_fnm, rd2_fnm, preprocess=True, force=
 
     Returns
     -------
-    None
+    spades_seq :  Bio.Seq.Seq
+        Sequence object returned by SPAdes
+    apc_seq :  Bio.Seq.Seq
+        Sequence object returned by apc
+    rd1_unmerged_fnm : str
+        File name of reads one, after optional preprocessing
+    rd2_unmerged_fnm : str
+        File name of reads two, after optional preprocessing
+    rds_merged_fnm : str
+        File name of Merged reads, after optional preprocessing
 
     """
     # Assemble only if the output directory does not exist
@@ -297,7 +311,11 @@ def compute_coverage_using_bbtools(working_dir, rd1_fnm, rd2_fnm, ref_fnm, force
 
     Returns
     -------
-    None
+    coverage : float
+    out_fnm : str
+        File name of reads mapped to the reference sequence
+    covstats_fnm : str
+        File name of the file to which coverage statistics are written
 
     """
     # Preprocess only if the output directory does not exist
@@ -390,10 +408,12 @@ def count_k_mers_in_rds(rd_fnm, k_mer_len=25, k_mers=None, seq_rcds=None):
 
     Returns
     -------
-    tuple(dict, list(Bio.SeqRecord.SeqRecord))
-        Dictionay containing k-mer keys and count and source sequence
-        record index values, and list of sequence records in which
-        k-mers were counted
+    k_mers : dict
+        Containing k-mer keys and count and source sequence record
+        index values
+    seq_rcds : list(Bio.SeqRecord.SeqRecord)
+        Contains sequence records in which k-mers were counted
+
     """
     if k_mers is None:
         k_mers = {}
@@ -426,6 +446,11 @@ def write_k_mer_counts_in_rds(k_mers_in_rd1, k_mers_in_rd2, k_mer_counts_fnm):
         dictionary returned by count_k_mers_in_seq()
     k_mer_counts_fnm
         file name to which to write k-mers and their counts
+
+    Returns
+    -------
+    None
+
     """
     with open(k_mer_counts_fnm, "w") as f:
         k_mer_set_rd1 = set(k_mers_in_rd1.keys())
@@ -461,7 +486,7 @@ def read_k_mer_counts(k_mer_counts_fnm, seq_id=0, k_mers=None):
 
     Returns
     -------
-    dict
+    k_mers : dict
         Dictionay containing k-mer keys and counts, and source
         sequence identifiers values
     """
@@ -541,8 +566,14 @@ def write_paired_reads_for_cnt(
 
     Returns
     -------
-    tuple(str)
-        Read one and two file names with and without repeats
+    rd1_wr_file_name : str
+        File name containing reads one with repeats
+    rd1_wo_file_name : str
+        File name containing reads one without repeats
+    rd2_wr_file_name : str
+        File name containing reads two with repeats
+    rd2_wo_file_name : str
+        File name containing reads two without repeats
 
     """
     # Find common sequence records
@@ -579,8 +610,10 @@ def find_seq_rcds_for_cnt(k_mer_cnt_rds, coverage, k_mers, n_clusters):
 
     Returns
     -------
-    tuple(set(int), sklearn.cluster.KMeans)
+    i_rcds : set(int)
         Index of sequence records in a cluster
+    kmeans : sklearn.cluster.KMeans
+        Object containing result of k-means estimation
 
     """
     # TODO: Settle
@@ -619,8 +652,10 @@ def write_reads_for_cnt(i_rcds, seq_rcds, case):
 
     Returns
     -------
-    tuple(str)
-        Names of read files
+    read_wr_file_name : str
+        File name of reads with repeats
+    read_wo_file_name : str
+        File name of reads without repeats
 
     """
     # TODO: Settle
@@ -652,6 +687,13 @@ def ghi(rd1_file_name, rd2_file_name):
     OUTER_DISTANCE = 500
     FRAGMENT_LEN = OUTER_DISTANCE
 
+    # Count k-mers in the random sequence, doubled to represent
+    # circular DNA
+    start_time = time.time()
+    print("Counting k_mers in initial sequence ...", end=" ", flush=True)
+    k_mers_seq = count_k_mers_in_seq(initial_seq + initial_seq)
+    print("done in {0} s".format(time.time() - start_time), flush=True)
+
     # Count k-mers in the paired reads, and write the result to a
     # file
     start_time = time.time()
@@ -665,21 +707,15 @@ def ghi(rd1_file_name, rd2_file_name):
     print("done in {0} s".format(time.time() - start_time), flush=True)
 
     # Collect k-mer counts, and compute coverage
-    # TODO: How to count kmers in the sequence before it is known
-    # k_mer_cnt_seq = collect_k_mer_cnt(k_mers_seq, seq_cnt=2)
+    k_mer_cnt_seq = collect_k_mer_cnt(k_mers_seq, seq_cnt=2)
     k_mer_cnt_rd1 = collect_k_mer_cnt(k_mers_rd1, seq_cnt=1)
     k_mer_cnt_rd2 = collect_k_mer_cnt(k_mers_rd2, seq_cnt=1)
-    # coverage_rd1 = int(np.sum(k_mer_cnt_rd1) / np.sum(k_mer_cnt_seq))
-    # coverage_rd2 = int(np.sum(k_mer_cnt_rd2) / np.sum(k_mer_cnt_seq))
-    coverage_rd1 = 1
-    coverage_rd2 = 1
+    coverage_rd1 = int(np.sum(k_mer_cnt_rd1) / np.sum(k_mer_cnt_seq))
+    coverage_rd2 = int(np.sum(k_mer_cnt_rd2) / np.sum(k_mer_cnt_seq))
 
     # Separate reads into those containing a k-mer with the
     # expected count, and all others
     print("Writing reads based on read count ...", end=" ", flush=True)
-    # TODO: What to do with this r_k_mers
-    # r_k_mer_exp_rd1 = str(r_k_mers[K_MER_CNT_REP.index(EXP_CNT)])
-    # r_k_mer_exp_rd2 = r_k_mer_exp_rd1[-1::-1]
     (
         rd1_wr_file_name,
         rd1_wo_file_name,
@@ -698,8 +734,6 @@ def ghi(rd1_file_name, rd2_file_name):
         EXP_CNT,
     )
     print("done in {0} s".format(time.time() - start_time), flush=True)
-    # print("r_k_mer_exp_rd1: {0}".format(r_k_mer_exp_rd1))
-    # print("r_k_mer_exp_rd2: {0}".format(r_k_mer_exp_rd2))
 
     # Assemble paired reads with repeats using SSAKE
     start_time = time.time()
@@ -766,8 +800,10 @@ def align_assembly_output(aligner, working_dir, seq):
 
     Returns
     -------
-    tuple(float)
-        Alignment score for the SPAdes and apc output
+    spd_scr
+        Alignment score for the SPAdes output
+    apc_scr
+        Alignment score for the apc output
 
     """
     # Read the multi-FASTA SPAdes output file, and align
