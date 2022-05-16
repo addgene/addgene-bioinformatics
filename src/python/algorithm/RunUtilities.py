@@ -8,7 +8,18 @@ from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 import docker
 
-logger = logging.getLogger(__name__)
+# Logging configuration
+root = logging.getLogger()
+if not root.handlers:
+    ch = logging.StreamHandler()
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+    ch.setFormatter(formatter)
+    root.addHandler(ch)
+
+logger = logging.getLogger("RunUtilities")
+logger.setLevel(logging.INFO)
 
 
 def csc(a_seq, o_seq):
@@ -98,6 +109,7 @@ def csc(a_seq, o_seq):
     )
 
     # Run the command in the Docker image
+    logger.info(f"Running {command} in {working_dir} on {image}")
     client = docker.from_env()
     client.containers.run(
         image,
@@ -335,6 +347,7 @@ def kmc(
     )
 
     # Run the command in the Docker image
+    logger.info(f"Running {command} in {working_dir} on {image}")
     client = docker.from_env()
     return client.containers.run(
         image,
@@ -464,6 +477,7 @@ def kmc_transform(
         command = " ".join([command, "-s"])
 
     # Run the command in the Docker image
+    logger.info(f"Running {command} in {working_dir} on {image}")
     client = docker.from_env()
     return client.containers.run(
         image,
@@ -636,6 +650,7 @@ def kmc_simple(
         command = " ".join([command, "-oc{0}".format(out_calc_mode)])
 
     # Run the command in the Docker image
+    logger.info(f"Running {command} in {working_dir} on {image}")
     client = docker.from_env()
     return client.containers.run(
         image,
@@ -845,6 +860,7 @@ def kmc_filter(
     )
 
     # Run the command in the Docker image
+    logger.info(f"Running {command} in {working_dir} on {image}")
     client = docker.from_env()
     return client.containers.run(
         image,
@@ -1059,6 +1075,7 @@ def ssake(
     )
 
     # Run the command in the Docker image
+    logger.info(f"Running {command} in {working_dir} on {image}")
     client = docker.from_env()
     return client.containers.run(
         image,
@@ -1248,6 +1265,7 @@ def spades(inp_fq_one_fnm, inp_fq_two_fnm, out_dir, *args, **kwargs):
         )
 
     # Run the command in the Docker image
+    logger.info(f"Running {command} in {working_dir} on {image}")
     client = docker.from_env()
     return client.containers.run(
         image,
@@ -1312,6 +1330,7 @@ def apc(base_file_name, contigs_file_name):
     )
 
     # Run the command in the Docker image
+    logger.info(f"Running {command} in {working_dir} on {image}")
     client = docker.from_env()
     return client.containers.run(
         image,
@@ -1707,6 +1726,12 @@ def BBDuk(
         on the value of the stdout and stderr arguments
 
     """
+    # Define image, and Docker run parameters
+    image = "ralatsdio/bbtools:v38.90"
+    hosting_dir = os.getcwd()
+    working_dir = "/data"
+    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
+
     # Define BBDuk command
     command = " ".join(
         [
@@ -1741,11 +1766,8 @@ def BBDuk(
         )
 
     # Run the command in the Docker image
-    image = "ralatsdio/bbtools:v38.90"
+    logger.info(f"Running {command} in {working_dir} on {image}")
     client = docker.from_env()
-    hosting_dir = os.getcwd()
-    working_dir = "/data"
-    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
     return client.containers.run(
         image,
         command=command,
@@ -1920,6 +1942,12 @@ def BBNorm(
         on the value of the stdout and stderr arguments
 
     """
+    # Define image, and Docker run parameters
+    image = "ralatsdio/bbtools:v38.90"
+    hosting_dir = os.getcwd()
+    working_dir = "/data"
+    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
+
     # Define BBNorm command
     command = " ".join(
         [
@@ -1946,11 +1974,8 @@ def BBNorm(
         )
 
     # Run the command in the Docker image
-    image = "ralatsdio/bbtools:v38.90"
+    logger.info(f"Running {command} in {working_dir} on {image}")
     client = docker.from_env()
-    hosting_dir = os.getcwd()
-    working_dir = "/data"
-    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
     return client.containers.run(
         image,
         command=command,
@@ -2216,6 +2241,12 @@ def BBMerge(
         on the value of the stdout and stderr arguments
 
     """
+    # Define image, and Docker run parameters
+    image = "ralatsdio/bbtools:v38.90"
+    hosting_dir = os.getcwd()
+    working_dir = "/data"
+    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
+
     # Define BBMerge command
     command = " ".join(
         [
@@ -2241,11 +2272,8 @@ def BBMerge(
         )
 
     # Run the command in the Docker image
-    image = "ralatsdio/bbtools:v38.90"
+    logger.info(f"Running {command} in {working_dir} on {image}")
     client = docker.from_env()
-    hosting_dir = os.getcwd()
-    working_dir = "/data"
-    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
     return client.containers.run(
         image,
         command=command,
@@ -2582,6 +2610,12 @@ def BBMap(
         on the value of the stdout and stderr arguments
 
     """
+    # Define image, and Docker run parameters
+    image = "ralatsdio/bbtools:v38.90"
+    hosting_dir = os.getcwd()
+    working_dir = "/data"
+    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
+
     # Define BBMap command
     command = " ".join(
         [
@@ -2605,11 +2639,8 @@ def BBMap(
         )
 
     # Run the command in the Docker image
-    image = "ralatsdio/bbtools:v38.90"
+    logger.info(f"Running {command} in {working_dir} on {image}")
     client = docker.from_env()
-    hosting_dir = os.getcwd()
-    working_dir = "/data"
-    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
     return client.containers.run(
         image,
         command=command,
@@ -2708,6 +2739,12 @@ def BBSplit(inp_fq_fnm, *args, **kwargs):
         on the value of the stdout and stderr arguments
 
     """
+    # Define image, and Docker run parameters
+    image = "ralatsdio/bbtools:v38.90"
+    hosting_dir = os.getcwd()
+    working_dir = "/data"
+    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
+
     # Define BBMerge command
     basename = inp_fq_fnm.split(".", 1)
     outp1_fnm = f"{basename[0]}_R1.{basename[1]}"
@@ -2732,11 +2769,8 @@ def BBSplit(inp_fq_fnm, *args, **kwargs):
         )
 
     # Run the command in the Docker image
-    image = "ralatsdio/bbtools:v38.90"
+    logger.info(f"Running {command} in {working_dir} on {image}")
     client = docker.from_env()
-    hosting_dir = os.getcwd()
-    working_dir = "/data"
-    volumes = {hosting_dir: {"bind": working_dir, "mode": "rw"}}
     return client.containers.run(
         image,
         command=command,
