@@ -18,7 +18,7 @@ asttokens==2.0.5
     # via stack-data
 attrs==21.4.0
     # via py-tes
-awscli==1.22.88
+awscli==1.24.9
     # via -r requirements.in
 backcall==0.2.0
     # via ipython
@@ -26,7 +26,7 @@ bagit==1.8.1
     # via cwltool
 biopython==1.79
     # via -r requirements.in
-bleach==4.1.0
+bleach==5.0.0
     # via galaxy-util
 blessed==1.19.1
     # via enlighten
@@ -34,30 +34,30 @@ boltons==21.0.0
     # via galaxy-util
 boto==2.49.0
     # via toil
-boto3==1.21.33
+boto3==1.23.9
     # via toil
-boto3-stubs[s3]==1.21.33
+boto3-stubs[s3]==1.23.9
     # via toil
-botocore==1.24.33
+botocore==1.26.9
     # via
     #   awscli
     #   boto3
     #   s3transfer
-botocore-stubs==1.24.33
+botocore-stubs==1.26.9
     # via boto3-stubs
-cachecontrol==0.12.10
+cachecontrol==0.12.11
     # via schema-salad
 cachetools==4.2.4
     # via google-auth
-certifi==2021.10.8
+certifi==2022.5.18.1
     # via requests
 cffi==1.15.0
     # via pynacl
 charset-normalizer==2.0.12
     # via requests
-click==8.1.2
+click==8.1.3
     # via pip-tools
-colorama==0.4.3
+colorama==0.4.4
     # via awscli
 coloredlogs==15.0.1
     # via cwltool
@@ -67,11 +67,11 @@ cycler==0.11.0
     # via matplotlib
 decorator==5.1.1
     # via ipython
-dill==0.3.4
+dill==0.3.5.1
     # via toil
 docker==5.0.3
     # via toil
-docutils==0.15.2
+docutils==0.16
     # via
     #   awscli
     #   galaxy-util
@@ -79,7 +79,7 @@ enlighten==1.10.2
     # via toil
 executing==0.8.3
     # via stack-data
-fonttools==4.31.2
+fonttools==4.33.3
     # via matplotlib
 future==0.18.2
     # via py-tes
@@ -107,9 +107,9 @@ google-cloud-storage==1.6.0
     # via toil
 google-crc32c==1.3.0
     # via google-resumable-media
-google-resumable-media==2.3.2
+google-resumable-media==2.3.3
     # via google-cloud-storage
-googleapis-common-protos==1.56.0
+googleapis-common-protos==1.56.2
     # via google-api-core
 http-parser==0.9.0
     # via pymesos
@@ -117,7 +117,7 @@ humanfriendly==10.0
     # via coloredlogs
 idna==3.3
     # via requests
-ipython==8.2.0
+ipython==8.3.0
     # via -r requirements.in
 isodate==0.6.1
     # via rdflib
@@ -141,7 +141,7 @@ lxml==4.8.0
     #   prov
 markupsafe==2.1.1
     # via galaxy-util
-matplotlib==3.5.1
+matplotlib==3.5.2
     # via -r requirements.in
 matplotlib-inline==0.1.3
     # via ipython
@@ -149,23 +149,25 @@ mistune==0.8.4
     # via schema-salad
 msgpack==1.0.3
     # via cachecontrol
-mypy-boto3-s3==1.21.31
+mypy-boto3-s3==1.23.0.post1
     # via boto3-stubs
 mypy-extensions==0.4.3
     # via cwltool
-networkx==2.7.1
+networkx==2.8.2
     # via prov
-numpy==1.22.3
+numpy==1.22.4
     # via
     #   biopython
     #   matplotlib
+    #   pandas
     #   scikit-learn
     #   scipy
 packaging==21.3
     # via
-    #   bleach
     #   galaxy-util
     #   matplotlib
+pandas==1.4.2
+    # via -r requirements.in
 parso==0.8.3
     # via jedi
 pep517==0.12.0
@@ -174,21 +176,21 @@ pexpect==4.8.0
     # via ipython
 pickleshare==0.7.5
     # via ipython
-pillow==9.1.0
+pillow==9.1.1
     # via matplotlib
-pip-tools==6.5.1
+pip-tools==6.6.2
     # via -r requirements.in
 prefixed==0.3.2
     # via enlighten
 prompt-toolkit==3.0.29
     # via ipython
-protobuf==3.20.0
+protobuf==3.20.1
     # via
     #   google-api-core
     #   googleapis-common-protos
 prov==1.5.1
     # via cwltool
-psutil==5.9.0
+psutil==5.9.1
     # via
     #   cwltool
     #   toil
@@ -208,17 +210,17 @@ pycparser==2.21
     # via cffi
 pycryptodome==3.14.1
     # via galaxy-util
-pydantic==1.9.0
+pydantic==1.9.1
     # via galaxy-tool-util
 pydot==1.4.2
     # via cwltool
-pygments==2.11.2
+pygments==2.12.0
     # via ipython
 pymesos==0.3.15
     # via toil
 pynacl==1.5.0
     # via toil
-pyparsing==3.0.7
+pyparsing==3.0.9
     # via
     #   cwltool
     #   matplotlib
@@ -229,12 +231,14 @@ python-dateutil==2.8.2
     # via
     #   botocore
     #   matplotlib
+    #   pandas
     #   prov
     #   py-tes
     #   toil
 pytz==2022.1
     # via
     #   google-api-core
+    #   pandas
     #   toil
 pyyaml==5.4.1
     # via
@@ -279,11 +283,11 @@ s3transfer==0.5.2
     # via
     #   awscli
     #   boto3
-schema-salad==8.2.20220204150214
+schema-salad==8.3.20220525163636
     # via cwltool
-scikit-learn==1.0.2
+scikit-learn==1.1.1
     # via -r requirements.in
-scipy==1.8.0
+scipy==1.8.1
     # via scikit-learn
 shellescape==3.8.1
     # via cwltool
@@ -311,11 +315,11 @@ toil[aws,cwl,encryption,google,mesos]==5.6.0
     # via -r requirements.in
 tomli==2.0.1
     # via pep517
-traitlets==5.1.1
+traitlets==5.2.1.post0
     # via
     #   ipython
     #   matplotlib-inline
-typing-extensions==4.1.1
+typing-extensions==4.2.0
     # via
     #   boto3-stubs
     #   botocore-stubs

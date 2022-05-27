@@ -2,6 +2,7 @@ awscli
 biopython
 ipython
 matplotlib
+pandas
 pip-tools
 scikit-learn
 toil[aws,mesos,google,encryption,cwl]
