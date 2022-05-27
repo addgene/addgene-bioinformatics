@@ -8,8 +8,10 @@ import subprocess
 import time
 
 from Bio import Align, SeqIO
+from Bio.Seq import Seq
 import numpy as np
 from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
 
 import RunUtilities as ru
 
@@ -60,7 +62,6 @@ def pushd(new_dir):
         os.chdir(old_dir)
 
 
-# TODO: Add context manager for timing?
 @contextlib.contextmanager
 def timing(message):
     """Time a chunk of code and print timing messages.
@@ -83,7 +84,7 @@ def timing(message):
         logger.info(message + f" finished in {time.time() - start_time} s")
 
 
-def copy_reads(sequencing_data_dir, plate, well, working_dir):
+def copy_reads(sequencing_data_dir, plate, well, working_dir, force=False):
     """Copy read files for a given plate and well to a working
     directory, if they don't already exist there.
 
@@ -97,6 +98,8 @@ def copy_reads(sequencing_data_dir, plate, well, working_dir):
         Well identifier
     working_dir : str
         Path to working directory
+    force : boolean
+        Flag to force copying if read files exist
 
     Returns
     -------
@@ -118,13 +121,13 @@ def copy_reads(sequencing_data_dir, plate, well, working_dir):
     rd_fnms = (rd1_fnm, rd2_fnm)
     for rd_fnm in rd_fnms:
         rd_file_path = os.path.join(sequencing_data_dir, plate_dir, rd_fnm)
-        if not os.path.exists(rd_fnm):
+        if not os.path.exists(rd_fnm) or force:
             shutil.copy(rd_file_path, working_dir)
 
     return rd_fnms
 
 
-def copy_adapters(sequencing_data_dir, working_dir):
+def copy_adapters(sequencing_data_dir, working_dir, force):
     """Copy adapters file to a working directory, if it doesn't
     already exist there.
 
@@ -134,17 +137,19 @@ def copy_adapters(sequencing_data_dir, working_dir):
         Path to directory containing sequencing data
     working_dir : str
         Path to working directory
+    force : boolean
+        Flag to force copying if adapters file exists
 
     Returns
     -------
     adapter_fnm : str
-        Adapte file name
+        Adapter file name
 
     """
     # Copy each file, if needed
     adapter_fnm = "adapters.fa"
     adapter_file_path = os.path.join(sequencing_data_dir, adapter_fnm)
-    if not os.path.exists(adapter_fnm):
+    if not os.path.exists(adapter_fnm) or force:
         shutil.copy(adapter_file_path, working_dir)
 
     return adapter_fnm
@@ -161,8 +166,8 @@ def preprocess_reads_using_bbtools(working_dir, rd1_fnm, rd2_fnm, force=False):
         Name of read one file
     rd2_fnm : str
         Name of read two file
-    force=False : boolean
-        Flag to force preprocessing if output directory exists
+    force : boolean
+        Flag to force preprocessing if output files exist
 
     Returns
     -------
@@ -175,13 +180,24 @@ def preprocess_reads_using_bbtools(working_dir, rd1_fnm, rd2_fnm, force=False):
 
     """
     # Preprocess only if the output directory does not exist
-    if not os.path.exists(working_dir) or force:
-        with pushd(working_dir):
+    rd1_trimmed_fnm = rd1_fnm.replace(".fastq.gz", "_trimmed.fastq.gz")
+    rd2_trimmed_fnm = rd2_fnm.replace(".fastq.gz", "_trimmed.fastq.gz")
+    rd1_normalized_fnm = rd1_fnm.replace(".fastq.gz", "_normalized.fastq.gz")
+    rd2_normalized_fnm = rd2_fnm.replace(".fastq.gz", "_normalized.fastq.gz")
+    rd1_unmerged_fnm = rd1_fnm.replace(".fastq.gz", "_unmerged.fastq.gz")
+    rd2_unmerged_fnm = rd2_fnm.replace(".fastq.gz", "_unmerged.fastq.gz")
+    rds_merged_fnm = rd1_fnm.replace("_R1", "_Rs").replace(
+        ".fastq.gz", "_merged.fastq.gz"
+    )
+    with pushd(working_dir):
 
-            # Run BBDuk
+        # Run BBDuk, if needed
+        if (
+            not os.path.exists(rd1_trimmed_fnm)
+            or not os.path.exists(rd2_trimmed_fnm)
+            or force
+        ):
             with timing("Trimming using BBDuk"):
-                rd1_trimmed_fnm = rd1_fnm.replace(".fastq.gz", "_trimmed.fastq.gz")
-                rd2_trimmed_fnm = rd2_fnm.replace(".fastq.gz", "_trimmed.fastq.gz")
                 ru.BBDuk(
                     rd1_fnm,
                     rd2_fnm,
@@ -189,14 +205,13 @@ def preprocess_reads_using_bbtools(working_dir, rd1_fnm, rd2_fnm, force=False):
                     outp2_fnm=rd2_trimmed_fnm,
                 )
 
-            # Run BBNorm
+        # Run BBNorm, if needed
+        if (
+            not os.path.exists(rd1_normalized_fnm)
+            or not os.path.exists(rd2_normalized_fnm)
+            or force
+        ):
             with timing("Normalizing using BBNorm"):
-                rd1_normalized_fnm = rd1_fnm.replace(
-                    ".fastq.gz", "_normalized.fastq.gz"
-                )
-                rd2_normalized_fnm = rd2_fnm.replace(
-                    ".fastq.gz", "_normalized.fastq.gz"
-                )
                 ru.BBNorm(
                     rd1_trimmed_fnm,
                     rd2_trimmed_fnm,
@@ -204,13 +219,14 @@ def preprocess_reads_using_bbtools(working_dir, rd1_fnm, rd2_fnm, force=False):
                     outp2_fnm=rd2_normalized_fnm,
                 )
 
-            # Run BBMerge
+        # Run BBMerge, if needed
+        if (
+            not os.path.exists(rds_merged_fnm)
+            or not os.path.exists(rd1_unmerged_fnm)
+            or not os.path.exists(rd2_unmerged_fnm)
+            or force
+        ):
             with timing("Merging using BBMerge"):
-                rds_merged_fnm = rd1_fnm.replace("_R1", "_Rs").replace(
-                    ".fastq.gz", "_merged.fastq.gz"
-                )
-                rd1_unmerged_fnm = rd1_fnm.replace(".fastq.gz", "_unmerged.fastq.gz")
-                rd2_unmerged_fnm = rd2_fnm.replace(".fastq.gz", "_unmerged.fastq.gz")
                 ru.BBMerge(
                     rd1_normalized_fnm,
                     rd2_normalized_fnm,
@@ -219,11 +235,15 @@ def preprocess_reads_using_bbtools(working_dir, rd1_fnm, rd2_fnm, force=False):
                     outpu2_fnm=rd2_unmerged_fnm,
                 )
 
-        return rd1_unmerged_fnm, rd2_unmerged_fnm, rds_merged_fnm
-
-    else:
-
-        return ()
+    return (
+        rd1_trimmed_fnm,
+        rd2_trimmed_fnm,
+        rd1_normalized_fnm,
+        rd2_normalized_fnm,
+        rd1_unmerged_fnm,
+        rd2_unmerged_fnm,
+        rds_merged_fnm,
+    )
 
 
 def assemble_using_spades(working_dir, rd1_fnm, rd2_fnm, preprocess=True, force=False):
@@ -238,7 +258,7 @@ def assemble_using_spades(working_dir, rd1_fnm, rd2_fnm, preprocess=True, force=
     rd2_fnm : str
         Name of read two file
     force=False : boolean
-        Flag to force assembly if output directory exists
+        Flag to force assembly if output files exist
 
     Returns
     -------
@@ -255,25 +275,32 @@ def assemble_using_spades(working_dir, rd1_fnm, rd2_fnm, preprocess=True, force=
 
     """
     # Assemble only if the output directory does not exist
+    spades_seq = None
+    apc_seq = None
+    rd1_unmerged_fnm = None
+    rd2_unmerged_fnm = None
+    rds_merged_fnm = None
     spades_dir = os.path.join(working_dir, SPADES_OUTPUT_DIR)
-    if not os.path.exists(spades_dir) or force:
-        with pushd(working_dir):
+    output_pth = os.path.join(SPADES_OUTPUT_DIR, SPADES_OUTPUT_FNM)
+    with pushd(working_dir):
 
-            # Optionally preprocess
-            rds_merged_fnm = None
-            rd1_unmerged_fnm = None
-            rd2_unmerged_fnm = None
-            if preprocess:
-                with timing("Preprocessing using BBTools"):
-                    (
-                        rd1_unmerged_fnm,
-                        rd2_unmerged_fnm,
-                        rds_merged_fnm,
-                    ) = preprocess_reads_using_bbtools(
-                        working_dir, rd1_fnm, rd2_fnm, force=force
-                    )
+        # Optionally preprocess, if needed
+        if preprocess:
+            with timing("Preprocessing using BBTools"):
+                (
+                    rd1_trimmed_fnm,
+                    rd2_trimmed_fnm,
+                    rd1_normalized_fnm,
+                    rd2_normalized_fnm,
+                    rd1_unmerged_fnm,
+                    rd2_unmerged_fnm,
+                    rds_merged_fnm,
+                ) = preprocess_reads_using_bbtools(
+                    working_dir, rd1_fnm, rd2_fnm, force=force
+                )
 
-                # Run SPAdes with merged reads
+            # Run SPAdes with merged reads, if needed
+            if not os.path.exists(output_pth) or force:
                 with timing("Assembling preprocessed reads using SPAdes"):
                     ru.spades(
                         rd1_unmerged_fnm,
@@ -283,8 +310,9 @@ def assemble_using_spades(working_dir, rd1_fnm, rd2_fnm, preprocess=True, force=
                         cov_cutoff=100,
                     )
 
-            else:
-                # Run SPAdes without merged reads
+        else:
+            # Run SPAdes without merged reads, if needed
+            if not os.path.exists(output_pth) or force:
                 with timing("Assembling original reads using SPAdes"):
                     ru.spades(
                         rd1_fnm,
@@ -293,36 +321,33 @@ def assemble_using_spades(working_dir, rd1_fnm, rd2_fnm, preprocess=True, force=
                         cov_cutoff=100,
                     )
 
-            # Copy SPAdes output file, and parse
-            spades_seq = None
-            output_pth = os.path.join(SPADES_OUTPUT_DIR, SPADES_OUTPUT_FNM)
-            if os.path.exists(output_pth):
-                shutil.copy(output_pth, ".")
-                spades_seq = [
-                    seq_rcd for seq_rcd in SeqIO.parse(SPADES_OUTPUT_FNM, "fasta")
-                ][0].seq
+        # Copy SPAdes output file, and parse
+        if os.path.exists(output_pth):
+            shutil.copy(output_pth, ".")
+            spades_seq = [
+                seq_rcd for seq_rcd in SeqIO.parse(SPADES_OUTPUT_FNM, "fasta")
+            ][0].seq
 
-            # Run apc
-            with timing("Circularize using apc"):
-                ru.apc(APC_BASE_FNM, SPADES_OUTPUT_FNM)
-            logger.info(
-                f"Results of assembling usng SPAdes in directory: {os.getcwd()}"
-            )
+        # Run apc
+        with timing("Circularize using apc"):
+            ru.apc(APC_BASE_FNM, SPADES_OUTPUT_FNM)
+        logger.info(
+            f"Results of assembling usng SPAdes in directory: {os.getcwd()}"
+        )
 
-            # Parse apc output file
-            apc_seq = None
-            if os.path.exists(APC_OUTPUT_FNM):
-                apc_seq = [seq_rcd for seq_rcd in SeqIO.parse(APC_OUTPUT_FNM, "fasta")][
-                    0
-                ].seq
+        # Parse apc output file
+        if os.path.exists(APC_OUTPUT_FNM):
+            apc_seq = [seq_rcd for seq_rcd in SeqIO.parse(APC_OUTPUT_FNM, "fasta")][
+                0
+            ].seq
 
-            return (
-                spades_seq,
-                apc_seq,
-                rd1_unmerged_fnm,
-                rd2_unmerged_fnm,
-                rds_merged_fnm,
-            )
+        return (
+            spades_seq,
+            apc_seq,
+            rd1_unmerged_fnm,
+            rd2_unmerged_fnm,
+            rds_merged_fnm,
+        )
 
 
 def compute_coverage_using_bbtools(working_dir, rd1_fnm, rd2_fnm, ref_fnm, force=False):
@@ -339,29 +364,31 @@ def compute_coverage_using_bbtools(working_dir, rd1_fnm, rd2_fnm, ref_fnm, force
     ref_fnm : str
         Name of reference sequence file
     force=False : boolean
-        Flag to force preprocessing if output directory exists
+        Flag to force computing if output files exist
 
     Returns
     -------
     coverage : float
+        Average number of reads that map to the reference sequence
     out_fnm : str
         File name of reads mapped to the reference sequence
     covstats_fnm : str
         File name of the file to which coverage statistics are written
 
     """
-    # Preprocess only if the output directory does not exist
-    if not os.path.exists(working_dir) or force:
-        with pushd(working_dir):
+    # Compute coverage, if needed
+    coverage = 0
+    out_fnm = rd1_fnm.replace("_R1", "_Rs").replace(
+        ".fastq.gz", "_output.fastq.gz"
+    )
+    covstats_fnm = rd1_fnm.replace("_R1", "_Rs").replace(
+        ".fastq.gz", "_covstats.txt"
+    )
+    with pushd(working_dir):
+        if not os.path.exists(out_fnm) or not os.path.exists(covstats_fnm) or force:
 
             # Run BBMap
             with timing("Mapping using BBMap"):
-                out_fnm = rd1_fnm.replace("_R1", "_Rs").replace(
-                    ".fastq.gz", "_output.fastq.gz"
-                )
-                covstats_fnm = rd1_fnm.replace("_R1", "_Rs").replace(
-                    ".fastq.gz", "_covstats.txt"
-                )
                 ru.BBMap(rd1_fnm, rd2_fnm, out_fnm, ref_fnm, covstats_fnm)
 
             # Parse BBMap coverage statistics
@@ -374,11 +401,7 @@ def compute_coverage_using_bbtools(working_dir, rd1_fnm, rd2_fnm, ref_fnm, force
             )
             coverage = float(cp.stdout.strip())
 
-        return coverage, out_fnm, covstats_fnm
-
-    else:
-
-        return ()
+    return coverage, out_fnm, covstats_fnm
 
 
 def count_k_mers_in_seq(seq, seq_id=0, k_mer_len=25, k_mers=None):
@@ -394,8 +417,8 @@ def count_k_mers_in_seq(seq, seq_id=0, k_mer_len=25, k_mers=None):
         The source sequence identifer
     k_mer_len : int
         The length of k-mers to count
-    k_mers : None or dct
-        None or dictionary returned by this method
+    k_mers : dct
+        Emtpy, or returned by this method
 
     Returns
     -------
@@ -409,13 +432,19 @@ def count_k_mers_in_seq(seq, seq_id=0, k_mer_len=25, k_mers=None):
     seq_len = len(seq)
     for i_seq in range(seq_len - k_mer_len + 1):
         k_mer = str(seq[i_seq : i_seq + k_mer_len])
-        if k_mer not in k_mers:
+        k_mer_rc = Seq(k_mer).reverse_complement()
+        if k_mer not in k_mers and k_mer_rc not in k_mers:
             k_mers[k_mer] = {}
             k_mers[k_mer]["src"] = set([seq_id])
             k_mers[k_mer]["cnt"] = 1
-        else:
+        elif k_mer in k_mers:
             k_mers[k_mer]["src"].add(seq_id)
             k_mers[k_mer]["cnt"] += 1
+        elif k_mer_rc in k_mers:
+            k_mers[k_mer_rc]["src"].add(seq_id)
+            k_mers[k_mer_rc]["cnt"] += 1
+        else:
+            raise Exception("Should not get here")
 
     return k_mers
 
@@ -429,12 +458,12 @@ def count_k_mers_in_rds(rd_fnm, k_mer_len=25, k_mers=None, seq_rcds=None):
     ----------
     rd_fnm : str
         The name of the gzipped read file
+    k_mers : dict
+        Empty, or returned by count_k_mers_in_seq()
+    seq_rcds : list(Bio.SeqRecord.SeqRecord)
+        Empty, or returned by count_k_mers_in_rds()
     k_mer_len : int
         The length of k-mers to count
-    k_mers : None or dict
-        None or dictionary returned by count_k_mers_in_seq()
-    seq_rcds : None or list(Bio.SeqRecord.SeqRecord)
-        None or list of sequence records in which k-mers were counted
 
     Returns
     -------
@@ -458,7 +487,7 @@ def count_k_mers_in_rds(rd_fnm, k_mer_len=25, k_mers=None, seq_rcds=None):
         i_seq = -1
         for seq_rcd in seq_rcd_gen:
             i_seq += 1
-            k_mers = count_k_mers_in_seq(seq_rcd.seq, i_seq, k_mers=k_mers)
+            k_mers = count_k_mers_in_seq(seq_rcd.seq, seq_id=i_seq, k_mers=k_mers)
             seq_rcds.append(seq_rcd)
 
     return k_mers, seq_rcds
@@ -471,11 +500,11 @@ def write_k_mer_counts_in_rds(k_mers_in_rd1, k_mers_in_rd2, k_mer_counts_fnm):
     Parameters
     ----------
     k_mers_in_rd1 : dct
-        dictionary returned by count_k_mers_in_seq()
+        Dictionary returned by count_k_mers_in_seq()
     k_mers_in_rd2 : dct
-        dictionary returned by count_k_mers_in_seq()
+        Dictionary returned by count_k_mers_in_seq()
     k_mer_counts_fnm
-        file name to which to write k-mers and their counts
+        File name to which to write k-mers and their counts
 
     Returns
     -------
@@ -570,7 +599,6 @@ def write_paired_reads_for_cnt(
     k_mers_rd2,
     seq_rcds_rd2,
 ):
-    # TODO: Update.
     """Write paired reads for counts.
 
     Parameters
@@ -623,10 +651,8 @@ def write_paired_reads_for_cnt(
     return rd1_wr_file_name, rd1_wo_file_name, rd2_wr_file_name, rd2_wo_file_name
 
 
-# TODO: Step through to validate
-def find_seq_rcds_for_cnt(k_mer_cnt_rds, coverage, k_mers, n_clusters):
-    """Use k-means clustering to identify reads containing a k-mer
-    with the expected count.
+def find_seq_rcds_for_cnt(k_mer_cnt_rds, min_n_clusters=2, max_n_clusters=8):
+    """TODO: Complete
 
     Parameters
     ----------
@@ -646,17 +672,32 @@ def find_seq_rcds_for_cnt(k_mer_cnt_rds, coverage, k_mers, n_clusters):
         Object containing result of k-means estimation
 
     """
-    # TODO: Settle
-    EXP_CNT = 16
-    K_MER_CNT_REP = [EXP_CNT]
-
     # Cluster counts in the expected number of clusters
-    kmeans = KMeans(n_clusters=len(K_MER_CNT_REP) + 1, random_state=0).fit(
-        (k_mer_cnt_rds / coverage).reshape(-1, 1)
+    opt_kmeans = None
+    opt_s_score = -1
+    opt_n_clusters = min_n_clusters
+    # X = (k_mer_cnt_rds / coverage).reshape(-1, 1)
+    X = k_mer_cnt_rds.reshape(-1, 1)
+    with timing("Selecting number of clusters"):
+        for n_clusters in range(min_n_clusters, max_n_clusters + 1):
+            with timing(f"Fitting and scoring {n_clusters} clusters"):
+                kmeans = KMeans(n_clusters=n_clusters, random_state=0).fit(X)
+                s_score = silhouette_score(X, kmeans.labels_, random_state=0)
+                logger.info(
+                    f"With {n_clusters} clusters found silhouette score {s_score}"
+                )
+                if s_score > opt_s_score:
+                    opt_kmeans = kmeans
+                    opt_s_score = s_score
+                    opt_n_clusters = n_clusters
+
+    logger.info(
+        f"Optimum number of clusters {opt_n_clusters} has silhouette score {opt_s_score}"
     )
 
     # Identify the cluster and sequence records (reads) corresponding
     # to the expected count
+    """
     label = kmeans.predict(np.array(K_MER_CNT_REP).reshape(-1, 1))[0]
     i_rcds = set()
     keys = np.array(list(k_mers.keys()))
@@ -664,6 +705,8 @@ def find_seq_rcds_for_cnt(k_mer_cnt_rds, coverage, k_mers, n_clusters):
         i_rcds = i_rcds.union(k_mers[key]["src"])
 
     return i_rcds, kmeans
+    """
+    return opt_kmeans, opt_s_score, opt_n_clusters
 
 
 def write_reads_for_cnt(i_rcds, seq_rcds, case):
@@ -719,6 +762,7 @@ def ghi(initial_seq, rd1_file_name, rd2_file_name):
 
     # Count k-mers in the random sequence, doubled to represent
     # circular DNA
+    # TODO: Fix
     with timing("Counting k_mers in initial sequence"):
         k_mers_seq = count_k_mers_in_seq(initial_seq + initial_seq)
 
