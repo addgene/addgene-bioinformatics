@@ -18,7 +18,7 @@ asttokens==2.0.5
     # via stack-data
 attrs==21.4.0
     # via py-tes
-awscli==1.24.9
+awscli==1.24.10
     # via -r requirements.in
 backcall==0.2.0
     # via ipython
@@ -34,16 +34,16 @@ boltons==21.0.0
     # via galaxy-util
 boto==2.49.0
     # via toil
-boto3==1.23.9
+boto3==1.23.10
     # via toil
-boto3-stubs[s3]==1.23.9
+boto3-stubs[s3]==1.23.10
     # via toil
-botocore==1.26.9
+botocore==1.26.10
     # via
     #   awscli
     #   boto3
     #   s3transfer
-botocore-stubs==1.26.9
+botocore-stubs==1.26.10
     # via boto3-stubs
 cachecontrol==0.12.11
     # via schema-salad
@@ -117,7 +117,7 @@ humanfriendly==10.0
     # via coloredlogs
 idna==3.3
     # via requests
-ipython==8.3.0
+ipython==8.4.0
     # via -r requirements.in
 isodate==0.6.1
     # via rdflib
@@ -160,6 +160,7 @@ numpy==1.22.4
     #   biopython
     #   matplotlib
     #   pandas
+    #   pyarrow
     #   scikit-learn
     #   scipy
 packaging==21.3
@@ -200,6 +201,8 @@ pure-eval==0.2.2
     # via stack-data
 py-tes==0.4.2
     # via toil
+pyarrow==8.0.0
+    # via -r requirements.in
 pyasn1==0.4.8
     # via
     #   pyasn1-modules

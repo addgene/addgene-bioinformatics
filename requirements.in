@@ -4,5 +4,6 @@ ipython
 matplotlib
 pandas
 pip-tools
+pyarrow
 scikit-learn
 toil[aws,mesos,google,encryption,cwl]
