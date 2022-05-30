@@ -1,6 +1,7 @@
 import contextlib
 import glob
 import gzip
+import json
 import logging
 import os
 import shutil
@@ -9,7 +10,9 @@ import time
 
 from Bio import Align, SeqIO
 from Bio.Seq import Seq
+from matplotlib import pyplot as plt
 import numpy as np
+import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 
@@ -22,6 +25,9 @@ SPADES_OUTPUT_FNM = "contigs.fasta"
 APC_OUTPUT_DIR = "apc"
 APC_BASE_FNM = "apc"
 APC_OUTPUT_FNM = APC_BASE_FNM + ".1.fa"
+
+SSAKE_OUTPUT_DIR = "ssake"
+FRAGMENT_LEN = 500
 
 # Logging configuration
 root = logging.getLogger()
@@ -127,7 +133,7 @@ def copy_reads(sequencing_data_dir, plate, well, working_dir, force=False):
     return rd_fnms
 
 
-def copy_adapters(sequencing_data_dir, working_dir, force):
+def copy_adapters(sequencing_data_dir, working_dir, force=False):
     """Copy adapters file to a working directory, if it doesn't
     already exist there.
 
@@ -329,11 +335,10 @@ def assemble_using_spades(working_dir, rd1_fnm, rd2_fnm, preprocess=True, force=
             ][0].seq
 
         # Run apc
-        with timing("Circularize using apc"):
-            ru.apc(APC_BASE_FNM, SPADES_OUTPUT_FNM)
-        logger.info(
-            f"Results of assembling usng SPAdes in directory: {os.getcwd()}"
-        )
+        if not os.path.exists(APC_OUTPUT_FNM):
+            with timing("Circularize using apc"):
+                ru.apc(APC_BASE_FNM, SPADES_OUTPUT_FNM)
+        logger.info(f"Results of assembling usng SPAdes in directory: {os.getcwd()}")
 
         # Parse apc output file
         if os.path.exists(APC_OUTPUT_FNM):
@@ -378,12 +383,8 @@ def compute_coverage_using_bbtools(working_dir, rd1_fnm, rd2_fnm, ref_fnm, force
     """
     # Compute coverage, if needed
     coverage = 0
-    out_fnm = rd1_fnm.replace("_R1", "_Rs").replace(
-        ".fastq.gz", "_output.fastq.gz"
-    )
-    covstats_fnm = rd1_fnm.replace("_R1", "_Rs").replace(
-        ".fastq.gz", "_covstats.txt"
-    )
+    out_fnm = rd1_fnm.replace("_R1", "_Rs").replace(".fastq.gz", "_output.fastq.gz")
+    covstats_fnm = rd1_fnm.replace("_R1", "_Rs").replace(".fastq.gz", "_covstats.txt")
     with pushd(working_dir):
         if not os.path.exists(out_fnm) or not os.path.exists(covstats_fnm) or force:
 
@@ -652,61 +653,108 @@ def write_paired_reads_for_cnt(
 
 
 def find_seq_rcds_for_cnt(k_mer_cnt_rds, min_n_clusters=2, max_n_clusters=8):
+    pass
+
+
+def find_optimum_n_clusters(
+    working_dir,
+    dump_fnm,
+    min_n_clusters=2,
+    max_n_clusters=8,
+    n_bins=100,
+    do_plot=False,
+    force=False,
+):
     """TODO: Complete
 
     Parameters
     ----------
-    k_mer_cnt_rds : numpy.ndarray
-        Counts of k_mers
-    coverage : int
-        Read coverage
-    k_mers : dict
-        Contains k-mer keys and count and source sequence record index
-        values
+    working_dir : str
+        Directory in which data is read and written
+    dump_fnm : str
+        Name of file dumped by kmc
+    min_n_clusters : int
+        Minimum number of clusters tested
+    max_n_clusters : int
+        Maximum number of clusters tested
+    n_bins : int
+        Number of bins over which to compute histogram
+    do_plot : boolean
+        Flag to plot histogram with bins color coded by label
+    force : boolean
+        Flag to force preprocessing if output files exist
 
     Returns
     -------
-    i_rcds : set(int)
-        Index of sequence records in a cluster
-    kmeans : sklearn.cluster.KMeans
-        Object containing result of k-means estimation
+    k_mer_cnt_min : int
+        Minimum k-mer count for each label
+    k_mer_cnt_max : int
+        Maximum k-mer count for each label
 
     """
-    # Cluster counts in the expected number of clusters
-    opt_kmeans = None
-    opt_s_score = -1
-    opt_n_clusters = min_n_clusters
-    # X = (k_mer_cnt_rds / coverage).reshape(-1, 1)
-    X = k_mer_cnt_rds.reshape(-1, 1)
-    with timing("Selecting number of clusters"):
-        for n_clusters in range(min_n_clusters, max_n_clusters + 1):
-            with timing(f"Fitting and scoring {n_clusters} clusters"):
-                kmeans = KMeans(n_clusters=n_clusters, random_state=0).fit(X)
-                s_score = silhouette_score(X, kmeans.labels_, random_state=0)
-                logger.info(
-                    f"With {n_clusters} clusters found silhouette score {s_score}"
-                )
-                if s_score > opt_s_score:
-                    opt_kmeans = kmeans
-                    opt_s_score = s_score
-                    opt_n_clusters = n_clusters
+    with pushd(working_dir):
+        parquet_fnm = dump_fnm.replace(".txt", ".parquet")
+        if not os.path.exists(parquet_fnm) or force:
 
-    logger.info(
-        f"Optimum number of clusters {opt_n_clusters} has silhouette score {opt_s_score}"
-    )
+            # Read k-mer counts dumped by kmc
+            k_mer_cnt_rds = pd.read_csv(dump_fnm, sep="\t", names=["k_mers", "cnts"])
 
-    # Identify the cluster and sequence records (reads) corresponding
-    # to the expected count
-    """
-    label = kmeans.predict(np.array(K_MER_CNT_REP).reshape(-1, 1))[0]
-    i_rcds = set()
-    keys = np.array(list(k_mers.keys()))
-    for key in keys[kmeans.labels_ == label]:
-        i_rcds = i_rcds.union(k_mers[key]["src"])
+            # Find optimum number of clusters based on the silhouette
+            # score
+            opt_s_score = -1
+            opt_kmeans = None
+            cnts = k_mer_cnt_rds["cnts"].to_numpy().reshape(-1, 1)
+            with timing("Selecting number of clusters"):
+                for n_clusters in range(min_n_clusters, max_n_clusters + 1):
+                    with timing(f"Fitting and scoring {n_clusters} clusters"):
+                        # TODO: Use random state argument
+                        kmeans = KMeans(n_clusters=n_clusters, random_state=0).fit(cnts)
+                        s_score = silhouette_score(cnts, kmeans.labels_, random_state=0)
+                        logger.info(
+                            f"With {n_clusters} clusters found silhouette score {s_score}"
+                        )
+                        if s_score > opt_s_score:
+                            opt_s_score = s_score
+                            opt_kmeans = kmeans
+            logger.info(
+                f"Optimum number of clusters {pd.unique(opt_kmeans.labels_).size} has silhouette score {opt_s_score}"
+            )
+            k_mer_cnt_rds["labels"] = opt_kmeans.labels_
+            k_mer_cnt_rds.to_parquet(parquet_fnm)
+        else:
+            k_mer_cnt_rds = pd.read_parquet(parquet_fnm)
 
-    return i_rcds, kmeans
-    """
-    return opt_kmeans, opt_s_score, opt_n_clusters
+        # Compute k-mer count minimum and maximum for each label,
+        # optionally plotting
+        cnts = k_mer_cnt_rds["cnts"]
+        labels = k_mer_cnt_rds["labels"]
+        if do_plot:
+            fig, axs = plt.subplots()
+            _n, _bins, patches = axs.hist(cnts, bins=n_bins)
+            # TODO: Add more colors
+            colors = ["tab:blue", "tab:orange", "tab:green", "tab:red"]
+        n, bins = np.histogram(cnts, bins=n_bins)
+        bins = np.array(bins[:-1])
+        i_bins = np.array(range(bins.size))
+        k_mer_cnt_min = []
+        k_mer_cnt_max = []
+        for label in range(pd.unique(labels).size):
+            k_mer_cnt_min.append(cnts[labels == label].min())
+            k_mer_cnt_max.append(cnts[labels == label].max())
+            if do_plot:
+                for i_bin in i_bins[
+                    (k_mer_cnt_min[label] <= bins) & (bins <= k_mer_cnt_max[label])
+                ]:
+                    patches[i_bin].set(color=colors[label])
+        if do_plot:
+            axs.set_title(f"k-mer counts distribution\n{dump_fnm}")
+            axs.set_xlabel("k-mer counts")
+            axs.set_ylabel("frequency")
+            plt.tight_layout()
+            plt.savefig(dump_fnm.replace(".txt", ".png"))
+            plt.show()
+
+    return k_mer_cnt_min, k_mer_cnt_max
 
 
 def write_reads_for_cnt(i_rcds, seq_rcds, case):
