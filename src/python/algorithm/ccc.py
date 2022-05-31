@@ -77,7 +77,7 @@ for i_seq in range(unq_qcs_data.shape[0]):
             working_dir, raw_read_fnms[0], raw_read_fnms[1], force=force
         )
 
-    # Assemble reads
+    # Assemble reads with preprocessing
     with au.timing("Assembling reads"):
         au.assemble_using_spades(
             working_dir,
@@ -87,16 +87,19 @@ for i_seq in range(unq_qcs_data.shape[0]):
             force=force,
         )
 
+    # TODO: Align result to QC sequence
+
     # Assemble read sets
     count_min = 2
     pp_read_fnms = [
         rd1_unmerged_fnm,
         rd2_unmerged_fnm,
-        rds_merged_fnm,
     ]
     with au.pushd(working_dir):
         database_bnms = []
+        dump_fnms = []
         filtered_fnms = []
+        matched_fnms = []
         n_clusters = 0
         min_n_clusters = 2
         max_n_clusters = 4
@@ -120,6 +123,7 @@ for i_seq in range(unq_qcs_data.shape[0]):
                         count_max=1e9,
                     )
                 dump_fnm = database_bnm + ".txt"
+                dump_fnms.append(dump_fnm)
                 if not os.path.exists(dump_fnm) or force:
                     ru.kmc_transform(database_bnm, "dump", dump_fnm, is_sorted=True)
 
@@ -133,12 +137,13 @@ for i_seq in range(unq_qcs_data.shape[0]):
                     k_mer_cnt_min,
                     k_mer_cnt_max,
                 ) = au.find_optimum_n_clusters(
-                    working_dir, dump_fnm, min_n_clusters=min_n_clusters, max_n_clusters=max_n_clusters, do_plot=False, force=force
+                    dump_fnm, min_n_clusters=min_n_clusters, max_n_clusters=max_n_clusters, do_plot=False, force=force
                 )
                 if n_clusters == 0:
                     n_clusters = len(k_mer_cnt_min)
+                    i_cluster = np.argmin(np.array(k_mer_cnt_max))
 
-            with au.timing(f"Filtering k_mers in {read_fnm} using kmc"):
+            with au.timing(f"Filtering {read_fnm} using kmc"):
                 for label in range(n_clusters):
                     filtered_fnm = read_fnm.replace(".fastq.gz", f"_filtered_{label}.fastq")
                     filtered_fnms.append(filtered_fnm)
@@ -154,60 +159,27 @@ for i_seq in range(unq_qcs_data.shape[0]):
                             inp_rd_count_min=2,
                             inp_rd_count_max=1e9,
                         )
+                    matched_fnm = read_fnm.replace(".fastq.gz", f"_matched_{label}.fastq")
+                    matched_fnms.append(matched_fnm)
+                    
+        # TODO: Start here
+        with au.timing(f"Matching paired read files"):
+            au.match_reads(filtered_fnms[0:2], matched_fnms[0:2])
 
-        for label in range(n_clusters):
-            id_sets = []
-            for read_fnm in raw_read_fnms:
-                filtered_fnm = read_fnm.replace(".fastq.gz", f"_unmerged_filtered_{label}.fastq")
-                id_set = set()
-                with open(filtered_fnm, "r") as f:
-                    for line in f:
-                        if line[0] == "@":
-                            id_set.add(line.split(sep=" ")[0])
-                id_sets.append(id_set)
-            matched_id_set = id_sets[0].intersection(id_sets[1])
+        for label in set(range(n_clusters)) - set([i_cluster]):
 
-            matched_fnms = []
-            for read_fnm in raw_read_fnms:
-                filtered_fnm = read_fnm.replace(".fastq.gz", f"_unmerged_filtered_{label}.fastq")
-                matched_fnm = filtered_fnm.replace("filtered", "matched")
-                matched_fnms.append(matched_fnm)
-                with open(matched_fnm, "w") as m:
-                    with open(filtered_fnm, "r") as f:
-                        for line in f:
-                            if line[0] == "@":
-                                if line.split(sep=" ")[0] in matched_id_set:
-                                    do_print = True
-                                else:
-                                    do_print = False
-                            if do_print:
-                                m.write(line)
-
-            # Assemble read set
-            with au.timing(f"Assembling read set {label} using SPAdes"):
+            # Assemble read set using SSAKE
+            with au.timing(f"Assembling read set {label} using SSAKE"):
                 try:
-                    spades_output_dir = au.SPADES_OUTPUT_DIR + f"_{label}"
-                    if not os.path.exists(spades_output_dir) or force:
-                        ru.spades(
-                            rd1_unmerged_fnm.replace(".fastq.gz", f"_matched_{label}.fastq"),
-                            rd2_unmerged_fnm.replace(".fastq.gz", f"_matched_{label}.fastq"),
-                            spades_output_dir,
-                            merged=rds_merged_fnm.replace(".fastq.gz", f"_filtered_{label}.fastq"),
-                            cov_cutoff=100,
-                        )
-                except Exception as ex:
-                    logger.error(f"{ex}")
-
-            with au.timing("Assembling paired reads with repeats using SSAKE"):
-                try:
-                    ssake_output_dir = au.SSAKE_OUTPUT_DIR + f"_{label}"
+                    ssake_output_dir = f"ssake_{label}"
                     if not os.path.exists(ssake_output_dir) or force:
-                        ssake_out_base_name = ssake_output_dir
+                        ssake_out_fnm = "ssake_scaffolds.fa"
+                        ssake_out_bnm = ssake_output_dir
                         ru.ssake(
                             rd1_unmerged_fnm.replace(".fastq.gz", f"_matched_{label}.fastq"),
                             rd2_unmerged_fnm.replace(".fastq.gz", f"_matched_{label}.fastq"),
-                            ssake_out_base_name,
-                            au.FRAGMENT_LEN,
+                            ssake_out_bnm,
+                            au.SSAKE_FRAGMENT_LEN,
                             phred_threshold=20,  # -x
                             n_consec_bases=70,  # -n
                             ascii_offset=33,  # -d
@@ -223,5 +195,29 @@ for i_seq in range(unq_qcs_data.shape[0]):
                             do_break_ties=0,  # -q
                             do_run_verbose=0,
                         )  # -v
+
+                        # Copy scaffolds to a common file
+                        with open(ssake_out_bnm + "_scaffolds.fa", "r") as ifp:
+                            with open(ssake_out_fnm, "w") as ofp:
+                                ofp.write(ifp.read())
+
                 except Exception as ex:
                     logger.error(f"{ex}")
+
+        # Assemble unmerged reads and scaffolds using SPAdes and apc
+        with au.timing(f"Assemble unmerged reads and scaffolds using SPAdes and apc"):
+            try:
+                spades_output_dir = f"spades_s"
+                if not os.path.exists(spades_output_dir) or force:
+                    ru.spades(
+                        rd1_unmerged_fnm.replace(".fastq.gz", f"_matched_0.fastq"),
+                        rd2_unmerged_fnm.replace(".fastq.gz", f"_matched_0.fastq"),
+                        spades_output_dir,
+                        merged=rds_merged_fnm,
+                        trusted_contigs_fnm=ssake_out_fnm,
+                        cov_cutoff=100,
+                    )
+            except Exception as ex:
+                logger.error(f"{ex}")
+
+            # TODO: Align result to QC sequence

@@ -1,7 +1,6 @@
 import contextlib
 import glob
 import gzip
-import json
 import logging
 import os
 import shutil
@@ -19,15 +18,8 @@ from sklearn.metrics import silhouette_score
 import RunUtilities as ru
 
 
-SPADES_OUTPUT_DIR = "spades"
 SPADES_OUTPUT_FNM = "contigs.fasta"
-
-APC_OUTPUT_DIR = "apc"
-APC_BASE_FNM = "apc"
-APC_OUTPUT_FNM = APC_BASE_FNM + ".1.fa"
-
-SSAKE_OUTPUT_DIR = "ssake"
-FRAGMENT_LEN = 500
+SSAKE_FRAGMENT_LEN = 500
 
 # Logging configuration
 root = logging.getLogger()
@@ -252,13 +244,25 @@ def preprocess_reads_using_bbtools(working_dir, rd1_fnm, rd2_fnm, force=False):
     )
 
 
-def assemble_using_spades(working_dir, rd1_fnm, rd2_fnm, preprocess=True, force=False):
+def assemble_using_spades(
+    working_dir,
+    spades_output_dir,
+    apc_base_fnm,
+    rd1_fnm,
+    rd2_fnm,
+    preprocess=True,
+    force=False,
+):
     """Assemble reads using SPAdes, then circularize using apc.
 
     Parameters
     ----------
     working_dir : str
         Directory in which the assembly occurs
+    spades_output_dir : str
+        Directory in which the output is written
+    apc_base_fnm : str
+        Base file name for apc output
     rd1_fnm : str
         Name of read one file
     rd2_fnm : str
@@ -280,79 +284,82 @@ def assemble_using_spades(working_dir, rd1_fnm, rd2_fnm, preprocess=True, force=
         File name of Merged reads, after optional preprocessing
 
     """
-    # Assemble only if the output directory does not exist
-    spades_seq = None
-    apc_seq = None
+    # Optionally preprocess, if needed
     rd1_unmerged_fnm = None
     rd2_unmerged_fnm = None
     rds_merged_fnm = None
-    spades_dir = os.path.join(working_dir, SPADES_OUTPUT_DIR)
-    output_pth = os.path.join(SPADES_OUTPUT_DIR, SPADES_OUTPUT_FNM)
-    with pushd(working_dir):
+    if preprocess:
+        with timing("Preprocessing using BBTools"):
+            (
+                rd1_trimmed_fnm,
+                rd2_trimmed_fnm,
+                rd1_normalized_fnm,
+                rd2_normalized_fnm,
+                rd1_unmerged_fnm,
+                rd2_unmerged_fnm,
+                rds_merged_fnm,
+            ) = preprocess_reads_using_bbtools(
+                working_dir, rd1_fnm, rd2_fnm, force=force
+            )
 
-        # Optionally preprocess, if needed
+    # Assemble only if the output directory does not exist
+    spades_seq = None
+    apc_seq = None
+    spades_output_fnm = spades_output_dir + ".fasta"
+    spades_output_pth = os.path.join(working_dir, SPADES_OUTPUT_FNM)
+    apc_output_fnm = apc_base_fnm + ".1.fa"
+    with pushd(working_dir):
         if preprocess:
-            with timing("Preprocessing using BBTools"):
-                (
-                    rd1_trimmed_fnm,
-                    rd2_trimmed_fnm,
-                    rd1_normalized_fnm,
-                    rd2_normalized_fnm,
-                    rd1_unmerged_fnm,
-                    rd2_unmerged_fnm,
-                    rds_merged_fnm,
-                ) = preprocess_reads_using_bbtools(
-                    working_dir, rd1_fnm, rd2_fnm, force=force
-                )
 
             # Run SPAdes with merged reads, if needed
-            if not os.path.exists(output_pth) or force:
+            if not os.path.exists(spades_output_pth) or force:
                 with timing("Assembling preprocessed reads using SPAdes"):
                     ru.spades(
                         rd1_unmerged_fnm,
                         rd2_unmerged_fnm,
-                        SPADES_OUTPUT_DIR,
+                        spades_output_dir,
                         merged=rds_merged_fnm,
                         cov_cutoff=100,
                     )
 
         else:
+
             # Run SPAdes without merged reads, if needed
-            if not os.path.exists(output_pth) or force:
+            if not os.path.exists(spades_output_pth) or force:
                 with timing("Assembling original reads using SPAdes"):
                     ru.spades(
                         rd1_fnm,
                         rd2_fnm,
-                        SPADES_OUTPUT_DIR,
+                        spades_output_dir,
                         cov_cutoff=100,
                     )
 
         # Copy SPAdes output file, and parse
-        if os.path.exists(output_pth):
-            shutil.copy(output_pth, ".")
+        if os.path.exists(spades_output_pth):
+            shutil.copy(spades_output_pth, spades_output_fnm)
             spades_seq = [
-                seq_rcd for seq_rcd in SeqIO.parse(SPADES_OUTPUT_FNM, "fasta")
+                seq_rcd for seq_rcd in SeqIO.parse(spades_output_fnm, "fasta")
             ][0].seq
 
         # Run apc
-        if not os.path.exists(APC_OUTPUT_FNM):
+        if not os.path.exists(apc_output_fnm):
             with timing("Circularize using apc"):
-                ru.apc(APC_BASE_FNM, SPADES_OUTPUT_FNM)
+                ru.apc(apc_base_fnm, spades_output_fnm)
         logger.info(f"Results of assembling usng SPAdes in directory: {os.getcwd()}")
 
         # Parse apc output file
-        if os.path.exists(APC_OUTPUT_FNM):
-            apc_seq = [seq_rcd for seq_rcd in SeqIO.parse(APC_OUTPUT_FNM, "fasta")][
+        if os.path.exists(apc_output_fnm):
+            apc_seq = [seq_rcd for seq_rcd in SeqIO.parse(apc_output_fnm, "fasta")][
                 0
             ].seq
 
-        return (
-            spades_seq,
-            apc_seq,
-            rd1_unmerged_fnm,
-            rd2_unmerged_fnm,
-            rds_merged_fnm,
-        )
+    return (
+        spades_seq,
+        apc_seq,
+        rd1_unmerged_fnm,
+        rd2_unmerged_fnm,
+        rds_merged_fnm,
+    )
 
 
 def compute_coverage_using_bbtools(working_dir, rd1_fnm, rd2_fnm, ref_fnm, force=False):
@@ -657,7 +664,6 @@ def find_seq_rcds_for_cnt(k_mer_cnt_rds, min_n_clusters=2, max_n_clusters=8):
 
 
 def find_optimum_n_clusters(
-    working_dir,
     dump_fnm,
     min_n_clusters=2,
     max_n_clusters=8,
@@ -669,8 +675,6 @@ def find_optimum_n_clusters(
 
     Parameters
     ----------
-    working_dir : str
-        Directory in which data is read and written
     dump_fnm : str
         Name of file dumped by kmc
     min_n_clusters : int
@@ -692,67 +696,66 @@ def find_optimum_n_clusters(
         Maximum k-mer count for each label
 
     """
-    with pushd(working_dir):
-        parquet_fnm = dump_fnm.replace(".txt", ".parquet")
-        if not os.path.exists(parquet_fnm) or force:
+    parquet_fnm = dump_fnm.replace(".txt", ".parquet")
+    if not os.path.exists(parquet_fnm) or force:
 
-            # Read k-mer counts dumped by kmc
-            k_mer_cnt_rds = pd.read_csv(dump_fnm, sep="\t", names=["k_mers", "cnts"])
+        # Read k-mer counts dumped by kmc
+        k_mer_cnt_rds = pd.read_csv(dump_fnm, sep="\t", names=["k_mers", "cnts"])
 
-            # Find optimum number of clusters based on the silhouette
-            # score
-            opt_s_score = -1
-            opt_kmeans = None
-            cnts = k_mer_cnt_rds["cnts"].to_numpy().reshape(-1, 1)
-            with timing("Selecting number of clusters"):
-                for n_clusters in range(min_n_clusters, max_n_clusters + 1):
-                    with timing(f"Fitting and scoring {n_clusters} clusters"):
-                        # TODO: Use random state argument
-                        kmeans = KMeans(n_clusters=n_clusters, random_state=0).fit(cnts)
-                        s_score = silhouette_score(cnts, kmeans.labels_, random_state=0)
-                        logger.info(
-                            f"With {n_clusters} clusters found silhouette score {s_score}"
-                        )
-                        if s_score > opt_s_score:
-                            opt_s_score = s_score
-                            opt_kmeans = kmeans
-            logger.info(
-                f"Optimum number of clusters {pd.unique(opt_kmeans.labels_).size} has silhouette score {opt_s_score}"
-            )
-            k_mer_cnt_rds["labels"] = opt_kmeans.labels_
-            k_mer_cnt_rds.to_parquet(parquet_fnm)
-        else:
-            k_mer_cnt_rds = pd.read_parquet(parquet_fnm)
+        # Find optimum number of clusters based on the silhouette
+        # score
+        opt_s_score = -1
+        opt_kmeans = None
+        cnts = k_mer_cnt_rds["cnts"].to_numpy().reshape(-1, 1)
+        with timing("Selecting number of clusters"):
+            for n_clusters in range(min_n_clusters, max_n_clusters + 1):
+                with timing(f"Fitting and scoring {n_clusters} clusters"):
+                    # TODO: Use random state argument
+                    kmeans = KMeans(n_clusters=n_clusters, random_state=0).fit(cnts)
+                    s_score = silhouette_score(cnts, kmeans.labels_, random_state=0)
+                    logger.info(
+                        f"With {n_clusters} clusters found silhouette score {s_score}"
+                    )
+                    if s_score > opt_s_score:
+                        opt_s_score = s_score
+                        opt_kmeans = kmeans
+        logger.info(
+            f"Optimum number of clusters {pd.unique(opt_kmeans.labels_).size} has silhouette score {opt_s_score}"
+        )
+        k_mer_cnt_rds["labels"] = opt_kmeans.labels_
+        k_mer_cnt_rds.to_parquet(parquet_fnm)
+    else:
+        k_mer_cnt_rds = pd.read_parquet(parquet_fnm)
 
-        # Compute k-mer count minimum and maximum for each label,
-        # optionally plotting
-        cnts = k_mer_cnt_rds["cnts"]
-        labels = k_mer_cnt_rds["labels"]
+    # Compute k-mer count minimum and maximum for each label,
+    # optionally plotting
+    cnts = k_mer_cnt_rds["cnts"]
+    labels = k_mer_cnt_rds["labels"]
+    if do_plot:
+        fig, axs = plt.subplots()
+        _n, _bins, patches = axs.hist(cnts, bins=n_bins)
+        # TODO: Add more colors
+        colors = ["tab:blue", "tab:orange", "tab:green", "tab:red"]
+    n, bins = np.histogram(cnts, bins=n_bins)
+    bins = np.array(bins[:-1])
+    i_bins = np.array(range(bins.size))
+    k_mer_cnt_min = []
+    k_mer_cnt_max = []
+    for label in range(pd.unique(labels).size):
+        k_mer_cnt_min.append(cnts[labels == label].min())
+        k_mer_cnt_max.append(cnts[labels == label].max())
         if do_plot:
-            fig, axs = plt.subplots()
-            _n, _bins, patches = axs.hist(cnts, bins=n_bins)
-            # TODO: Add more colors
-            colors = ["tab:blue", "tab:orange", "tab:green", "tab:red"]
-        n, bins = np.histogram(cnts, bins=n_bins)
-        bins = np.array(bins[:-1])
-        i_bins = np.array(range(bins.size))
-        k_mer_cnt_min = []
-        k_mer_cnt_max = []
-        for label in range(pd.unique(labels).size):
-            k_mer_cnt_min.append(cnts[labels == label].min())
-            k_mer_cnt_max.append(cnts[labels == label].max())
-            if do_plot:
-                for i_bin in i_bins[
-                    (k_mer_cnt_min[label] <= bins) & (bins <= k_mer_cnt_max[label])
-                ]:
-                    patches[i_bin].set(color=colors[label])
-        if do_plot:
-            axs.set_title(f"k-mer counts distribution\n{dump_fnm}")
-            axs.set_xlabel("k-mer counts")
-            axs.set_ylabel("frequency")
-            plt.tight_layout()
-            plt.savefig(dump_fnm.replace(".txt", ".png"))
-            plt.show()
+            for i_bin in i_bins[
+                (k_mer_cnt_min[label] <= bins) & (bins <= k_mer_cnt_max[label])
+            ]:
+                patches[i_bin].set(color=colors[label])
+    if do_plot:
+        axs.set_title(f"k-mer counts distribution\n{dump_fnm}")
+        axs.set_xlabel("k-mer counts")
+        axs.set_ylabel("frequency")
+        plt.tight_layout()
+        plt.savefig(dump_fnm.replace(".txt", ".png"))
+        plt.show()
 
     return k_mer_cnt_min, k_mer_cnt_max
 
@@ -797,6 +800,34 @@ def write_reads_for_cnt(i_rcds, seq_rcds, case):
             SeqIO.write(seq_rcds[i_rcd], f, "fastq")
 
     return read_wr_file_name, read_wo_file_name
+
+
+def match_reads(filtered_fnms, matched_fnms):
+
+    id_sets = []
+    for filtered_fnm in filtered_fnms:
+        id_set = set()
+        with open(filtered_fnm, "r") as f:
+            for line in f:
+                if line[0] == "@":
+                    id_set.add(line.split(sep=" ")[0])
+        id_sets.append(id_set)
+    matched_id_set = id_sets[0].intersection(id_sets[1])
+
+    if len(filtered_fnms) != len(matched_fnms):
+        raise Exception("Number of filtered and matched file names must be equal")
+
+    for matched_fnm, filtered_fnm in zip(matched_fnms, filtered_fnms):
+        with open(matched_fnm, "w") as m:
+            with open(filtered_fnm, "r") as f:
+                for line in f:
+                    if line[0] == "@":
+                        if line.split(sep=" ")[0] in matched_id_set:
+                            do_print = True
+                        else:
+                            do_print = False
+                    if do_print:
+                        m.write(line)
 
 
 # TODO: Name and review
