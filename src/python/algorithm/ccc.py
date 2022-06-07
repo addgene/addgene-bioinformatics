@@ -57,11 +57,11 @@ for i_seq in range(unq_qcs_data.shape[0]):
     plot_dir = Path(os.getcwd()) / "plots"
     os.makedirs(plot_dir, exist_ok=True)
 
-    # Copy in adapters and reads
-    adapter_fnm = au.copy_adapters(str(SEQUENCING_BASE_DIR), working_dir, force=force)
+    # Copy in reads and adapters
     raw_read_fnms = au.copy_reads(
         str(SEQUENCING_DATA_DIR), plate, well, working_dir, force=force
     )
+    adapter_fnm = au.copy_adapters(SEQUENCING_BASE_DIR, working_dir, force=force)
 
     # Preprocess reads
     with au.timing("Preprocessing reads"):
@@ -79,8 +79,16 @@ for i_seq in range(unq_qcs_data.shape[0]):
 
     # Assemble reads with preprocessing
     with au.timing("Assembling reads"):
-        au.assemble_using_spades(
+        (
+            spades_seq,
+            apc_seq,
+            _rd1_unmerged_fnm,
+            _rd2_unmerged_fnm,
+            _rds_merged_fnm,
+        ) = au.assemble_using_spades(
             working_dir,
+            "spades_0",
+            "apc_0",
             raw_read_fnms[0],
             raw_read_fnms[1],
             preprocess=True,
@@ -88,6 +96,8 @@ for i_seq in range(unq_qcs_data.shape[0]):
         )
 
     # TODO: Align result to QC sequence
+
+    # TODO: Move all of the following to AssemblyUtilities
 
     # Assemble read sets
     count_min = 2
@@ -109,8 +119,8 @@ for i_seq in range(unq_qcs_data.shape[0]):
                 database_bnm = read_fnm.replace(".fastq.gz", "")
                 database_bnms.append(database_bnm)
                 if (
-                    not os.path.exists(database_bnm + ".kmc_pre")
-                    or not os.path.exists(database_bnm + ".kmc_suf")
+                    not Path(database_bnm + ".kmc_pre").exists()
+                    or not Path(database_bnm + ".kmc_suf").exists()
                     or force
                 ):
                     ru.kmc(
@@ -124,7 +134,7 @@ for i_seq in range(unq_qcs_data.shape[0]):
                     )
                 dump_fnm = database_bnm + ".txt"
                 dump_fnms.append(dump_fnm)
-                if not os.path.exists(dump_fnm) or force:
+                if not Path(dump_fnm).exists() or force:
                     ru.kmc_transform(database_bnm, "dump", dump_fnm, is_sorted=True)
 
             with au.timing(
@@ -147,7 +157,7 @@ for i_seq in range(unq_qcs_data.shape[0]):
                 for label in range(n_clusters):
                     filtered_fnm = read_fnm.replace(".fastq.gz", f"_filtered_{label}.fastq")
                     filtered_fnms.append(filtered_fnm)
-                    if not os.path.exists(filtered_fnm) or force:
+                    if not Path(filtered_fnm).exists() or force:
                         ru.kmc_filter(
                             database_bnm,
                             read_fnm,
@@ -172,7 +182,7 @@ for i_seq in range(unq_qcs_data.shape[0]):
             with au.timing(f"Assembling read set {label} using SSAKE"):
                 try:
                     ssake_output_dir = f"ssake_{label}"
-                    if not os.path.exists(ssake_output_dir) or force:
+                    if not Path(ssake_output_dir).exists() or force:
                         ssake_out_fnm = "ssake_scaffolds.fa"
                         ssake_out_bnm = ssake_output_dir
                         ru.ssake(
@@ -208,7 +218,7 @@ for i_seq in range(unq_qcs_data.shape[0]):
         with au.timing(f"Assemble unmerged reads and scaffolds using SPAdes and apc"):
             try:
                 spades_output_dir = f"spades_s"
-                if not os.path.exists(spades_output_dir) or force:
+                if not Path(spades_output_dir).exists() or force:
                     ru.spades(
                         rd1_unmerged_fnm.replace(".fastq.gz", f"_matched_0.fastq"),
                         rd2_unmerged_fnm.replace(".fastq.gz", f"_matched_0.fastq"),
@@ -221,3 +231,5 @@ for i_seq in range(unq_qcs_data.shape[0]):
                 logger.error(f"{ex}")
 
             # TODO: Align result to QC sequence
+
+    break

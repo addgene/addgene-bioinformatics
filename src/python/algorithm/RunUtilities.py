@@ -1,6 +1,7 @@
 import logging
 import math
 import os
+from pathlib import Path
 import re
 
 from Bio import SeqIO
@@ -106,7 +107,7 @@ def csc(a_seq, o_seq):
             SeqRecord(a_seq, id="id_a", name="name_a", description="reference"),
             SeqRecord(o_seq, id="id_o", name="name_o", description="offset"),
         ],
-        os.path.join(hosting_dir, input_file),
+        Path(hosting_dir) / input_file,
         "fasta",
     )
 
@@ -123,7 +124,7 @@ def csc(a_seq, o_seq):
     # Read the multi-FASTA output file
     seq_rcds = [
         seq_record
-        for seq_record in SeqIO.parse(os.path.join(hosting_dir, output_file), "fasta")
+        for seq_record in SeqIO.parse(Path(hosting_dir) / output_file, "fasta")
     ]
 
     # Assign and return the rotated sequences

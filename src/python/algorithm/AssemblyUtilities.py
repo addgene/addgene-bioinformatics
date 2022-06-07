@@ -3,6 +3,7 @@ import glob
 import gzip
 import logging
 import os
+from pathlib import Path
 import shutil
 import subprocess
 import time
@@ -33,9 +34,6 @@ if not root.handlers:
 
 logger = logging.getLogger("AssemblyUtilities")
 logger.setLevel(logging.INFO)
-
-
-# TODO: Use pathlib?
 
 
 @contextlib.contextmanager
@@ -107,9 +105,7 @@ def copy_reads(sequencing_data_dir, plate, well, working_dir, force=False):
     """
     # Find the plate directory given that we only know the Addgene,
     # but not the seqWell, identifier
-    plate_dir = os.path.basename(
-        glob.glob(os.path.join(sequencing_data_dir, plate + "*"))[0]
-    )
+    plate_dir = list(Path(sequencing_data_dir).glob(plate + "*"))[0].name
 
     # Follow the read file naming convention
     rd1_fnm = plate_dir.replace("_FASTQ", "") + "_" + well + "_R1_001.fastq.gz"
@@ -118,9 +114,10 @@ def copy_reads(sequencing_data_dir, plate, well, working_dir, force=False):
     # Copy each file, if needed
     rd_fnms = (rd1_fnm, rd2_fnm)
     for rd_fnm in rd_fnms:
-        rd_file_path = os.path.join(sequencing_data_dir, plate_dir, rd_fnm)
-        if not os.path.exists(rd_fnm) or force:
-            shutil.copy(rd_file_path, working_dir)
+        rd_file_src = Path(sequencing_data_dir) / plate_dir / rd_fnm
+        rd_file_dst = Path(working_dir) / rd_fnm
+        if not rd_file_dst.exists() or force:
+            shutil.copy(rd_file_src, working_dir)
 
     return rd_fnms
 
@@ -146,9 +143,10 @@ def copy_adapters(sequencing_data_dir, working_dir, force=False):
     """
     # Copy each file, if needed
     adapter_fnm = "adapters.fa"
-    adapter_file_path = os.path.join(sequencing_data_dir, adapter_fnm)
-    if not os.path.exists(adapter_fnm) or force:
-        shutil.copy(adapter_file_path, working_dir)
+    adapter_file_src = Path(sequencing_data_dir) / adapter_fnm
+    adapter_file_dst = Path(working_dir) / adapter_fnm
+    if not adapter_file_dst.exists() or force:
+        shutil.copy(adapter_file_src, working_dir)
 
     return adapter_fnm
 
@@ -191,8 +189,8 @@ def preprocess_reads_using_bbtools(working_dir, rd1_fnm, rd2_fnm, force=False):
 
         # Run BBDuk, if needed
         if (
-            not os.path.exists(rd1_trimmed_fnm)
-            or not os.path.exists(rd2_trimmed_fnm)
+            not Path(rd1_trimmed_fnm).exists()
+            or not Path(rd2_trimmed_fnm).exists()
             or force
         ):
             with timing("Trimming using BBDuk"):
@@ -205,8 +203,8 @@ def preprocess_reads_using_bbtools(working_dir, rd1_fnm, rd2_fnm, force=False):
 
         # Run BBNorm, if needed
         if (
-            not os.path.exists(rd1_normalized_fnm)
-            or not os.path.exists(rd2_normalized_fnm)
+            not Path(rd1_normalized_fnm).exists()
+            or not Path(rd2_normalized_fnm).exists()
             or force
         ):
             with timing("Normalizing using BBNorm"):
@@ -219,9 +217,9 @@ def preprocess_reads_using_bbtools(working_dir, rd1_fnm, rd2_fnm, force=False):
 
         # Run BBMerge, if needed
         if (
-            not os.path.exists(rds_merged_fnm)
-            or not os.path.exists(rd1_unmerged_fnm)
-            or not os.path.exists(rd2_unmerged_fnm)
+            not Path(rds_merged_fnm).exists()
+            or not Path(rd1_unmerged_fnm).exists()
+            or not Path(rd2_unmerged_fnm).exists()
             or force
         ):
             with timing("Merging using BBMerge"):
@@ -306,13 +304,13 @@ def assemble_using_spades(
     spades_seq = None
     apc_seq = None
     spades_output_fnm = spades_output_dir + ".fasta"
-    spades_output_pth = os.path.join(working_dir, SPADES_OUTPUT_FNM)
+    spades_output_pth = Path(working_dir) / spades_output_dir / SPADES_OUTPUT_FNM
     apc_output_fnm = apc_base_fnm + ".1.fa"
     with pushd(working_dir):
         if preprocess:
 
             # Run SPAdes with merged reads, if needed
-            if not os.path.exists(spades_output_pth) or force:
+            if not spades_output_pth.exists() or force:
                 with timing("Assembling preprocessed reads using SPAdes"):
                     ru.spades(
                         rd1_unmerged_fnm,
@@ -325,7 +323,7 @@ def assemble_using_spades(
         else:
 
             # Run SPAdes without merged reads, if needed
-            if not os.path.exists(spades_output_pth) or force:
+            if not spades_output_pth.exists() or force:
                 with timing("Assembling original reads using SPAdes"):
                     ru.spades(
                         rd1_fnm,
@@ -335,20 +333,20 @@ def assemble_using_spades(
                     )
 
         # Copy SPAdes output file, and parse
-        if os.path.exists(spades_output_pth):
+        if spades_output_pth.exists():
             shutil.copy(spades_output_pth, spades_output_fnm)
             spades_seq = [
                 seq_rcd for seq_rcd in SeqIO.parse(spades_output_fnm, "fasta")
             ][0].seq
 
         # Run apc
-        if not os.path.exists(apc_output_fnm):
+        if not Path(apc_output_fnm).exists():
             with timing("Circularize using apc"):
                 ru.apc(apc_base_fnm, spades_output_fnm)
         logger.info(f"Results of assembling usng SPAdes in directory: {os.getcwd()}")
 
         # Parse apc output file
-        if os.path.exists(apc_output_fnm):
+        if Path(apc_output_fnm).exists():
             apc_seq = [seq_rcd for seq_rcd in SeqIO.parse(apc_output_fnm, "fasta")][
                 0
             ].seq
@@ -393,7 +391,7 @@ def compute_coverage_using_bbtools(working_dir, rd1_fnm, rd2_fnm, ref_fnm, force
     out_fnm = rd1_fnm.replace("_R1", "_Rs").replace(".fastq.gz", "_output.fastq.gz")
     covstats_fnm = rd1_fnm.replace("_R1", "_Rs").replace(".fastq.gz", "_covstats.txt")
     with pushd(working_dir):
-        if not os.path.exists(out_fnm) or not os.path.exists(covstats_fnm) or force:
+        if not Path(out_fnm).exists() or not Path(covstats_fnm).exists() or force:
 
             # Run BBMap
             with timing("Mapping using BBMap"):
@@ -697,7 +695,7 @@ def find_optimum_n_clusters(
 
     """
     parquet_fnm = dump_fnm.replace(".txt", ".parquet")
-    if not os.path.exists(parquet_fnm) or force:
+    if not Path(parquet_fnm).exists() or force:
 
         # Read k-mer counts dumped by kmc
         k_mer_cnt_rds = pd.read_csv(dump_fnm, sep="\t", names=["k_mers", "cnts"])
@@ -884,7 +882,7 @@ def ghi(initial_seq, rd1_file_name, rd2_file_name):
     # Assemble paired reads with repeats using SSAKE
     with timing("Assembling paired reads with repeats using SSAKE"):
         ssake_out_base_name = BASE_FILE_NAME + "_ssake"
-        if os.path.exists(ssake_out_base_name):
+        if Path(ssake_out_base_name).exists():
             shutil.rmtree(ssake_out_base_name)
             ru.ssake(
                 rd1_wr_file_name,
@@ -912,10 +910,8 @@ def ghi(initial_seq, rd1_file_name, rd2_file_name):
         "Assembling paired reads repeats and with trusted contigs using SPAdes"
     ):
         spades_wc_out_dir = BASE_FILE_NAME + "_spades_wc"
-        trusted_contigs_fnm = os.path.join(
-            ssake_out_base_name, ssake_out_base_name + "_scaffolds.fa"
-        )
-        if os.path.exists(spades_wc_out_dir):
+        trusted_contigs_fnm = str(Path(ssake_out_base_name) / ssake_out_base_name + "_scaffolds.fa")
+        if Path(spades_wc_out_dir).exists():
             shutil.rmtree(spades_wc_out_dir)
         ru.spades(
             rd1_file_name,
@@ -945,22 +941,22 @@ def align_assembly_output(aligner, working_dir, seq):
         Alignment score for the apc output
 
     """
-    case = os.path.basename(working_dir)
+    case = Path(working_dir).name
     with timing(f"Aligning {case} assemblies"):
 
         # Read the multi-FASTA SPAdes output file, and align
-        output_pth = os.path.join(working_dir, SPADES_OUTPUT_DIR, SPADES_OUTPUT_FNM)
+        output_pth = Path(working_dir) / SPADES_OUTPUT_DIR / SPADES_OUTPUT_FNM
         spd_scr = -1.0
-        if os.path.exists(output_pth):
+        if Path(output_pth).exists():
             spd_scr = 0.0
             seq_rcds = [seq_rcd for seq_rcd in SeqIO.parse(output_pth, "fasta")]
             if len(seq_rcds) > 0:
                 spd_scr = aligner.score(seq + seq, seq_rcds[0].seq)
 
         # Read the FASTA apc output file, and align
-        output_pth = os.path.join(working_dir, APC_OUTPUT_FNM)
+        output_pth = Path(working_dir) / APC_OUTPUT_FNM
         apc_scr = -1.0
-        if os.path.exists(output_pth):
+        if output_pth.exists():
             apc_scr = 0.0
             seq_rcds = [seq_rcd for seq_rcd in SeqIO.parse(output_pth, "fasta")]
             if len(seq_rcds) > 0:
