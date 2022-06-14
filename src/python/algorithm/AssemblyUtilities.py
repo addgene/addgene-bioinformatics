@@ -1,6 +1,4 @@
 import contextlib
-import glob
-import gzip
 import logging
 import os
 from pathlib import Path
@@ -9,7 +7,6 @@ import subprocess
 import time
 
 from Bio import Align, SeqIO
-from Bio.Seq import Seq
 from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
@@ -122,6 +119,56 @@ def copy_reads(sequencing_data_dir, plate, well, working_dir, force=False):
     return rd_fnms
 
 
+def compute_coverage_using_bbtools(working_dir, rd1_fnm, rd2_fnm, ref_fnm, force=False):
+    """Compute coverage uings BBTools BBMap.
+
+    Parameters
+    ----------
+    working_dir : str
+        Directory in which preprocessing occurs
+    rd1_fnm : str
+        Name of read one file
+    rd2_fnm : str
+        Name of read two file
+    ref_fnm : str
+        Name of reference sequence file
+    force : boolean
+        Flag to force computing if output files exist
+
+    Returns
+    -------
+    coverage : float
+        Average number of reads that map to the reference sequence
+    out_fnm : str
+        File name of reads mapped to the reference sequence
+    covstats_fnm : str
+        File name of the file to which coverage statistics are written
+
+    """
+    # Compute coverage, if needed
+    coverage = 0
+    out_fnm = rd1_fnm.replace("_R1", "_Rs").replace(".fastq.gz", "_output.fastq.gz")
+    covstats_fnm = rd1_fnm.replace("_R1", "_Rs").replace(".fastq.gz", "_covstats.txt")
+    with pushd(working_dir):
+        if not Path(out_fnm).exists() or not Path(covstats_fnm).exists() or force:
+
+            # Run BBMap
+            with timing("Mapping using BBMap"):
+                ru.BBMap(rd1_fnm, rd2_fnm, out_fnm, ref_fnm, covstats_fnm)
+
+            # Parse BBMap coverage statistics
+            cp = subprocess.run(
+                f"head -n 2 {covstats_fnm} | tail -n 1 | cut -wf 2",
+                shell=True,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            coverage = float(cp.stdout.strip())
+
+    return coverage, out_fnm, covstats_fnm
+
+
 def copy_adapters(sequencing_data_dir, working_dir, force=False):
     """Copy adapters file to a working directory, if it doesn't
     already exist there.
@@ -167,12 +214,20 @@ def preprocess_reads_using_bbtools(working_dir, rd1_fnm, rd2_fnm, force=False):
 
     Returns
     -------
+    rd1_trimmed_fnm : str
+        File name of reads one after BBDuk
+    rd2_trimmed_fnm : str
+        File name of reads two after BBDuk
+    rd1_normalized_fnm : str
+        File name of reads one after BBNorm
+    rd2_normalized_fnm : str
+        File name of reads two after BBNorm
     rd1_unmerged_fnm : str
-        File name of reads one, after optional preprocessing
+        File name of reads one after BBMerge
     rd2_unmerged_fnm : str
-        File name of reads two, after optional preprocessing
+        File name of reads two after BBMerge
     rds_merged_fnm : str
-        File name of Merged reads, after optional preprocessing
+        File name of merged reads after BBDuk
 
     """
     # Preprocess only if the output directory does not exist
@@ -265,7 +320,9 @@ def assemble_using_spades(
         Name of read one file
     rd2_fnm : str
         Name of read two file
-    force=False : boolean
+    preprocess : boolean
+        Flag to preprocess reads using BBDuk, BBNorm, and BBMerge
+    force : boolean
         Flag to force assembly if output files exist
 
     Returns
@@ -275,14 +332,16 @@ def assemble_using_spades(
     apc_seq :  Bio.Seq.Seq
         Sequence object returned by apc
     rd1_unmerged_fnm : str
-        File name of reads one, after optional preprocessing
+        File name of reads one after optional preprocessing
     rd2_unmerged_fnm : str
-        File name of reads two, after optional preprocessing
+        File name of reads two after optional preprocessing
     rds_merged_fnm : str
         File name of Merged reads, after optional preprocessing
 
     """
     # Optionally preprocess, if needed
+    spades_seq = None
+    apc_seq = None
     rd1_unmerged_fnm = None
     rd2_unmerged_fnm = None
     rds_merged_fnm = None
@@ -301,8 +360,6 @@ def assemble_using_spades(
             )
 
     # Assemble only if the output directory does not exist
-    spades_seq = None
-    apc_seq = None
     spades_output_fnm = spades_output_dir + ".fasta"
     spades_output_pth = Path(working_dir) / spades_output_dir / SPADES_OUTPUT_FNM
     apc_output_fnm = apc_base_fnm + ".1.fa"
@@ -360,316 +417,253 @@ def assemble_using_spades(
     )
 
 
-def compute_coverage_using_bbtools(working_dir, rd1_fnm, rd2_fnm, ref_fnm, force=False):
-    """Compute coverage uings BBTools BBMap.
+# TODO: Review
+def assemble_using_ssake(
+        working_dir,
+        spades_output_dir,
+        apc_base_fnm,
+        ssake_scaffolds_fnm,
+        rd1_unmerged_fnm,
+        rd2_unmerged_fnm,
+        rds_merged_fnm,
+        force=False
+):
+    """Assemble reads using SPAdes, then circularize using apc.
 
     Parameters
     ----------
     working_dir : str
-        Directory in which preprocessing occurs
-    rd1_fnm : str
-        Name of read one file
-    rd2_fnm : str
-        Name of read two file
-    ref_fnm : str
-        Name of reference sequence file
-    force=False : boolean
-        Flag to force computing if output files exist
+        Directory in which the assembly occurs
+    spades_output_dir : str
+        Directory in which the output is written
+    apc_base_fnm : str
+        Base file name for apc output
+    ssake_scaffolds_fnm : str
+        Name of file containing all scaffolds produced by SSAKE
+    rd1_unmerged_fnm : str
+        Name of unmerged read one file
+    rd2_unmerged_fnm : str
+        Name of unmerged read two file
+    rds_merged_fnm : str
+        Name of merged read one and two file
+    force : boolean
+        Flag to force assembly if output files exist
 
     Returns
     -------
-    coverage : float
-        Average number of reads that map to the reference sequence
-    out_fnm : str
-        File name of reads mapped to the reference sequence
-    covstats_fnm : str
-        File name of the file to which coverage statistics are written
+    spades_seq :  Bio.Seq.Seq
+        Sequence object returned by SPAdes
+    apc_seq :  Bio.Seq.Seq
+        Sequence object returned by apc
+    rd1_matched_m_fnm : str
+        File name of reads one matched from minimum k-mer count cluster
+    rd2_matched_m_fnm : str
+        File name of reads two matched from minimum k-mer count cluster
 
     """
-    # Compute coverage, if needed
-    coverage = 0
-    out_fnm = rd1_fnm.replace("_R1", "_Rs").replace(".fastq.gz", "_output.fastq.gz")
-    covstats_fnm = rd1_fnm.replace("_R1", "_Rs").replace(".fastq.gz", "_covstats.txt")
+    spades_seq = None
+    apc_seq = None
+    rd1_matched_m = None
+    rd2_matched_m = None
     with pushd(working_dir):
-        if not Path(out_fnm).exists() or not Path(covstats_fnm).exists() or force:
 
-            # Run BBMap
-            with timing("Mapping using BBMap"):
-                ru.BBMap(rd1_fnm, rd2_fnm, out_fnm, ref_fnm, covstats_fnm)
+        # Filter unmerged read files by k-mer count clusters, if
+        # needed
+        pp_read_fnms = [
+            rd1_unmerged_fnm,
+            rd2_unmerged_fnm,
+        ]
+        database_bnms = []
+        dump_fnms = []
+        count_min = 2
+        n_clusters = 0
+        min_n_clusters = 2
+        max_n_clusters = 4
+        for read_fnm in pp_read_fnms:
 
-            # Parse BBMap coverage statistics
-            cp = subprocess.run(
-                f"head -n 2 {covstats_fnm} | tail -n 1 | cut -wf 2",
-                shell=True,
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-            coverage = float(cp.stdout.strip())
+            # Count k-mers
+            with timing(f"Counting k_mers in {read_fnm} using kmc"):
+                database_bnm = read_fnm.replace(".fastq.gz", "")
+                database_bnms.append(database_bnm)
+                if (
+                    not Path(database_bnm + ".kmc_pre").exists()
+                    or not Path(database_bnm + ".kmc_suf").exists()
+                    or force
+                ):
+                    ru.kmc(
+                        [read_fnm],
+                        database_bnm,
+                        k_mer_length=25,
+                        signature_length=9,
+                        count_min=count_min,
+                        max_count=256,
+                        count_max=1e9,
+                    )
+                dump_fnm = database_bnm + ".txt"
+                dump_fnms.append(dump_fnm)
+                if not Path(dump_fnm).exists() or force:
+                    ru.kmc_transform(database_bnm, "dump", dump_fnm, is_sorted=True)
 
-    return coverage, out_fnm, covstats_fnm
-
-
-def count_k_mers_in_seq(seq, seq_id=0, k_mer_len=25, k_mers=None):
-    """Count k-mers of a specified length in a sequence with a
-    specified identifier. Optionally update dictionary returned by
-    this method.
-
-    Parameters
-    ----------
-    seq : Bio.Seq.Seq
-        The sequence in which to count
-    seq_id : int
-        The source sequence identifer
-    k_mer_len : int
-        The length of k-mers to count
-    k_mers : dct
-        Emtpy, or returned by this method
-
-    Returns
-    -------
-    k_mers : dct
-        Dictionay containing k-mer keys and counts and source sequence
-        identifier values
-
-    """
-    if k_mers is None:
-        k_mers = {}
-    seq_len = len(seq)
-    for i_seq in range(seq_len - k_mer_len + 1):
-        k_mer = str(seq[i_seq : i_seq + k_mer_len])
-        k_mer_rc = Seq(k_mer).reverse_complement()
-        if k_mer not in k_mers and k_mer_rc not in k_mers:
-            k_mers[k_mer] = {}
-            k_mers[k_mer]["src"] = set([seq_id])
-            k_mers[k_mer]["cnt"] = 1
-        elif k_mer in k_mers:
-            k_mers[k_mer]["src"].add(seq_id)
-            k_mers[k_mer]["cnt"] += 1
-        elif k_mer_rc in k_mers:
-            k_mers[k_mer_rc]["src"].add(seq_id)
-            k_mers[k_mer_rc]["cnt"] += 1
-        else:
-            raise Exception("Should not get here")
-
-    return k_mers
-
-
-def count_k_mers_in_rds(rd_fnm, k_mer_len=25, k_mers=None, seq_rcds=None):
-    """Count k-mers of a specified length in a gzipped file of reads
-    in the specified format. Optionally update dictionary and list
-    returned by this method.
-
-    Parameters
-    ----------
-    rd_fnm : str
-        The name of the gzipped read file
-    k_mers : dict
-        Empty, or returned by count_k_mers_in_seq()
-    seq_rcds : list(Bio.SeqRecord.SeqRecord)
-        Empty, or returned by count_k_mers_in_rds()
-    k_mer_len : int
-        The length of k-mers to count
-
-    Returns
-    -------
-    k_mers : dict
-        Containing k-mer keys and count and source sequence record
-        index values
-    seq_rcds : list(Bio.SeqRecord.SeqRecord)
-        Contains sequence records in which k-mers were counted
-
-    """
-    if k_mers is None:
-        k_mers = {}
-    if seq_rcds is None:
-        seq_rcds = []
-    read_format, is_gzipped = ru.get_bio_read_format(rd_fnm)
-    _open = open
-    if is_gzipped:
-        _open = gzip.open
-    with _open(rd_fnm, "rt") as f:
-        seq_rcd_gen = SeqIO.parse(f, format=read_format)
-        i_seq = -1
-        for seq_rcd in seq_rcd_gen:
-            i_seq += 1
-            k_mers = count_k_mers_in_seq(seq_rcd.seq, seq_id=i_seq, k_mers=k_mers)
-            seq_rcds.append(seq_rcd)
-
-    return k_mers, seq_rcds
-
-
-def write_k_mer_counts_in_rds(k_mers_in_rd1, k_mers_in_rd2, k_mer_counts_fnm):
-    """Write the k-mer counts corresponding to paired reads to the
-    specified file.
-
-    Parameters
-    ----------
-    k_mers_in_rd1 : dct
-        Dictionary returned by count_k_mers_in_seq()
-    k_mers_in_rd2 : dct
-        Dictionary returned by count_k_mers_in_seq()
-    k_mer_counts_fnm
-        File name to which to write k-mers and their counts
-
-    Returns
-    -------
-    None
-
-    """
-    with open(k_mer_counts_fnm, "w") as f:
-        k_mer_set_rd1 = set(k_mers_in_rd1.keys())
-        k_mer_set_rd2 = set(k_mers_in_rd2.keys())
-        k_mer_set = k_mer_set_rd1.union(k_mer_set_rd2)
-        for k_mer in sorted(k_mer_set):
-            k_mer_cnt_rd1 = 0
-            if k_mer in k_mer_set_rd1:
-                k_mer_cnt_rd1 = k_mers_in_rd1[k_mer]["cnt"]
-            k_mer_cnt_rd2 = 0
-            if k_mer in k_mer_set_rd2:
-                k_mer_cnt_rd2 = k_mers_in_rd2[k_mer]["cnt"]
-            f.write(
-                "{0} {1:10d} {2:10d}\n".format(
-                    k_mer, int(k_mer_cnt_rd1), int(k_mer_cnt_rd2)
+            # Find k-mer count clusters
+            with timing(
+                f"Finding optimum number of clusters given counts in {dump_fnm}"
+            ):
+                if "_R2_" in read_fnm:
+                    # Use the optimum number of clusters determined
+                    # for the first read file
+                    min_n_clusters = n_clusters
+                    max_n_clusters = n_clusters
+                (k_mer_cnt_min, k_mer_cnt_max,) = find_optimum_n_clusters(
+                    dump_fnm,
+                    min_n_clusters=min_n_clusters,
+                    max_n_clusters=max_n_clusters,
+                    do_plot=False,
+                    force=force,
                 )
-            )
+                if "_R1_" in read_fnm:
+                    # Set the optimum number of clusters, and index of
+                    # the cluster with the lowest count determined for
+                    # the first read file
+                    n_clusters = len(k_mer_cnt_min)
+                    i_cluster = np.argmin(np.array(k_mer_cnt_max))
 
+            # Filter reads in k-mer count clusters
+            with timing(f"Filtering {read_fnm} using kmc"):
+                for label in range(n_clusters):
+                    filtered_fnm = read_fnm.replace(
+                        ".fastq.gz", f"_filtered_{label}.fastq"
+                    )
+                    if not Path(filtered_fnm).exists() or force:
+                        ru.kmc_filter(
+                            database_bnm,
+                            read_fnm,
+                            filtered_fnm,
+                            trim_reads=False,
+                            hard_mask=False,
+                            inp_db_count_min=k_mer_cnt_min[label],
+                            inp_db_count_max=k_mer_cnt_max[label],
+                            inp_rd_count_min=2,
+                            inp_rd_count_max=1e9,
+                        )
 
-def read_k_mer_counts(k_mer_counts_fnm, seq_id=0, k_mers=None):
-    """Read the k-mer counts corresponding to paired reads from the
-    specified file. Optionally update dictionary returned by
-    count_k_mers_in_seq().
+        # Match filtered read files
+        for label in range(n_clusters):
+            filtered_fnms = []
+            matched_fnms = []
+            for read_fnm in pp_read_fnms:
+                filtered_fnm = read_fnm.replace(".fastq.gz", f"_filtered_{label}.fastq")
+                filtered_fnms.append(filtered_fnm)
+                matched_fnm = read_fnm.replace(".fastq.gz", f"_matched_{label}.fastq")
+                matched_fnms.append(matched_fnm)
+            with timing(f"Matching paired read files"):
+                match_reads(filtered_fnms, matched_fnms)
 
-    Parameters
-    ----------
-    k_mers_counts_fnm : str
-        The name of the file containing k-mers and their counts
-    seq_id : int
-        The sequence identifer
-    k_mers : None or dct
-        None or dictionary returned by count_k_mers_in_seq()
+        # Assemble read sets other than the minumum k-mer count
+        # cluster using SSAKE
+        with timing(f"Assembling read set {label} using SSAKE"):
+            for label in set(range(n_clusters)) - set([i_cluster]):
+                try:
+                    ssake_output_bnm = f"ssake_{label}"
+                    ssake_output_fnm = ssake_output_bnm + "_scaffolds.fa"
+                    ssake_output_pth = Path(ssake_output_bnm) / ssake_output_fnm
+                    if not ssake_output_pth.exists() or force:
+                        if label == 0 and Path(ssake_scaffolds_fnm).exists():
+                            os.remove(ssake_scaffolds_fnm)
+                        ru.ssake(
+                            rd1_unmerged_fnm.replace(
+                                ".fastq.gz", f"_matched_{label}.fastq"
+                            ),
+                            rd2_unmerged_fnm.replace(
+                                ".fastq.gz", f"_matched_{label}.fastq"
+                            ),
+                            ssake_output_bnm,
+                            SSAKE_FRAGMENT_LEN,
+                            phred_threshold=20,  # -x
+                            n_consec_bases=70,  # -n
+                            ascii_offset=33,  # -d
+                            min_coverage=5,  # -w
+                            n_ovrlap_bases=20,  # -m
+                            n_reads_to_call=2,  # -o
+                            base_ratio=0.7,  # -r
+                            n_bases_to_trim=0,  # -t
+                            contig_size=100,  # -z
+                            do_track_cvrg=0,  # -c
+                            do_ignore_mppng=0,  # -y
+                            do_ignore_headr=0,  # -k
+                            do_break_ties=0,  # -q
+                            do_run_verbose=0,
+                        )  # -v
 
-    Returns
-    -------
-    k_mers : dict
-        Dictionay containing k-mer keys and counts, and source
-        sequence identifiers values
-    """
-    if k_mers is None:
-        k_mers = {}
-    with open(k_mer_counts_fnm) as f:
-        for ln in f:
-            flds = ln.split()
-            k_mer = flds[0]
-            cnt_rd1 = int(flds[1])
-            cnt_rd2 = int(flds[2])
-            if k_mer in k_mers:
-                logger.ingof(f"Second occurance of k-mer: {k_mer} unexpected")
-            else:
-                k_mers[k_mer] = {}
-                k_mers[k_mer]["src"] = set([seq_id])
-                k_mers[k_mer]["rd1"] = cnt_rd1
-                k_mers[k_mer]["rd2"] = cnt_rd2
+                        # Copy scaffolds to a common file
+                        with open(ssake_output_pth, "r") as ifp:
+                            with open(ssake_scaffolds_fnm, "a") as ofp:
+                                ofp.write(ifp.read())
 
-    return k_mers
+                except Exception as ex:
+                    logger.error(f"{ex}")
 
+        # Assemble unmerged reads from the first k-mer count cluster,
+        # all merged reads, and scaffolds using SPAdes and apc
+        spades_output_fnm = spades_output_dir + ".fasta"
+        spades_output_pth = Path(working_dir) / spades_output_dir / SPADES_OUTPUT_FNM
+        apc_output_fnm = apc_base_fnm + ".1.fa"
+        with timing(
+            f"Assemble unmerged and merged reads, and scaffolds using SPAdes and apc"
+        ):
+            try:
+                if not Path(spades_output_dir).exists() or force:
+                    label = i_cluster
+                    rd1_matched_m = rd1_unmerged_fnm.replace(".fastq.gz", f"_matched_{label}.fastq")
+                    rd2_matched_m = rd2_unmerged_fnm.replace(".fastq.gz", f"_matched_{label}.fastq")
+                    ru.spades(
+                        rd1_matched_m,
+                        rd2_matched_m,
+                        spades_output_dir,
+                        merged=rds_merged_fnm,
+                        trusted_contigs=ssake_scaffolds_fnm,
+                        cov_cutoff=100,
+                    )
 
-def collect_k_mer_cnt(k_mers, seq_cnt=2):
-    """Collect k-mer counts, assuming that we counted in a doubled
-    sequence. Set sequence count otherwise.
+                # Copy SPAdes output file, and parse
+                if spades_output_pth.exists():
+                    shutil.copy(spades_output_pth, spades_output_fnm)
+                    spades_seq = [
+                        seq_rcd for seq_rcd in SeqIO.parse(spades_output_fnm, "fasta")
+                    ][0].seq
 
-    Parameters
-    ----------
-    k_mers : dict
-        Dictionary returned by count_k_mers_in_seq()
-    seq_cnt : int
-        Number of times the sequence was repeated for counting
-        (default: 2)
+                # Run apc
+                if not Path(apc_output_fnm).exists():
+                    with timing("Circularize using apc"):
+                        ru.apc(apc_base_fnm, spades_output_fnm)
+                logger.info(f"Results of assembling usng SSAKE in directory: {os.getcwd()}")
 
-    Returns
-    -------
-    numpy.ndarray
-        Counts of k_mers
+                # Parse apc output file
+                if Path(apc_output_fnm).exists():
+                    apc_seq = [seq_rcd for seq_rcd in SeqIO.parse(apc_output_fnm, "fasta")][
+                        0
+                    ].seq
 
-    """
-    return np.array([val["cnt"] / seq_cnt for val in k_mers.values()])
+            except Exception as ex:
+                logger.error(f"{ex}")
 
-
-def write_paired_reads_for_cnt(
-    k_mer_cnt_rd1,
-    coverage_rd1,
-    k_mers_rd1,
-    seq_rcds_rd1,
-    k_mer_cnt_rd2,
-    coverage_rd2,
-    k_mers_rd2,
-    seq_rcds_rd2,
-):
-    """Write paired reads for counts.
-
-    Parameters
-    ----------
-    k_mer_cnt_rd1 : numpy.ndarray
-        Counts of k_mers
-    coverage_rd1 : int
-        Read one coverage
-    k_mers_rd1 : dict
-        Contains k-mer keys and count and source sequence record index
-        values
-    seq_rcds_rd1 : list(Bio.SeqRecord.SeqRecord)
-        Contains sequence records in which k-mers were counted
-    k_mer_cnt_rd2  : numpy.ndarray
-        Counts of k_mers
-    coverage_rd2 : int
-        Read two coverage
-    k_mers_rd2 : dict
-        Contains k-mer keys and count and source sequence record index
-        values
-    seq_rcds_rd2 : list(Bio.SeqRecord.SeqRecord)
-        Contains sequence records in which k-mers were counted
-
-    Returns
-    -------
-    rd1_wr_file_name : str
-        File name containing reads one with repeats
-    rd1_wo_file_name : str
-        File name containing reads one without repeats
-    rd2_wr_file_name : str
-        File name containing reads two with repeats
-    rd2_wo_file_name : str
-        File name containing reads two without repeats
-
-    """
-    # Find common sequence records
-    if len(seq_rcds_rd1) != len(seq_rcds_rd2):
-        raise (Exception("Number of sequence records for each pair must agree"))
-    i_rcds_rd1, _ = find_seq_rcds_for_cnt(k_mer_cnt_rd1, coverage_rd1, k_mers_rd1)
-    i_rcds_rd2, _ = find_seq_rcds_for_cnt(k_mer_cnt_rd2, coverage_rd2, k_mers_rd2)
-    i_rcds = i_rcds_rd1.intersection(i_rcds_rd2)
-
-    # Write read one and two files with and without repeats
-    rd1_wr_file_name, rd1_wo_file_name = write_reads_for_cnt(
-        i_rcds, seq_rcds_rd1, "rd1"
+    return (
+        spades_seq,
+        apc_seq,
+        rd1_matched_m,
+        rd2_matched_m,
     )
-    rd2_wr_file_name, rd2_wo_file_name = write_reads_for_cnt(
-        i_rcds, seq_rcds_rd2, "rd2"
-    )
-    return rd1_wr_file_name, rd1_wo_file_name, rd2_wr_file_name, rd2_wo_file_name
-
-
-def find_seq_rcds_for_cnt(k_mer_cnt_rds, min_n_clusters=2, max_n_clusters=8):
-    pass
 
 
 def find_optimum_n_clusters(
     dump_fnm,
     min_n_clusters=2,
     max_n_clusters=8,
-    n_bins=100,
-    do_plot=False,
     force=False,
+    do_plot=False,
+    n_bins=100,
 ):
-    """TODO: Complete
+    """Use k-means to cluster k-mer counts, selecting the optimum
+    number of clusters based on the silhouette score.
 
     Parameters
     ----------
@@ -679,19 +673,19 @@ def find_optimum_n_clusters(
         Minimum number of clusters tested
     max_n_clusters : int
         Maximum number of clusters tested
-    n_bins : int
-        Number of bins over which to compute histogram
-    do_plot : boolean
-        Flag to plot histogram with bins color coded by label
     force : boolean
         Flag to force preprocessing if output files exist
+    do_plot : boolean
+        Flag to plot histogram with bins color coded by label
+    n_bins : int
+        Number of bins over which to compute histogram if plotting
 
     Returns
     -------
     k_mer_cnt_min : int
-        Minimum k-mer count for each label
+        Minimum k-mer count for each cluster
     k_mer_cnt_max : int
-        Maximum k-mer count for each label
+        Maximum k-mer count for each cluster
 
     """
     parquet_fnm = dump_fnm.replace(".txt", ".parquet")
@@ -758,50 +752,29 @@ def find_optimum_n_clusters(
     return k_mer_cnt_min, k_mer_cnt_max
 
 
-def write_reads_for_cnt(i_rcds, seq_rcds, case):
-    """Write a FASTQ file containing the sequence records (reads)
-    specified, and a file containing all other sequence records
-    (reads).
+def match_reads(filtered_fnms, matched_fnms):
+    """Read filtered one and two read files, find the intersection
+    between the identifiers for each read in each file, and write the
+    corresponding matched read one and two files.
 
     Parameters
     ----------
-    i_rcds : set(int)
-        Index of sequence records in a cluster
-    seq_rcds : list(Bio.SeqRecord.SeqRecord)
-        Contains sequence records
-    case : str
-        Label for read files
+    filtered_fnms : [str]
+        Names of filtered read one and two files
+    matched_fnms : [str]
+        Names of matched read one and two files
 
     Returns
     -------
-    read_wr_file_name : str
-        File name of reads with repeats
-    read_wo_file_name : str
-        File name of reads without repeats
+    None
 
     """
-    # TODO: Settle
-    BASE_FILE_NAME = "random_seq"
-    NUMBER_PAIRS = 25000
+    # Check numnber of file names
+    if len(filtered_fnms) != len(matched_fnms) and len(filtered_fnms) != 2:
+        raise Exception("Number of filtered and matched file names must equal two")
 
-    # Write a FASTQ file containing the specified sequence records
-    # (reads)
-    read_wr_file_name = BASE_FILE_NAME + "_wr_" + case + ".fastq"
-    with open(read_wr_file_name, "w") as f:
-        for i_rcd in i_rcds:
-            SeqIO.write(seq_rcds[i_rcd], f, "fastq")
-
-    # Write a FASTQ file containing all other sequence records (reads)
-    read_wo_file_name = BASE_FILE_NAME + "_wo_" + case + ".fastq"
-    with open(read_wo_file_name, "w") as f:
-        for i_rcd in set(range(NUMBER_PAIRS)).difference(i_rcds):
-            SeqIO.write(seq_rcds[i_rcd], f, "fastq")
-
-    return read_wr_file_name, read_wo_file_name
-
-
-def match_reads(filtered_fnms, matched_fnms):
-
+    # Read each filtered read file to create a set of identifiers for
+    # each read file, then find the intersection of the sets
     id_sets = []
     for filtered_fnm in filtered_fnms:
         id_set = set()
@@ -812,113 +785,31 @@ def match_reads(filtered_fnms, matched_fnms):
         id_sets.append(id_set)
     matched_id_set = id_sets[0].intersection(id_sets[1])
 
-    if len(filtered_fnms) != len(matched_fnms):
-        raise Exception("Number of filtered and matched file names must be equal")
-
+    # Write the reads in each read file with an identifier in the
+    # matched identifier set to a corresponding matched read file
+    n_matched = []
     for matched_fnm, filtered_fnm in zip(matched_fnms, filtered_fnms):
+        n_matched.append(0)
         with open(matched_fnm, "w") as m:
             with open(filtered_fnm, "r") as f:
+                n_group = 3
+                do_print = False
                 for line in f:
-                    if line[0] == "@":
+                    if line[0:2] == "@M":
+                        if n_group != 3:
+                            raise Exception(f"Group prior to {line} did not contain four lines")
+                        n_group = 0
                         if line.split(sep=" ")[0] in matched_id_set:
                             do_print = True
                         else:
                             do_print = False
+                    else:
+                        n_group += 1
                     if do_print:
                         m.write(line)
-
-
-# TODO: Name and review
-def ghi(initial_seq, rd1_file_name, rd2_file_name):
-    # TODO: Settle
-    BASE_FILE_NAME = "random_seq"
-    EXP_CNT = 16
-    K_MER_CNT_REP = [EXP_CNT]
-    OUTER_DISTANCE = 500
-    FRAGMENT_LEN = OUTER_DISTANCE
-
-    # Count k-mers in the random sequence, doubled to represent
-    # circular DNA
-    # TODO: Fix
-    with timing("Counting k_mers in initial sequence"):
-        k_mers_seq = count_k_mers_in_seq(initial_seq + initial_seq)
-
-    # Count k-mers in the paired reads, and write the result to a
-    # file
-    with timing("Counting k_mers in reads"):
-        k_mers_rd1, seq_rcds_rd1 = count_k_mers_in_rds(rd1_file_name)
-        k_mers_rd2, seq_rcds_rd2 = count_k_mers_in_rds(rd2_file_name)
-    with timing("Writing k_mers and counts in reads"):
-        write_k_mer_counts_in_rds(k_mers_rd1, k_mers_rd2, BASE_FILE_NAME + "_cnt.txt")
-
-    # Collect k-mer counts, and compute coverage
-    k_mer_cnt_seq = collect_k_mer_cnt(k_mers_seq, seq_cnt=2)
-    k_mer_cnt_rd1 = collect_k_mer_cnt(k_mers_rd1, seq_cnt=1)
-    k_mer_cnt_rd2 = collect_k_mer_cnt(k_mers_rd2, seq_cnt=1)
-    coverage_rd1 = int(np.sum(k_mer_cnt_rd1) / np.sum(k_mer_cnt_seq))
-    coverage_rd2 = int(np.sum(k_mer_cnt_rd2) / np.sum(k_mer_cnt_seq))
-
-    # Separate reads into those containing a k-mer with the
-    # expected count, and all others
-    with timing("Writing reads based on read count"):
-        (
-            rd1_wr_file_name,
-            rd1_wo_file_name,
-            rd2_wr_file_name,
-            rd2_wo_file_name,
-        ) = write_paired_reads_for_cnt(
-            k_mer_cnt_rd1,
-            coverage_rd1,
-            k_mers_rd1,
-            seq_rcds_rd1,
-            k_mer_cnt_rd2,
-            coverage_rd2,
-            k_mers_rd2,
-            seq_rcds_rd2,
-            K_MER_CNT_REP,
-            EXP_CNT,
-        )
-
-    # Assemble paired reads with repeats using SSAKE
-    with timing("Assembling paired reads with repeats using SSAKE"):
-        ssake_out_base_name = BASE_FILE_NAME + "_ssake"
-        if Path(ssake_out_base_name).exists():
-            shutil.rmtree(ssake_out_base_name)
-            ru.ssake(
-                rd1_wr_file_name,
-                rd2_wr_file_name,
-                ssake_out_base_name,
-                FRAGMENT_LEN,
-                phred_threshold=20,  # -x
-                n_consec_bases=70,  # -n
-                ascii_offset=33,  # -d
-                min_coverage=5,  # -w
-                n_ovrlap_bases=20,  # -m
-                n_reads_to_call=2,  # -o
-                base_ratio=0.7,  # -r
-                n_bases_to_trim=0,  # -t
-                contig_size=100,  # -z
-                do_track_cvrg=0,  # -c
-                do_ignore_mppng=0,  # -y
-                do_ignore_headr=0,  # -k
-                do_break_ties=0,  # -q
-                do_run_verbose=0,
-            )  # -v
-
-    # Assemble paired reads with trusted contigs using SPAdes
-    with timing(
-        "Assembling paired reads repeats and with trusted contigs using SPAdes"
-    ):
-        spades_wc_out_dir = BASE_FILE_NAME + "_spades_wc"
-        trusted_contigs_fnm = str(Path(ssake_out_base_name) / ssake_out_base_name + "_scaffolds.fa")
-        if Path(spades_wc_out_dir).exists():
-            shutil.rmtree(spades_wc_out_dir)
-        ru.spades(
-            rd1_file_name,
-            rd2_file_name,
-            spades_wc_out_dir,
-            trusted_contigs_fnm=trusted_contigs_fnm,
-        )
+                        n_matched[-1] += 1
+    if n_matched[0] != n_matched[1]:
+        raise Exception("Number of matched lines in each read file must be equal")
 
 
 def align_assembly_output(aligner, working_dir, seq):
@@ -945,6 +836,7 @@ def align_assembly_output(aligner, working_dir, seq):
     with timing(f"Aligning {case} assemblies"):
 
         # Read the multi-FASTA SPAdes output file, and align
+        # TODO: Fix
         output_pth = Path(working_dir) / SPADES_OUTPUT_DIR / SPADES_OUTPUT_FNM
         spd_scr = -1.0
         if Path(output_pth).exists():
@@ -954,6 +846,7 @@ def align_assembly_output(aligner, working_dir, seq):
                 spd_scr = aligner.score(seq + seq, seq_rcds[0].seq)
 
         # Read the FASTA apc output file, and align
+        # TODO: Fix
         output_pth = Path(working_dir) / APC_OUTPUT_FNM
         apc_scr = -1.0
         if output_pth.exists():
