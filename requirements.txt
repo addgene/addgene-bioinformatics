@@ -18,7 +18,7 @@ asttokens==2.0.5
     # via stack-data
 attrs==21.4.0
     # via py-tes
-awscli==1.25.1
+awscli==1.25.27
     # via -r requirements.in
 backcall==0.2.0
     # via ipython
@@ -26,7 +26,7 @@ bagit==1.8.1
     # via cwltool
 biopython==1.79
     # via -r requirements.in
-bleach==5.0.0
+bleach==5.0.1
     # via galaxy-util
 blessed==1.19.1
     # via enlighten
@@ -34,26 +34,28 @@ boltons==21.0.0
     # via galaxy-util
 boto==2.49.0
     # via toil
-boto3==1.24.1
+boto3==1.24.27
     # via toil
-boto3-stubs[s3]==1.24.1
+boto3-stubs[s3]==1.24.27
     # via toil
-botocore==1.27.1
+botocore==1.27.27
     # via
     #   awscli
     #   boto3
     #   s3transfer
-botocore-stubs==1.27.1
+botocore-stubs==1.27.27
     # via boto3-stubs
+build==0.8.0
+    # via pip-tools
 cachecontrol==0.12.11
     # via schema-salad
 cachetools==4.2.4
     # via google-auth
-certifi==2022.5.18.1
+certifi==2022.6.15
     # via requests
-cffi==1.15.0
+cffi==1.15.1
     # via pynacl
-charset-normalizer==2.0.12
+charset-normalizer==2.1.0
     # via requests
 click==8.1.3
     # via pip-tools
@@ -79,7 +81,7 @@ enlighten==1.10.2
     # via toil
 executing==0.8.3
     # via stack-data
-fonttools==4.33.3
+fonttools==4.34.4
     # via matplotlib
 future==0.18.2
     # via py-tes
@@ -109,7 +111,7 @@ google-crc32c==1.3.0
     # via google-resumable-media
 google-resumable-media==2.3.3
     # via google-cloud-storage
-googleapis-common-protos==1.56.2
+googleapis-common-protos==1.56.3
     # via google-api-core
 http-parser==0.9.0
     # via pymesos
@@ -123,7 +125,7 @@ isodate==0.6.1
     # via rdflib
 jedi==0.18.1
     # via ipython
-jmespath==1.0.0
+jmespath==1.0.1
     # via
     #   boto3
     #   botocore
@@ -131,11 +133,11 @@ joblib==1.1.0
     # via scikit-learn
 kazoo==2.8.0
     # via pymesos
-kiwisolver==1.4.2
+kiwisolver==1.4.3
     # via matplotlib
 lockfile==0.12.2
     # via schema-salad
-lxml==4.9.0
+lxml==4.9.1
     # via
     #   galaxy-tool-util
     #   prov
@@ -147,15 +149,15 @@ matplotlib-inline==0.1.3
     # via ipython
 mistune==0.8.4
     # via schema-salad
-msgpack==1.0.3
+msgpack==1.0.4
     # via cachecontrol
 mypy-boto3-s3==1.24.0
     # via boto3-stubs
 mypy-extensions==0.4.3
     # via cwltool
-networkx==2.8.2
+networkx==2.8.4
     # via prov
-numpy==1.22.4
+numpy==1.23.1
     # via
     #   biopython
     #   matplotlib
@@ -163,25 +165,26 @@ numpy==1.22.4
     #   scipy
 packaging==21.3
     # via
+    #   build
     #   galaxy-util
     #   matplotlib
 parso==0.8.3
     # via jedi
 pep517==0.12.0
-    # via pip-tools
+    # via build
 pexpect==4.8.0
     # via ipython
 pickleshare==0.7.5
     # via ipython
-pillow==9.1.1
+pillow==9.2.0
     # via matplotlib
-pip-tools==6.6.2
+pip-tools==6.8.0
     # via -r requirements.in
 prefixed==0.3.2
     # via enlighten
-prompt-toolkit==3.0.29
+prompt-toolkit==3.0.30
     # via ipython
-protobuf==3.20.1
+protobuf==4.21.2
     # via
     #   google-api-core
     #   googleapis-common-protos
@@ -205,7 +208,7 @@ pyasn1-modules==0.2.8
     # via google-auth
 pycparser==2.21
     # via cffi
-pycryptodome==3.14.1
+pycryptodome==3.15.0
     # via galaxy-util
 pydantic==1.9.1
     # via galaxy-tool-util
@@ -246,7 +249,7 @@ rdflib==6.0.2
     #   schema-salad
 repoze-lru==0.7
     # via routes
-requests==2.27.1
+requests==2.28.1
     # via
     #   apache-libcloud
     #   cachecontrol
@@ -278,7 +281,7 @@ s3transfer==0.6.0
     # via
     #   awscli
     #   boto3
-schema-salad==8.3.20220525163636
+schema-salad==8.3.20220626185350
     # via cwltool
 scikit-learn==1.1.1
     # via -r requirements.in
@@ -302,19 +305,21 @@ six==1.16.0
     #   routes
 sortedcontainers==2.4.0
     # via galaxy-tool-util
-stack-data==0.2.0
+stack-data==0.3.0
     # via ipython
 threadpoolctl==3.1.0
     # via scikit-learn
 toil[aws,cwl,encryption,google,mesos]==5.6.0
     # via -r requirements.in
 tomli==2.0.1
-    # via pep517
-traitlets==5.2.2.post1
+    # via
+    #   build
+    #   pep517
+traitlets==5.3.0
     # via
     #   ipython
     #   matplotlib-inline
-typing-extensions==4.2.0
+typing-extensions==4.3.0
     # via
     #   boto3-stubs
     #   botocore-stubs
@@ -322,7 +327,7 @@ typing-extensions==4.2.0
     #   galaxy-tool-util
     #   mypy-boto3-s3
     #   pydantic
-urllib3==1.26.9
+urllib3==1.26.10
     # via
     #   botocore
     #   requests
@@ -332,7 +337,7 @@ wcwidth==0.2.5
     #   prompt-toolkit
 webencodings==0.5.1
     # via bleach
-websocket-client==1.3.2
+websocket-client==1.3.3
     # via docker
 wheel==0.37.1
     # via pip-tools
