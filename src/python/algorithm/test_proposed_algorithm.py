@@ -1,13 +1,11 @@
+
 import logging
 import os
 from pathlib import Path
 
-from matplotlib import pyplot as plt
-import numpy as np
 import pandas as pd
 
 import AssemblyUtilities as au
-import RunUtilities as ru
 
 
 SEQUENCING_BASE_DIR = Path("/Volumes/Seagate/addgene-sequencing-data")

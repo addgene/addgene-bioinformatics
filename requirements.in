@@ -2,6 +2,7 @@ awscli
 biopython
 ipython
 matplotlib
+openpyxl
 pandas
 pip-tools
 pyarrow
