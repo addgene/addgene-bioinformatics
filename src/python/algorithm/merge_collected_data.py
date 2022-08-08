@@ -108,3 +108,7 @@ selected_seqs_with_repeat_sub_seqs = (
 selected_seqs_with_repeat_sub_seqs.to_excel(
     COLLECTED_DATA_HOME / f"2018-Collected-Data-Selected-Seqs-WITH-Repeat-Sub-Seqs.xlsx"
 )
+
+selected_seqs_with_repeat_sub_seqs = get_sheet_parquet(
+    "Selected-Seqs-WITH-Repeat-Sub-Seqs",
+)
