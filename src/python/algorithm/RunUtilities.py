@@ -22,6 +22,7 @@ if not root.handlers:
 logger = logging.getLogger("RunUtilities")
 logger.setLevel(logging.INFO)
 
+
 # TODO: Use consistent parameter names
 
 
@@ -2780,7 +2781,7 @@ def BBReformat():
     minavgquality=0         (maq) Reads with average quality (after trimming) below this will be discarded.
     maqb=0                  If positive, calculate maq from this many initial bases.
     chastityfilter=f        (cf) Reads with names  containing ' 1:Y:' or ' 2:Y:' will be discarded.
-    barcodefilter=f         Remove reads with unexpected barcodes if barcodes is set, or barcodes containing 'N' otherwise.  
+    barcodefilter=f         Remove reads with unexpected barcodes if barcodes is set, or barcodes containing 'N' otherwise.
                             A barcode must be the last part of the read header.
     barcodes=               Comma-delimited list of barcodes or files of barcodes.
     maxns=-1                If 0 or greater, reads with more Ns than this (after trimming) will be discarded.
@@ -2829,7 +2830,7 @@ def BBReformat():
     cardinality=f           (loglog) Count unique kmers using the LogLog algorithm.
     loglogbuckets=1999      Use this many buckets for cardinality estimation.
 
-    Shortcuts: 
+    Shortcuts:
     The # symbol will be substituted for 1 and 2.  The % symbol in out will be substituted for input name minus extensions.
     For example:
     reformat.sh in=read#.fq out=%.fa
@@ -2847,7 +2848,7 @@ def BBReformat():
     """
     pass
 
-    
+
 def BBJoin(inp_fq_one_fnm, inp_fq_two_fnm, *args, **kwargs):
     """Using BBTools BBMap reformat.sh to join interleaved reads in
     two files into one file.

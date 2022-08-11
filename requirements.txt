@@ -14,11 +14,11 @@ appnope==0.1.3
     # via ipython
 argcomplete==2.0.0
     # via cwltool
-asttokens==2.0.5
+asttokens==2.0.7
     # via stack-data
 attrs==22.1.0
     # via py-tes
-awscli==1.25.43
+awscli==1.25.47
     # via -r requirements.in
 backcall==0.2.0
     # via ipython
@@ -34,16 +34,16 @@ boltons==21.0.0
     # via galaxy-util
 boto==2.49.0
     # via toil
-boto3==1.24.43
+boto3==1.24.47
     # via toil
 boto3-stubs[iam,s3,sdb]==1.24.0
     # via toil
-botocore==1.27.43
+botocore==1.27.47
     # via
     #   awscli
     #   boto3
     #   s3transfer
-botocore-stubs==1.27.43
+botocore-stubs==1.27.47
     # via boto3-stubs
 build==0.8.0
     # via pip-tools
@@ -99,7 +99,7 @@ google-api-core==2.8.2
     # via
     #   google-cloud-core
     #   google-cloud-storage
-google-auth==2.9.1
+google-auth==2.10.0
     # via
     #   google-api-core
     #   google-cloud-core
@@ -220,7 +220,7 @@ pure-eval==0.2.2
     # via stack-data
 py-tes==0.4.2
     # via toil
-pyarrow==8.0.0
+pyarrow==9.0.0
     # via -r requirements.in
 pyasn1==0.4.8
     # via
@@ -306,7 +306,7 @@ s3transfer==0.6.0
     #   boto3
 schema-salad==8.3.20220801194920
     # via cwltool
-scikit-learn==1.1.1
+scikit-learn==1.1.2
     # via -r requirements.in
 scipy==1.9.0
     # via scikit-learn

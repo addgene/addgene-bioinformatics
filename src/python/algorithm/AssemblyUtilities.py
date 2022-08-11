@@ -419,14 +419,14 @@ def assemble_using_spades(
 
 # TODO: Review
 def assemble_using_ssake(
-        working_dir,
-        spades_output_dir,
-        apc_base_fnm,
-        ssake_scaffolds_fnm,
-        rd1_unmerged_fnm,
-        rd2_unmerged_fnm,
-        rds_merged_fnm,
-        force=False
+    working_dir,
+    spades_output_dir,
+    apc_base_fnm,
+    ssake_scaffolds_fnm,
+    rd1_unmerged_fnm,
+    rd2_unmerged_fnm,
+    rds_merged_fnm,
+    force=False,
 ):
     """Assemble reads using SPAdes, then circularize using apc.
 
@@ -613,8 +613,12 @@ def assemble_using_ssake(
             try:
                 if not Path(spades_output_dir).exists() or force:
                     label = i_cluster
-                    rd1_matched_m = rd1_unmerged_fnm.replace(".fastq.gz", f"_matched_{label}.fastq")
-                    rd2_matched_m = rd2_unmerged_fnm.replace(".fastq.gz", f"_matched_{label}.fastq")
+                    rd1_matched_m = rd1_unmerged_fnm.replace(
+                        ".fastq.gz", f"_matched_{label}.fastq"
+                    )
+                    rd2_matched_m = rd2_unmerged_fnm.replace(
+                        ".fastq.gz", f"_matched_{label}.fastq"
+                    )
                     ru.spades(
                         rd1_matched_m,
                         rd2_matched_m,
@@ -635,13 +639,15 @@ def assemble_using_ssake(
                 if not Path(apc_output_fnm).exists():
                     with timing("Circularize using apc"):
                         ru.apc(apc_base_fnm, spades_output_fnm)
-                logger.info(f"Results of assembling usng SSAKE in directory: {os.getcwd()}")
+                logger.info(
+                    f"Results of assembling usng SSAKE in directory: {os.getcwd()}"
+                )
 
                 # Parse apc output file
                 if Path(apc_output_fnm).exists():
-                    apc_seq = [seq_rcd for seq_rcd in SeqIO.parse(apc_output_fnm, "fasta")][
-                        0
-                    ].seq
+                    apc_seq = [
+                        seq_rcd for seq_rcd in SeqIO.parse(apc_output_fnm, "fasta")
+                    ][0].seq
 
             except Exception as ex:
                 logger.error(f"{ex}")
@@ -797,7 +803,9 @@ def match_reads(filtered_fnms, matched_fnms):
                 for line in f:
                     if line[0:2] == "@M":
                         if n_group != 3:
-                            raise Exception(f"Group prior to {line} did not contain four lines")
+                            raise Exception(
+                                f"Group prior to {line} did not contain four lines"
+                            )
                         n_group = 0
                         if line.split(sep=" ")[0] in matched_id_set:
                             do_print = True
@@ -812,21 +820,25 @@ def match_reads(filtered_fnms, matched_fnms):
         raise Exception("Number of matched lines in each read file must be equal")
 
 
-def align_assembly_output(aligner, working_dir, seq):
+def align_assembly_output(aligner, working_dir, spades_out_fnm, apc_out_fnm, seq):
     """Align SPAdes and apc assembly output to a sequence.
 
     Parameters
     ----------
     aligner : Align.PairwiseAligner
         A Biopython pairwise aligner
-    working_dir
+    working_dir : str
         Directory containing output of an assembly case
+    spades_out_fnm : str
+        File containing SPAdes output
+    apc_out_fnm : str
+        File containing apc output
     seq : Bio.Seq.Seq
         A Biopython sequence to which to align
 
     Returns
     -------
-    spd_scr
+    spades_scr
         Alignment score for the SPAdes output
     apc_scr
         Alignment score for the apc output
@@ -836,18 +848,16 @@ def align_assembly_output(aligner, working_dir, seq):
     with timing(f"Aligning {case} assemblies"):
 
         # Read the multi-FASTA SPAdes output file, and align
-        # TODO: Fix
-        output_pth = Path(working_dir) / SPADES_OUTPUT_DIR / SPADES_OUTPUT_FNM
-        spd_scr = -1.0
+        output_pth = Path(working_dir) / spades_out_fnm
+        spades_scr = -1.0
         if Path(output_pth).exists():
-            spd_scr = 0.0
+            spades_scr = 0.0
             seq_rcds = [seq_rcd for seq_rcd in SeqIO.parse(output_pth, "fasta")]
             if len(seq_rcds) > 0:
-                spd_scr = aligner.score(seq + seq, seq_rcds[0].seq)
+                spades_scr = aligner.score(seq + seq, seq_rcds[0].seq)
 
         # Read the FASTA apc output file, and align
-        # TODO: Fix
-        output_pth = Path(working_dir) / APC_OUTPUT_FNM
+        output_pth = Path(working_dir) / apc_out_fnm
         apc_scr = -1.0
         if output_pth.exists():
             apc_scr = 0.0
@@ -855,7 +865,7 @@ def align_assembly_output(aligner, working_dir, seq):
             if len(seq_rcds) > 0:
                 apc_scr = aligner.score(seq + seq, seq_rcds[0].seq)
 
-    return spd_scr, apc_scr
+    return spades_scr, apc_scr
 
 
 def create_aligner(config):
@@ -893,3 +903,39 @@ def create_aligner(config):
     aligner.mode = config["mode"]
 
     return aligner
+
+
+def get_sheet_parquet(data_home, data_path, sheet_name, usecols=None, header=0):
+    """Read Excel spreadsheet and save to parquet or read parquet.
+
+    Parameters
+    ----------
+    data_home : pathlib.Path
+        Directory containing spreadsheets
+    data_path : pathlib.Path
+        Spreadsheet file
+    sheet_name : str
+        Name of spreadsheet tab
+    usecols : list(str)
+        List of column names in Excel format
+    header : int
+        Number of header rows
+
+    Returns
+    -------
+    sheet : Pandas.DataFrame
+    """
+    sheet_parquet = data_home / data_path.name.replace(
+        ".xlsx", f"-{sheet_name}.parquet"
+    )
+    if not sheet_parquet.exists():
+        sheet = pd.read_excel(
+            data_path,
+            sheet_name=sheet_name,
+            usecols=usecols,
+            header=header,
+        )
+        sheet.to_parquet(sheet_parquet)
+    else:
+        sheet = pd.read_parquet(sheet_parquet)
+    return sheet
