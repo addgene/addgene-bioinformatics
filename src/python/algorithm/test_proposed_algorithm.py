@@ -155,6 +155,12 @@ def main():
         plate = unq_seqs.iloc[i_seq]["Plate"]
         well = unq_seqs.iloc[i_seq]["Well"]
 
+        sequence_id = 240323
+        sequence_id = 226646
+
+        plate = qc_seqs.loc[qc_seqs["Sequence ID"] == sequence_id]["Plate"].iloc[0]
+        well = qc_seqs.loc[qc_seqs["Sequence ID"] == sequence_id]["Well"].iloc[0]
+
         # Get QC and subsequences
         qc_seq = qc_seqs.loc[qc_seqs["Sequence ID"] == sequence_id]["Sequence"].iloc[0]
         sub_seqs = [
@@ -201,8 +207,9 @@ def main():
                 force=force,
             )
 
-        # Align result to QC sequence
         print("Start here")
+
+        # Align result to QC sequence
         spades_scr_current = 0.0
         if spades_seq_current is not None:
             spades_scr_current = aligner.score(qc_seq + qc_seq, spades_seq_current)
@@ -235,6 +242,8 @@ def main():
         apc_scr_proposed = 0.0
         if apc_seq_proposed is not None:
             apc_scr_proposed = aligner.score(qc_seq + qc_seq, apc_seq_proposed)
+
+        print("stop here")
 
         # TODO: Count repeats in SSAKE scaffolds
 
