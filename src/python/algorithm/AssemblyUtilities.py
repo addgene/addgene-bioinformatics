@@ -461,6 +461,7 @@ def assemble_using_ssake(
         File name of reads two matched from minimum k-mer count cluster
 
     """
+    ssake_seqs = None
     spades_seq = None
     apc_seq = None
     rd1_matched_m = None
@@ -602,6 +603,12 @@ def assemble_using_ssake(
                 except Exception as ex:
                     logger.error(f"{ex}")
 
+        # Parse SSAKE scaffolds
+        if Path(ssake_scaffolds_fnm).exists():
+            ssake_seqs = [
+                str(seq_rcd.seq) for seq_rcd in SeqIO.parse(ssake_scaffolds_fnm, "fasta")
+            ]
+
         # Assemble unmerged reads from the first k-mer count cluster,
         # all merged reads, and scaffolds using SPAdes and apc
         spades_output_fnm = spades_output_dir + ".fasta"
@@ -653,6 +660,7 @@ def assemble_using_ssake(
                 logger.error(f"{ex}")
 
     return (
+        ssake_seqs,
         spades_seq,
         apc_seq,
         rd1_matched_m,

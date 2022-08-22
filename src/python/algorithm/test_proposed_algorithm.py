@@ -2,6 +2,7 @@ from configparser import ConfigParser
 import logging
 import os
 from pathlib import Path
+import re
 
 import pandas as pd
 
@@ -129,7 +130,7 @@ def merge_collected_data():
     return all_qc_seqs, selected_seqs_with_repeat_sub_seqs
 
 
-def main():
+def main(f):
 
     # Read and parse configuration file
     home_dir = Path(__file__).parents[3]
@@ -155,8 +156,7 @@ def main():
         plate = unq_seqs.iloc[i_seq]["Plate"]
         well = unq_seqs.iloc[i_seq]["Well"]
 
-        sequence_id = 240323
-        sequence_id = 226646
+        # sequence_id = 226646  # Test case
 
         plate = qc_seqs.loc[qc_seqs["Sequence ID"] == sequence_id]["Plate"].iloc[0]
         well = qc_seqs.loc[qc_seqs["Sequence ID"] == sequence_id]["Well"].iloc[0]
@@ -165,9 +165,9 @@ def main():
         qc_seq = qc_seqs.loc[qc_seqs["Sequence ID"] == sequence_id]["Sequence"].iloc[0]
         sub_seqs = [
             sub_seq
-            for sub_seq in sel_seqs.loc[sel_seqs["Sequence ID"] == sequence_id][
-                "Subsequence"
-            ]
+            for sub_seq in sel_seqs.loc[
+                sel_seqs["Sequence ID"] == sequence_id
+            ].dropna()["Subsequence"]
         ]
 
         # Create a directory for plot files
@@ -207,8 +207,6 @@ def main():
                 force=force,
             )
 
-        print("Start here")
-
         # Align result to QC sequence
         spades_scr_current = 0.0
         if spades_seq_current is not None:
@@ -220,6 +218,7 @@ def main():
         # Assemble reads using SSAKE
         with au.timing("Assembling reads using SSAKE"):
             (
+                ssake_seqs_proposed,
                 spades_seq_proposed,
                 apc_seq_proposed,
                 _rd1_matched_m,
@@ -243,10 +242,16 @@ def main():
         if apc_seq_proposed is not None:
             apc_scr_proposed = aligner.score(qc_seq + qc_seq, apc_seq_proposed)
 
-        print("stop here")
-
-        # TODO: Count repeats in SSAKE scaffolds
+        # Count subsequences in SSAKE scaffolds
+        f.write(f"Considering sequence id: {sequence_id}\n")
+        for ssake_seq in ssake_seqs_proposed:
+            f.write(f"    Counting in SSAKE seq: {ssake_seq}\n")
+            for sub_seq in sub_seqs:
+                n_sub_seq = len(re.findall(sub_seq, ssake_seq))
+                f.write(f"        Found {n_sub_seq} occurances of subsequence: {sub_seq}\n")
 
 
 if __name__ == "__main__":
-    main()
+    # TODO: Tidy up
+    with open("counts.txt", "w") as f:
+        main(f)
