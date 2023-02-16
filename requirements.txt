@@ -18,32 +18,32 @@ asttokens==2.2.1
     # via stack-data
 attrs==22.2.0
     # via py-tes
-awscli==1.27.51
+awscli==1.27.72
     # via -r requirements.in
 backcall==0.2.0
     # via ipython
 bagit==1.8.1
     # via cwltool
-biopython==1.80
+biopython==1.81
     # via -r requirements.in
-bleach==5.0.1
+bleach==6.0.0
     # via galaxy-util
-blessed==1.19.1
+blessed==1.20.0
     # via enlighten
 boltons==21.0.0
     # via galaxy-util
 boto==2.49.0
     # via toil
-boto3==1.26.51
+boto3==1.26.72
     # via toil
 boto3-stubs[iam,s3,sdb]==1.24.0
     # via toil
-botocore==1.29.51
+botocore==1.29.72
     # via
     #   awscli
     #   boto3
     #   s3transfer
-botocore-stubs==1.29.51
+botocore-stubs==1.29.72
     # via boto3-stubs
 build==0.10.0
     # via pip-tools
@@ -52,7 +52,7 @@ cachecontrol[filecache]==0.12.11
     #   cwl-utils
     #   schema-salad
     #   toil
-cachetools==5.2.1
+cachetools==5.3.0
     # via google-auth
 certifi==2022.12.7
     # via requests
@@ -70,9 +70,9 @@ contourpy==1.0.7
     # via matplotlib
 cwl-upgrader==1.2.4
     # via cwl-utils
-cwl-utils==0.21
+cwl-utils==0.23
     # via cwltool
-cwltool==3.1.20221008225030
+cwltool==3.1.20221201130942
     # via toil
 cycler==0.11.0
     # via matplotlib
@@ -86,7 +86,7 @@ docutils==0.16
     # via
     #   awscli
     #   galaxy-util
-enlighten==1.11.1
+enlighten==1.11.2
     # via toil
 executing==1.2.0
     # via stack-data
@@ -117,7 +117,7 @@ google-cloud-storage==2.5.0
     # via toil
 google-crc32c==1.5.0
     # via google-resumable-media
-google-resumable-media==2.4.0
+google-resumable-media==2.4.1
     # via google-cloud-storage
 googleapis-common-protos==1.58.0
     # via google-api-core
@@ -129,7 +129,7 @@ idna==3.4
     # via requests
 importlib-resources==5.10.2
     # via galaxy-util
-ipython==8.8.0
+ipython==8.10.0
     # via -r requirements.in
 isodate==0.6.1
     # via rdflib
@@ -153,11 +153,11 @@ lxml==4.9.2
     #   prov
 markupsafe==2.1.2
     # via galaxy-util
-matplotlib==3.6.3
+matplotlib==3.7.0
     # via -r requirements.in
 matplotlib-inline==0.1.6
     # via ipython
-mistune==2.0.4
+mistune==2.0.5
     # via schema-salad
 msgpack==1.0.4
     # via cachecontrol
@@ -173,15 +173,17 @@ mypy-boto3-sdb==1.24.0
     # via
     #   boto3-stubs
     #   toil
-mypy-boto3-sts==1.26.0.post1
+mypy-boto3-sts==1.26.57
     # via toil
-mypy-extensions==0.4.3
-    # via cwltool
+mypy-extensions==1.0.0
+    # via
+    #   cwltool
+    #   schema-salad
 networkx==2.8.8
     # via
     #   prov
     #   toil
-numpy==1.24.1
+numpy==1.24.2
     # via
     #   biopython
     #   contourpy
@@ -202,9 +204,9 @@ pickleshare==0.7.5
     # via ipython
 pillow==9.4.0
     # via matplotlib
-pip-tools==6.12.1
+pip-tools==6.12.2
     # via -r requirements.in
-prefixed==0.6.0
+prefixed==0.7.0
     # via enlighten
 prompt-toolkit==3.0.36
     # via ipython
@@ -232,9 +234,9 @@ pyasn1-modules==0.2.8
     # via google-auth
 pycparser==2.21
     # via cffi
-pycryptodome==3.16.0
+pycryptodome==3.17
     # via galaxy-util
-pydantic==1.10.4
+pydantic==1.10.5
     # via galaxy-tool-util
 pydot==1.4.2
     # via cwltool
@@ -301,6 +303,7 @@ rsa==4.7.2
 ruamel-yaml==0.17.21
     # via
     #   cwl-upgrader
+    #   cwl-utils
     #   cwltool
     #   schema-salad
     #   toil
@@ -312,13 +315,13 @@ s3transfer==0.6.0
     # via
     #   awscli
     #   boto3
-schema-salad==8.3.20230109181936
+schema-salad==8.4.20230213094415
     # via
     #   cwl-upgrader
     #   cwl-utils
     #   cwltool
     #   toil
-scikit-learn==1.2.0
+scikit-learn==1.2.1
     # via -r requirements.in
 scipy==1.10.0
     # via scikit-learn
@@ -342,19 +345,19 @@ stack-data==0.6.2
     # via ipython
 threadpoolctl==3.1.0
     # via scikit-learn
-toil[aws,cwl,encryption,google,mesos]==5.8.0
+toil[aws,cwl,encryption,google,mesos]==5.9.2
     # via -r requirements.in
 tomli==2.0.1
     # via
     #   build
     #   pyproject-hooks
-traitlets==5.8.1
+traitlets==5.9.0
     # via
     #   ipython
     #   matplotlib-inline
-types-awscrt==0.16.4
+types-awscrt==0.16.10
     # via botocore-stubs
-typing-extensions==4.4.0
+typing-extensions==4.5.0
     # via
     #   boto3-stubs
     #   cwltool
@@ -376,7 +379,7 @@ wcwidth==0.2.6
     #   prompt-toolkit
 webencodings==0.5.1
     # via bleach
-websocket-client==1.4.2
+websocket-client==1.5.1
     # via docker
 wheel==0.38.4
     # via pip-tools
