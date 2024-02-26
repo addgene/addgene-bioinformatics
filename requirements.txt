@@ -14,7 +14,7 @@ argcomplete==3.2.2
     # via cwltool
 asttokens==2.4.1
     # via stack-data
-awscli==1.32.35
+awscli==1.32.49
     # via -r requirements.in
 biopython==1.83
     # via -r requirements.in
@@ -26,25 +26,26 @@ boltons==23.1.1
     # via galaxy-util
 boto==2.49.0
     # via toil
-boto3==1.34.35
+boto3==1.34.49
     # via
     #   boto3-stubs
     #   moto
-boto3-stubs[boto3,iam,s3,sdb,sts]==1.34.35
+boto3-stubs[boto3,iam,s3,sdb,sts]==1.34.49
     # via toil
-botocore==1.34.35
+botocore==1.34.49
     # via
     #   awscli
     #   boto3
     #   boto3-stubs
     #   moto
     #   s3transfer
-botocore-stubs==1.34.35
+botocore-stubs==1.34.49
     # via boto3-stubs
 build==1.0.3
     # via pip-tools
 cachecontrol[filecache]==0.13.1
     # via
+    #   cachecontrol
     #   schema-salad
     #   toil
 cachetools==5.3.2
@@ -67,7 +68,7 @@ configargparse==1.7
     # via toil
 contourpy==1.2.0
     # via matplotlib
-cryptography==42.0.2
+cryptography==42.0.5
     # via moto
 cwl-upgrader==1.2.11
     # via cwl-utils
@@ -93,7 +94,7 @@ executing==2.0.1
     # via stack-data
 filelock==3.13.1
     # via cachecontrol
-fonttools==4.48.1
+fonttools==4.49.0
     # via matplotlib
 galaxy-containers==22.1.1
     # via galaxy-tool-util
@@ -104,11 +105,11 @@ galaxy-util==22.1.2
     #   galaxy-containers
     #   galaxy-tool-util
     #   toil
-google-api-core==2.16.2
+google-api-core==2.17.1
     # via
     #   google-cloud-core
     #   google-cloud-storage
-google-auth==2.27.0
+google-auth==2.28.1
     # via
     #   google-api-core
     #   google-cloud-core
@@ -128,9 +129,9 @@ humanfriendly==10.0
     # via coloredlogs
 idna==3.6
     # via requests
-importlib-resources==6.1.1
+importlib-resources==6.1.2
     # via galaxy-util
-ipython==8.21.0
+ipython==8.22.1
     # via -r requirements.in
 isodate==0.6.1
     # via rdflib
@@ -155,7 +156,7 @@ markupsafe==2.1.5
     #   galaxy-util
     #   jinja2
     #   werkzeug
-matplotlib==3.8.2
+matplotlib==3.8.3
     # via -r requirements.in
 matplotlib-inline==0.1.6
     # via ipython
@@ -203,13 +204,13 @@ pexpect==4.9.0
     # via ipython
 pillow==10.2.0
     # via matplotlib
-pip-tools==7.3.0
+pip-tools==7.4.0
     # via -r requirements.in
 prefixed==0.7.0
     # via enlighten
 prompt-toolkit==3.0.43
     # via ipython
-protobuf==4.25.2
+protobuf==4.25.3
     # via
     #   google-api-core
     #   googleapis-common-protos
@@ -233,9 +234,9 @@ pycparser==2.21
     # via cffi
 pycryptodome==3.20.0
     # via galaxy-util
-pydantic==2.6.1
+pydantic==2.6.2
     # via galaxy-tool-util
-pydantic-core==2.16.2
+pydantic-core==2.16.3
     # via pydantic
 pydot==2.0.0
     # via cwltool
@@ -252,7 +253,9 @@ pyparsing==3.1.1
     #   pydot
     #   rdflib
 pyproject-hooks==1.0.0
-    # via build
+    # via
+    #   build
+    #   pip-tools
 pypubsub==4.0.3
     # via toil
 python-dateutil==2.8.2
@@ -294,7 +297,7 @@ requests==2.31.0
     #   responses
     #   schema-salad
     #   toil
-responses==0.24.1
+responses==0.25.0
     # via moto
 routes==2.5.1
     # via galaxy-util
@@ -302,20 +305,17 @@ rsa==4.7.2
     # via
     #   awscli
     #   google-auth
-ruamel-yaml==0.18.3
+ruamel-yaml==0.18.6
     # via
     #   cwl-upgrader
     #   cwl-utils
     #   cwltool
-    #   ruamel-yaml-string
     #   schema-salad
     #   toil
 ruamel-yaml-clib==0.2.8
     # via
     #   ruamel-yaml
     #   toil
-ruamel-yaml-string==0.1.1
-    # via toil
 s3transfer==0.10.0
     # via
     #   awscli
@@ -326,7 +326,7 @@ schema-salad==8.5.20240102191335
     #   cwl-utils
     #   cwltool
     #   toil
-scikit-learn==1.4.0
+scikit-learn==1.4.1.post1
     # via -r requirements.in
 scipy==1.12.0
     # via scikit-learn
@@ -347,19 +347,19 @@ spython==0.3.13
     # via cwltool
 stack-data==0.6.3
     # via ipython
-threadpoolctl==3.2.0
+threadpoolctl==3.3.0
     # via scikit-learn
-toil[aws,cwl,encryption,google,mesos]==6.0.0
+toil[aws,cwl,encryption,google,mesos]==6.1.0
     # via -r requirements.in
 traitlets==5.14.1
     # via
     #   ipython
     #   matplotlib-inline
-types-awscrt==0.20.3
+types-awscrt==0.20.4
     # via botocore-stubs
 types-s3transfer==0.10.0
     # via boto3-stubs
-typing-extensions==4.9.0
+typing-extensions==4.10.0
     # via
     #   boto3-stubs
     #   galaxy-tool-util
