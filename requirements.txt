@@ -10,11 +10,11 @@ annotated-types==0.6.0
     # via pydantic
 apache-libcloud==2.8.3
     # via toil
-argcomplete==3.2.2
+argcomplete==3.2.3
     # via cwltool
 asttokens==2.4.1
     # via stack-data
-awscli==1.32.49
+awscli==1.32.81
     # via -r requirements.in
 biopython==1.83
     # via -r requirements.in
@@ -22,33 +22,32 @@ bleach==6.1.0
     # via galaxy-util
 blessed==1.20.0
     # via enlighten
-boltons==23.1.1
+boltons==24.0.0
     # via galaxy-util
 boto==2.49.0
     # via toil
-boto3==1.34.49
+boto3==1.34.81
     # via
     #   boto3-stubs
     #   moto
-boto3-stubs[boto3,iam,s3,sdb,sts]==1.34.49
+boto3-stubs[boto3,iam,s3,sdb,sts]==1.34.81
     # via toil
-botocore==1.34.49
+botocore==1.34.81
     # via
     #   awscli
     #   boto3
     #   boto3-stubs
     #   moto
     #   s3transfer
-botocore-stubs==1.34.49
+botocore-stubs==1.34.69
     # via boto3-stubs
-build==1.0.3
+build==1.2.1
     # via pip-tools
-cachecontrol[filecache]==0.13.1
+cachecontrol[filecache]==0.14.0
     # via
-    #   cachecontrol
     #   schema-salad
     #   toil
-cachetools==5.3.2
+cachetools==5.3.3
     # via google-auth
 certifi==2024.2.2
     # via requests
@@ -66,7 +65,7 @@ coloredlogs==15.0.1
     # via cwltool
 configargparse==1.7
     # via toil
-contourpy==1.2.0
+contourpy==1.2.1
     # via matplotlib
 cryptography==42.0.5
     # via moto
@@ -92,9 +91,9 @@ enlighten==1.12.4
     # via toil
 executing==2.0.1
     # via stack-data
-filelock==3.13.1
+filelock==3.13.4
     # via cachecontrol
-fonttools==4.49.0
+fonttools==4.51.0
     # via matplotlib
 galaxy-containers==22.1.1
     # via galaxy-tool-util
@@ -105,11 +104,11 @@ galaxy-util==22.1.2
     #   galaxy-containers
     #   galaxy-tool-util
     #   toil
-google-api-core==2.17.1
+google-api-core==2.18.0
     # via
     #   google-cloud-core
     #   google-cloud-storage
-google-auth==2.28.1
+google-auth==2.29.0
     # via
     #   google-api-core
     #   google-cloud-core
@@ -123,15 +122,15 @@ google-crc32c==1.5.0
     # via google-resumable-media
 google-resumable-media==2.7.0
     # via google-cloud-storage
-googleapis-common-protos==1.62.0
+googleapis-common-protos==1.63.0
     # via google-api-core
 humanfriendly==10.0
     # via coloredlogs
 idna==3.6
     # via requests
-importlib-resources==6.1.2
+importlib-resources==6.4.0
     # via galaxy-util
-ipython==8.22.1
+ipython==8.23.0
     # via -r requirements.in
 isodate==0.6.1
     # via rdflib
@@ -143,11 +142,11 @@ jmespath==1.0.1
     # via
     #   boto3
     #   botocore
-joblib==1.3.2
+joblib==1.4.0
     # via scikit-learn
 kiwisolver==1.4.5
     # via matplotlib
-lxml==5.1.0
+lxml==5.2.1
     # via
     #   galaxy-tool-util
     #   prov
@@ -156,21 +155,21 @@ markupsafe==2.1.5
     #   galaxy-util
     #   jinja2
     #   werkzeug
-matplotlib==3.8.3
+matplotlib==3.8.4
     # via -r requirements.in
 matplotlib-inline==0.1.6
     # via ipython
-mistune==2.0.5
+mistune==3.0.2
     # via schema-salad
 moto==4.2.14
     # via toil
-msgpack==1.0.7
+msgpack==1.0.8
     # via cachecontrol
 mypy-boto3-iam==1.34.8
     # via
     #   boto3-stubs
     #   toil
-mypy-boto3-s3==1.34.14
+mypy-boto3-s3==1.34.65
     # via boto3-stubs
 mypy-boto3-sdb==1.34.0
     # via boto3-stubs
@@ -180,7 +179,7 @@ mypy-extensions==1.0.0
     # via
     #   cwltool
     #   schema-salad
-networkx==3.2.1
+networkx==3.3
     # via
     #   prov
     #   toil
@@ -198,22 +197,25 @@ packaging==21.3
     #   docker
     #   galaxy-util
     #   matplotlib
-parso==0.8.3
+parso==0.8.4
     # via jedi
 pexpect==4.9.0
     # via ipython
-pillow==10.2.0
+pillow==10.3.0
     # via matplotlib
-pip-tools==7.4.0
+pip-tools==7.4.1
     # via -r requirements.in
 prefixed==0.7.0
     # via enlighten
 prompt-toolkit==3.0.43
     # via ipython
+proto-plus==1.23.0
+    # via google-api-core
 protobuf==4.25.3
     # via
     #   google-api-core
     #   googleapis-common-protos
+    #   proto-plus
 prov==1.5.1
     # via cwltool
 psutil==5.9.8
@@ -224,17 +226,17 @@ ptyprocess==0.7.0
     # via pexpect
 pure-eval==0.2.2
     # via stack-data
-pyasn1==0.5.1
+pyasn1==0.6.0
     # via
     #   pyasn1-modules
     #   rsa
-pyasn1-modules==0.3.0
+pyasn1-modules==0.4.0
     # via google-auth
-pycparser==2.21
+pycparser==2.22
     # via cffi
 pycryptodome==3.20.0
     # via galaxy-util
-pydantic==2.6.2
+pydantic==2.6.4
     # via galaxy-tool-util
 pydantic-core==2.16.3
     # via pydantic
@@ -244,7 +246,7 @@ pygments==2.17.2
     # via ipython
 pynacl==1.5.0
     # via toil
-pyparsing==3.1.1
+pyparsing==3.1.2
     # via
     #   cwltool
     #   galaxy-util
@@ -258,7 +260,7 @@ pyproject-hooks==1.0.0
     #   pip-tools
 pypubsub==4.0.3
     # via toil
-python-dateutil==2.8.2
+python-dateutil==2.9.0.post0
     # via
     #   botocore
     #   matplotlib
@@ -316,19 +318,19 @@ ruamel-yaml-clib==0.2.8
     # via
     #   ruamel-yaml
     #   toil
-s3transfer==0.10.0
+s3transfer==0.10.1
     # via
     #   awscli
     #   boto3
-schema-salad==8.5.20240102191335
+schema-salad==8.5.20240311110950
     # via
     #   cwl-upgrader
     #   cwl-utils
     #   cwltool
     #   toil
-scikit-learn==1.4.1.post1
+scikit-learn==1.4.2
     # via -r requirements.in
-scipy==1.12.0
+scipy==1.13.0
     # via scikit-learn
 shellescape==3.8.1
     # via cwltool
@@ -347,23 +349,24 @@ spython==0.3.13
     # via cwltool
 stack-data==0.6.3
     # via ipython
-threadpoolctl==3.3.0
+threadpoolctl==3.4.0
     # via scikit-learn
 toil[aws,cwl,encryption,google,mesos]==6.1.0
     # via -r requirements.in
-traitlets==5.14.1
+traitlets==5.14.2
     # via
     #   ipython
     #   matplotlib-inline
-types-awscrt==0.20.4
+types-awscrt==0.20.5
     # via botocore-stubs
 types-s3transfer==0.10.0
     # via boto3-stubs
-typing-extensions==4.10.0
+typing-extensions==4.11.0
     # via
     #   boto3-stubs
     #   galaxy-tool-util
     #   galaxy-util
+    #   ipython
     #   mypy-boto3-iam
     #   mypy-boto3-s3
     #   mypy-boto3-sdb
@@ -371,7 +374,7 @@ typing-extensions==4.10.0
     #   pydantic
     #   pydantic-core
     #   toil
-urllib3==2.0.7
+urllib3==2.2.1
     # via
     #   botocore
     #   docker
@@ -384,9 +387,9 @@ wcwidth==0.2.13
     #   prompt-toolkit
 webencodings==0.5.1
     # via bleach
-werkzeug==3.0.1
+werkzeug==3.0.2
     # via moto
-wheel==0.42.0
+wheel==0.43.0
     # via pip-tools
 xmltodict==0.13.0
     # via moto
