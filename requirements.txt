@@ -10,11 +10,11 @@ annotated-types==0.7.0
     # via pydantic
 apache-libcloud==2.8.3
     # via toil
-argcomplete==3.5.0
+argcomplete==3.5.1
     # via cwltool
 asttokens==2.4.1
     # via stack-data
-awscli==1.34.24
+awscli==1.35.16
     # via -r requirements.in
 biopython==1.84
     # via -r requirements.in
@@ -24,22 +24,22 @@ blessed==1.20.0
     # via enlighten
 boltons==24.0.0
     # via galaxy-util
-boto3==1.35.24
+boto3==1.35.50
     # via
     #   boto3-stubs
     #   moto
-boto3-stubs[autoscaling,boto3,ec2,iam,s3,sdb,sts]==1.35.24
+boto3-stubs[autoscaling,boto3,ec2,iam,s3,sdb,sts]==1.35.50
     # via toil
-botocore==1.35.24
+botocore==1.35.50
     # via
     #   awscli
     #   boto3
     #   boto3-stubs
     #   moto
     #   s3transfer
-botocore-stubs==1.35.24
+botocore-stubs==1.35.50
     # via boto3-stubs
-build==1.2.2
+build==1.2.2.post1
     # via pip-tools
 cachecontrol[filecache]==0.14.0
     # via
@@ -53,7 +53,7 @@ cffi==1.17.1
     # via
     #   cryptography
     #   pynacl
-charset-normalizer==3.3.2
+charset-normalizer==3.4.0
     # via requests
 click==8.1.7
     # via pip-tools
@@ -63,17 +63,17 @@ coloredlogs==15.0.1
     # via
     #   cwltool
     #   toil
-conda-package-streaming==0.10.0
+conda-package-streaming==0.11.0
     # via galaxy-tool-util
 configargparse==1.7
     # via toil
 contourpy==1.3.0
     # via matplotlib
-cryptography==43.0.1
+cryptography==43.0.3
     # via moto
 cwl-upgrader==1.2.11
     # via cwl-utils
-cwl-utils==0.34
+cwl-utils==0.35
     # via cwltool
 cwltool==3.1.20240508115724
     # via toil
@@ -81,7 +81,7 @@ cycler==0.12.1
     # via matplotlib
 decorator==5.1.1
     # via ipython
-dill==0.3.8
+dill==0.3.9
     # via toil
 docker==7.1.0
     # via toil
@@ -89,7 +89,7 @@ docutils==0.16
     # via
     #   awscli
     #   galaxy-util
-ec2-metadata==2.13.0
+ec2-metadata==2.14.0
     # via toil
 enlighten==1.12.4
     # via toil
@@ -97,15 +97,15 @@ executing==2.1.0
     # via stack-data
 filelock==3.16.1
     # via cachecontrol
-fonttools==4.53.1
+fonttools==4.54.1
     # via matplotlib
-galaxy-tool-util==24.1.1
+galaxy-tool-util==24.1.3
     # via toil
-galaxy-util==24.1.1
+galaxy-util==24.1.3
     # via
     #   galaxy-tool-util
     #   toil
-google-api-core==2.20.0
+google-api-core==2.22.0
     # via
     #   google-cloud-core
     #   google-cloud-storage
@@ -129,7 +129,7 @@ humanfriendly==10.0
     # via coloredlogs
 idna==3.10
     # via requests
-ipython==8.27.0
+ipython==8.29.0
     # via -r requirements.in
 isodate==0.6.1
     # via rdflib
@@ -149,7 +149,7 @@ lxml==5.3.0
     # via
     #   galaxy-tool-util
     #   prov
-markupsafe==2.1.5
+markupsafe==3.0.2
     # via
     #   galaxy-tool-util
     #   jinja2
@@ -160,19 +160,19 @@ matplotlib-inline==0.1.7
     # via ipython
 mistune==3.0.2
     # via schema-salad
-moto==5.0.14
+moto==5.0.18
     # via toil
 msgpack==1.1.0
     # via cachecontrol
-mypy-boto3-autoscaling==1.35.4
+mypy-boto3-autoscaling==1.35.45
     # via boto3-stubs
-mypy-boto3-ec2==1.35.8
+mypy-boto3-ec2==1.35.48
     # via boto3-stubs
 mypy-boto3-iam==1.35.0
     # via
     #   boto3-stubs
     #   toil
-mypy-boto3-s3==1.35.22
+mypy-boto3-s3==1.35.46
     # via
     #   boto3-stubs
     #   toil
@@ -184,11 +184,11 @@ mypy-extensions==1.0.0
     # via
     #   cwltool
     #   schema-salad
-networkx==3.3
+networkx==3.4.2
     # via
     #   prov
     #   toil
-numpy==2.1.1
+numpy==2.1.2
     # via
     #   biopython
     #   contourpy
@@ -206,17 +206,17 @@ parso==0.8.4
     # via jedi
 pexpect==4.9.0
     # via ipython
-pillow==10.4.0
+pillow==11.0.0
     # via matplotlib
 pip-tools==7.4.1
     # via -r requirements.in
 prefixed==0.9.0
     # via enlighten
-prompt-toolkit==3.0.47
+prompt-toolkit==3.0.48
     # via ipython
-proto-plus==1.24.0
+proto-plus==1.25.0
     # via google-api-core
-protobuf==5.28.2
+protobuf==5.28.3
     # via
     #   google-api-core
     #   googleapis-common-protos
@@ -243,20 +243,20 @@ pydantic==2.9.2
     # via galaxy-tool-util
 pydantic-core==2.23.4
     # via pydantic
-pydot==3.0.1
+pydot==3.0.2
     # via cwltool
 pygments==2.18.0
     # via ipython
 pynacl==1.5.0
     # via toil
-pyparsing==3.1.4
+pyparsing==3.2.0
     # via
     #   cwltool
     #   galaxy-util
     #   matplotlib
     #   pydot
     #   rdflib
-pyproject-hooks==1.1.0
+pyproject-hooks==1.2.0
     # via
     #   build
     #   pip-tools
@@ -316,15 +316,15 @@ ruamel-yaml==0.18.6
     #   cwltool
     #   schema-salad
     #   toil
-ruamel-yaml-clib==0.2.8
+ruamel-yaml-clib==0.2.12
     # via
     #   ruamel-yaml
     #   toil
-s3transfer==0.10.2
+s3transfer==0.10.3
     # via
     #   awscli
     #   boto3
-schema-salad==8.7.20240905150001
+schema-salad==8.7.20241021092521
     # via
     #   cwl-upgrader
     #   cwl-utils
@@ -359,9 +359,9 @@ traitlets==5.14.3
     # via
     #   ipython
     #   matplotlib-inline
-types-awscrt==0.21.5
+types-awscrt==0.23.0
     # via botocore-stubs
-types-s3transfer==0.10.2
+types-s3transfer==0.10.3
     # via boto3-stubs
 typing-extensions==4.12.2
     # via
@@ -383,11 +383,11 @@ wcwidth==0.2.13
     #   prompt-toolkit
 webencodings==0.5.1
     # via bleach
-werkzeug==3.0.4
+werkzeug==3.0.6
     # via moto
 wheel==0.44.0
     # via pip-tools
-xmltodict==0.13.0
+xmltodict==0.14.2
     # via moto
 zipstream-new==1.1.8
     # via galaxy-util
