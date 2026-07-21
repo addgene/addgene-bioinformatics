@@ -1,0 +1,6 @@
+---
+name: Semgrep
+on: [pull_request, workflow_dispatch]
+jobs:
+  semgrep:
+    uses: addgene/ops-github-actions/.github/workflows/semgrep.yaml@18b4946e74b8541b6bacca4ff0988a90557e4267

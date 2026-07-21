@@ -1,0 +1,6 @@
+---
+name: Betterleaks
+on: [pull_request, workflow_dispatch]
+jobs:
+  betterleaks:
+    uses: addgene/ops-github-actions/.github/workflows/betterleaks.yaml@18b4946e74b8541b6bacca4ff0988a90557e4267

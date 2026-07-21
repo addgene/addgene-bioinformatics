@@ -1,0 +1,12 @@
+---
+name: Stale Branches
+on:
+  schedule:
+    - cron: '5 6 * * 1-5'
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+jobs:
+  stale:
+    uses: addgene/ops-github-actions/.github/workflows/stale-branches.yaml@18b4946e74b8541b6bacca4ff0988a90557e4267
