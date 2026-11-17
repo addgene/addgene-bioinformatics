@@ -10,17 +10,11 @@ annotated-types==0.8.0
     # via pydantic
 apache-libcloud==3.9.1
     # via toil
-appdirs==1.4.4
-    # via fissix
 argcomplete==3.7.2
     # via cwltool
 asttokens==3.0.2
     # via stack-data
-attrs==26.1.0
-    # via
-    #   jsonschema
-    #   referencing
-awscli==1.46.2
+awscli==1.46.3
     # via -r requirements.in
 biopython==1.88
     # via -r requirements.in
@@ -30,18 +24,18 @@ blessed==1.52.0
     # via enlighten
 boltons==26.2.0
     # via galaxy-util
-boto3==1.43.118
+boto3==1.44.4
     # via
     #   boto3-stubs
     #   moto
-boto3-stubs[autoscaling,boto3,ec2,iam,s3,sdb,sts]==1.43.118
+boto3-stubs[autoscaling,boto3,ec2,iam,s3,sdb,sts]==1.44.4
     # via toil
-botocore==1.43.118
+botocore==1.44.4
     # via
     #   boto3
     #   moto
     #   s3transfer
-botocore-stubs==1.43.118
+botocore-stubs==1.43.126
     # via boto3-stubs
 build==1.6.1
     # via pip-tools
@@ -57,7 +51,7 @@ cffi==2.1.1
     #   pynacl
 charset-normalizer==3.5.2
     # via requests
-click==8.5.0
+click==8.5.1
     # via pip-tools
 cloudpickle==3.1.2
     # via joblib
@@ -69,7 +63,7 @@ coloredlogs==15.0.1
     #   toil
 conda-package-streaming==0.13.0
     # via galaxy-tool-util
-configargparse==1.8.0
+configargparse==1.10.1
     # via toil
 contourpy==1.4.0
     # via matplotlib
@@ -81,7 +75,7 @@ ct3==3.4.0.post5
     # via galaxy-util
 cwl-upgrader==1.2.15
     # via cwl-utils
-cwl-utils==0.45
+cwl-utils==0.47
     # via
     #   cwltool
     #   toil
@@ -103,27 +97,27 @@ enlighten==1.14.1
     # via toil
 executing==2.3.0
     # via stack-data
-filelock==4.2.4
+filelock==4.2.11
     # via cachecontrol
-fissix==24.4.24
+fissix==26.10.29
     # via galaxy-util
-fonttools==4.67.0
+fonttools==4.68.0
     # via matplotlib
 future==1.0.0
     # via galaxy-util
-galaxy-tool-util==26.1.1
+galaxy-tool-util==26.1.2
     # via toil
-galaxy-tool-util-models==26.1.1
+galaxy-tool-util-models==26.1.2
     # via galaxy-tool-util
-galaxy-util[image-util,template]==26.1.1
+galaxy-util[image-util,template]==26.1.2
     # via
     #   galaxy-tool-util
     #   toil
-google-api-core==2.43.0
+google-api-core==2.44.0
     # via
     #   google-cloud-core
     #   google-cloud-storage
-google-auth==2.62.0
+google-auth==2.62.2
     # via
     #   google-api-core
     #   google-cloud-core
@@ -143,7 +137,7 @@ humanfriendly==10.0
     # via coloredlogs
 idna==3.20
     # via requests
-ipython==9.17.1
+ipython==9.18.1
     # via -r requirements.in
 ipython-pygments-lexers==1.1.1
     # via ipython
@@ -158,17 +152,13 @@ jmespath==1.1.0
     #   botocore
 joblib==1.6.0
     # via scikit-learn
-jsonschema==4.26.0
-    # via galaxy-tool-util
-jsonschema-specifications==2025.9.1
-    # via jsonschema
 kiwisolver==1.5.1
     # via matplotlib
 lxml==6.1.3
     # via
     #   galaxy-tool-util
     #   prov
-markdown-it-py==4.2.0
+markdown-it-py==4.3.0
     # via rich
 markupsafe==3.0.4
     # via
@@ -180,46 +170,46 @@ matplotlib-inline==0.2.2
     # via ipython
 mdurl==0.1.2
     # via markdown-it-py
-mistune==3.3.4
+mistune==3.4.0
     # via schema-salad
-moto==5.2.4
+moto==5.2.5
     # via toil
-msgpack==1.2.3
+msgpack==1.2.4
     # via cachecontrol
-mypy-boto3-autoscaling==1.43.117
+mypy-boto3-autoscaling==1.44.2
     # via boto3-stubs
-mypy-boto3-ec2==1.43.118
+mypy-boto3-ec2==1.44.4
     # via boto3-stubs
-mypy-boto3-iam==1.43.70
+mypy-boto3-iam==1.44.3
     # via
     #   boto3-stubs
     #   toil
-mypy-boto3-s3==1.43.106
+mypy-boto3-s3==1.44.0
     # via
     #   boto3-stubs
     #   toil
-mypy-boto3-sdb==1.43.0
+mypy-boto3-sdb==1.44.0
     # via boto3-stubs
-mypy-boto3-sts==1.43.94
+mypy-boto3-sts==1.44.0
     # via boto3-stubs
-mypy-extensions==1.1.0
+mypy-extensions==1.2.0
     # via
     #   cwltool
     #   schema-salad
-narwhals==2.27.1
+narwhals==2.29.0
     # via scikit-learn
 networkx==3.7
     # via
     #   prov
     #   toil
-numpy==2.5.4
+numpy==2.5.5
     # via
     #   biopython
     #   contourpy
     #   matplotlib
     #   scikit-learn
     #   scipy
-opentelemetry-api==1.45.1
+opentelemetry-api==1.45.2
     # via google-api-core
 packaging==26.3
     # via
@@ -237,8 +227,10 @@ pillow==13.0.0
     # via
     #   galaxy-util
     #   matplotlib
-pip-tools==7.6.2
+pip-tools==7.7.0
     # via -r requirements.in
+platformdirs==4.14.6
+    # via fissix
 prefixed==0.9.0
     # via enlighten
 prompt-toolkit==3.0.53
@@ -263,7 +255,7 @@ ptyprocess==0.7.0
     # via pexpect
 pure-eval==0.2.4
     # via stack-data
-pyasn1==0.6.4
+pyasn1==0.6.5
     # via
     #   pyasn1-modules
     #   rsa
@@ -271,12 +263,12 @@ pyasn1-modules==0.4.2
     # via google-auth
 pycparser==3.12
     # via cffi
-pydantic==2.14.1
+pydantic==2.14.3
     # via
     #   galaxy-tool-util
     #   galaxy-tool-util-models
     #   pydantic-extra-types
-pydantic-core==2.50.1
+pydantic-core==2.50.4
     # via pydantic
 pydantic-extra-types==2.11.1
     # via galaxy-tool-util-models
@@ -323,10 +315,6 @@ rdflib==7.6.0
     #   cwltool
     #   prov
     #   schema-salad
-referencing==0.37.0
-    # via
-    #   jsonschema
-    #   jsonschema-specifications
 requests==2.34.2
     # via
     #   apache-libcloud
@@ -351,10 +339,6 @@ rich-argparse==1.8.0
     # via
     #   cwltool
     #   schema-salad
-rpds-py==2026.9.1
-    # via
-    #   jsonschema
-    #   referencing
 rsa==4.7.2
     # via awscli
 ruamel-yaml==0.19.1
@@ -368,7 +352,7 @@ ruamel-yaml-clib==0.2.15
     # via toil
 s3transfer==0.19.3
     # via boto3
-schema-salad==8.10.20260825112551
+schema-salad==8.10.20261106141337
     # via
     #   cwl-upgrader
     #   cwl-utils
@@ -388,7 +372,7 @@ spython==0.3.14
     # via cwltool
 stack-data==0.6.3
     # via ipython
-threadpoolctl==3.7.0
+threadpoolctl==3.8.0
     # via scikit-learn
 toil[aws,cwl,encryption,google,mesos]==9.6.0
     # via -r requirements.in
@@ -411,7 +395,7 @@ typing-extensions==4.16.0
     #   pydantic-extra-types
     #   toil
     #   typing-inspection
-typing-inspection==0.4.4
+typing-inspection==0.4.5
     # via pydantic
 urllib3==2.8.0
     # via
@@ -422,7 +406,7 @@ urllib3==2.8.0
     #   requests
     #   responses
     #   toil
-wcwidth==0.9.3
+wcwidth==0.9.4
     # via
     #   blessed
     #   prompt-toolkit
